@@ -314,14 +314,27 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 			CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
 		}
 		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& (!memcmp(txBuf+2, FR_CMD_SINGLE_REFRESH, 4)
-			|| !memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)
+			&& (!memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)
 			|| !memcmp(txBuf+2, FR_CMD_PEROID_EXCUTE, 4)
 			|| !memcmp(txBuf+2, FR_CMD_PEROID_STOP, 4))
 			&& !memcmp(txBuf+txLen-4, f_tail, 4))
 		{
 			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
 			CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+		}
+		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
+			&& !memcmp(txBuf+2, FR_CMD_SINGLE_REFRESH, 4)
+			&& !memcmp(txBuf+txLen-4, f_tail, 4))
+		{
+			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+			if(Send_shortAddr == COORDINATOR_ADDR) //协调器本身
+			{
+				CommonApp_ProcessZDOStates(DEV_ZB_COORD);
+			}
+			else
+			{
+				CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+			}
 		}
 	}
 }
