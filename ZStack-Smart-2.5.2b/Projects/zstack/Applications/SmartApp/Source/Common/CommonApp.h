@@ -86,7 +86,7 @@ extern "C"
 
 #define PERMIT_JOIN_TIMEOUT	10		//10 Seconds, <=255s
 #define PERMIT_JOIN_FORBID	0
-
+#define PERMIT_JOIN_ALWAYS	0xFF
 
 // Device Info Constants
 #define ZB_INFO_DEV_STATE                 0
