@@ -7,12 +7,12 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Max_Chen
-Date:2014-12-01
+Create by Sam_Chen
+Date:2015-02-02
 **************************************************************************************************/
 
 /**************************************************************************************************
-Modify by Max_Chen
+Modify by Sam_Chen
 Date:2014-12-01
 **************************************************************************************************/
 
@@ -41,6 +41,8 @@ Date:2014-12-01
 /*********************************************************************
  * GLOBAL VARIABLES
  */
+static uint8 *optData = NULL;
+static uint8 optDataLen = 0;
 
 /*********************************************************************
  * LOCAL VARIABLES
@@ -57,13 +59,34 @@ Date:2014-12-01
  */
 int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen)
 {
-	return 0;
+	if(optData != NULL && optDataLen < dataLen && dataLen <= MAX_OPTDATA_SIZE)
+	{
+		osal_mem_free(optData);
+		optData = NULL;
+	}
+
+	if(dataLen <= MAX_OPTDATA_SIZE)
+	{
+		if(optData == NULL && dataLen != 0)
+		{
+			optData = osal_mem_alloc(dataLen);
+		}
+
+		osal_memcpy(optData, data, dataLen);
+		optDataLen = dataLen;
+
+		return 0;
+	}	
+	
+	return -1;
 }
 
 
 int8 CommonDevice_GetData(uint8 *data, uint8 *dataLen)
 {
-	*dataLen = 0;
+	*dataLen = optDataLen;
+	osal_memcpy(data, optData, *dataLen);
+	
 	return 0;
 }
 

@@ -8,13 +8,13 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Max_Chen
+Create by Sam_Chen
 Date:2014-04-25
 **************************************************************************************************/
 
 /**************************************************************************************************
-Modify by Max_Chen
-Date:2014-11-28
+Modify by Sam_Chen
+Date:2015-02-02
 **************************************************************************************************/
 
 
@@ -180,7 +180,7 @@ void *SSAFrame_Analysis(frHeadType_t hType, uint8 SrcBuf[], uint8 SrcLen)
 			memset(aDataBuffer, 0, sizeof(aDataBuffer));
 			memcpy(aDataBuffer, SrcBuf+10, SrcLen-FR_DE_DATA_FIX_LEN);
 			aDataLen = SrcLen-FR_DE_DATA_FIX_LEN;
-			uoFrame.data_len = aDataLen;
+			deFrame.data_len = aDataLen;
 			deFrame.data = aDataBuffer;
 			
 			memcpy(deFrame.tail, SrcBuf+SrcLen-4, 4);
