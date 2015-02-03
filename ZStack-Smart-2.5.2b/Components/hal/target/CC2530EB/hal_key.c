@@ -110,11 +110,11 @@
 
 /* SW_6 is at P0.1 */
 #define HAL_KEY_SW_6_PORT   P0
-#ifndef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY_MAP_GPIO
 #define HAL_KEY_SW_6_BIT    BV(1)
 #else
 /* SW_6 change to P0.5 */
-#define HAL_KEY_SW_6_BIT    BV(5)
+#define HAL_KEY_SW_6_BIT    PUSH1_BV
 #endif
 #define HAL_KEY_SW_6_SEL    P0SEL
 #define HAL_KEY_SW_6_DIR    P0DIR
@@ -128,10 +128,10 @@
 #define HAL_KEY_SW_6_IEN      IEN1  /* CPU interrupt mask register */
 #define HAL_KEY_SW_6_IENBIT   BV(5) /* Mask bit for all of Port_0 */
 #define HAL_KEY_SW_6_ICTL     P0IEN /* Port Interrupt Control register */
-#ifndef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY_MAP_GPIO
 #define HAL_KEY_SW_6_ICTLBIT  BV(1) /* P0IEN - P0.1 enable/disable bit */
 #else
-#define HAL_KEY_SW_6_ICTLBIT  BV(5) /* P0IEN - P0.5 enable/disable bit */
+#define HAL_KEY_SW_6_ICTLBIT  PUSH1_BV /* P0IEN - P0.5 enable/disable bit */
 #endif
 #define HAL_KEY_SW_6_PXIFG    P0IFG /* Interrupt flag at source */
 
@@ -215,7 +215,7 @@ void HalKeyInit( void )
   HAL_KEY_SW_6_DIR &= ~(HAL_KEY_SW_6_BIT);    /* Set pin direction to Input */
 
   /* No KEY JOY */
-#ifndef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY_MAP_GPIO
   HAL_KEY_JOY_MOVE_SEL &= ~(HAL_KEY_JOY_MOVE_BIT); /* Set pin function to GPIO */
   HAL_KEY_JOY_MOVE_DIR &= ~(HAL_KEY_JOY_MOVE_BIT); /* Set pin direction to Input */
 #endif
@@ -277,7 +277,7 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
     HAL_KEY_SW_6_PXIFG = ~(HAL_KEY_SW_6_BIT);
 
 
-#ifndef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY_MAP_GPIO
     /* Rising/Falling edge configuratinn */
 
     HAL_KEY_JOY_MOVE_ICTL &= ~(HAL_KEY_JOY_MOVE_EDGEBIT);    /* Clear the edge bit */
@@ -334,7 +334,7 @@ uint8 HalKeyRead ( void )
     keys |= HAL_KEY_SW_6;
   }
 
-#ifndef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY_MAP_GPIO
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active low */
   {
     keys |= halGetJoyKeyInput();
@@ -358,7 +358,7 @@ void HalKeyPoll (void)
 {
   uint8 keys = 0;
 
-#ifndef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY_MAP_GPIO
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active HIGH */
   {
     keys = halGetJoyKeyInput();
@@ -573,7 +573,7 @@ void halProcessKeyInterrupt (void)
     valid = TRUE;
   }
 
-#ifndef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY_MAP_GPIO
   if (HAL_KEY_JOY_MOVE_PXIFG & HAL_KEY_JOY_MOVE_BIT)  /* Interrupt Flag has been set */
   {
     HAL_KEY_JOY_MOVE_PXIFG = ~(HAL_KEY_JOY_MOVE_BIT); /* Clear Interrupt Flag */
@@ -649,7 +649,7 @@ HAL_ISR_FUNCTION( halKeyPort0Isr, P0INT_VECTOR )
 }
 
 
-#ifndef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY_MAP_GPIO
 /**************************************************************************************************
  * @fn      halKeyPort2Isr
  *

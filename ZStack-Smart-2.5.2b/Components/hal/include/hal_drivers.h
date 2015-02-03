@@ -64,7 +64,7 @@ extern "C"
 #define HAL_SLEEP_TIMER_EVENT 0x0004
 #define PERIOD_RSSI_RESET_EVT 0x0008
 
-//#ifdef HAL_KEY_MAP_GPIO5
+//#ifdef HAL_KEY_MAP_GPIO
 #define HAL_KEY_COUNT_EVENT   0x0010
 #define HAL_LONG_KEY_EVENT	  0x0020
 //#endif

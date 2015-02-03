@@ -266,7 +266,7 @@
         <option>
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
-          <state>FR_APP_DEV=FR_APP_ALARM</state>
+          <state>DEVICE_TYPE_ID=11</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
@@ -454,6 +454,7 @@
           <state>$PROJ_DIR$\..\..\Source\Common</state>
           <state>$PROJ_DIR$\..\..\Source\Connector</state>
           <state>$PROJ_DIR$\..\..\Source\\EndNode</state>
+          <state>$PROJ_DIR$\..\..\Source\Board</state>
           <state>$PROJ_DIR$\..\..\Source\Manage</state>
           <state>$PROJ_DIR$\..\..\Source\Manage\Callbacks</state>
           <state>$PROJ_DIR$\..\..\Source\Manage\debug</state>
@@ -1337,12 +1338,10 @@
         <option>
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
-          <state>FR_APP_DEV=FR_APP_ALARM</state>
+          <state>DEVICE_TYPE_ID=11</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
-          <state>xPOWER_AMPLIFIER_POSITION_1</state>
-          <state>xPOWER_AMPLIFIER_POSITION_2</state>
           <state>xJIAJU_BUILDIN</state>
           <state>MT_TASK</state>
           <state>MT_SYS_FUNC</state>
@@ -1527,6 +1526,7 @@
           <state>$PROJ_DIR$\..\..\Source\Common</state>
           <state>$PROJ_DIR$\..\..\Source\Connector</state>
           <state>$PROJ_DIR$\..\..\Source\\EndNode</state>
+          <state>$PROJ_DIR$\..\..\Source\Board</state>
           <state>$PROJ_DIR$\..\..\Source\Manage</state>
           <state>$PROJ_DIR$\..\..\Source\Manage\Callbacks</state>
           <state>$PROJ_DIR$\..\..\Source\Manage\debug</state>
@@ -2163,10 +2163,13 @@
     <group>
       <name>EndNode</name>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\EndNode\Alarm_CommonOpt.c</name>
+        <name>$PROJ_DIR$\..\..\Source\Board\Alarm_Board_cfg.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\EndNode\EndnodeApp.c</name>
+        <name>$PROJ_DIR$\..\..\Source\Device\Alarm_DeviceDataCtrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Device\EndnodeApp.c</name>
       </file>
     </group>
     <group>

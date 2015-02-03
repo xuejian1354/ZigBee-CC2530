@@ -266,13 +266,10 @@
         <option>
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
-          <state>FR_APP_DEV=FR_APP_CONNECTOR</state>
+          <state>DEVICE_TYPE_ID=0</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
-          <state>HAL_MT7620_LED_MAP</state>
-          <state>POWER_AMPLIFIER_POSITION_1</state>
-          <state>xPOWER_AMPLIFIER_POSITION_2</state>
           <state>xJIAJU_BUILDIN</state>
           <state>MT_TASK</state>
           <state>MT_SYS_FUNC</state>
@@ -457,6 +454,7 @@
           <state>$PROJ_DIR$\..\..\Source\Common</state>
           <state>$PROJ_DIR$\..\..\Source\Connector</state>
           <state>$PROJ_DIR$\..\..\Source\\EndNode</state>
+          <state>$PROJ_DIR$\..\..\Source\Board</state>
           <state>$PROJ_DIR$\..\..\Source\Manage</state>
           <state>$PROJ_DIR$\..\..\Source\Manage\Callbacks</state>
           <state>$PROJ_DIR$\..\..\Source\Manage\debug</state>
@@ -1340,12 +1338,10 @@
         <option>
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
-          <state>FR_APP_DEV=FR_APP_CONNECTOR</state>
+          <state>DEVICE_TYPE_ID=0</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
-          <state>xPOWER_AMPLIFIER_POSITION_1</state>
-          <state>xPOWER_AMPLIFIER_POSITION_2</state>
           <state>xJIAJU_BUILDIN</state>
           <state>MT_TASK</state>
           <state>MT_SYS_FUNC</state>
@@ -1530,6 +1526,7 @@
           <state>$PROJ_DIR$\..\..\Source\Common</state>
           <state>$PROJ_DIR$\..\..\Source\Connector</state>
           <state>$PROJ_DIR$\..\..\Source\\EndNode</state>
+          <state>$PROJ_DIR$\..\..\Source\Board</state>
           <state>$PROJ_DIR$\..\..\Source\Manage</state>
           <state>$PROJ_DIR$\..\..\Source\Manage\Callbacks</state>
           <state>$PROJ_DIR$\..\..\Source\Manage\debug</state>
@@ -2160,16 +2157,19 @@
         <name>$PROJ_DIR$\..\..\Source\Common\CommonApp.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Common\Dev_CommonOpt.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\Source\Common\OSAL_CommonApp.c</name>
       </file>
     </group>
     <group>
       <name>Connector</name>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Connector\ConnectorApp.c</name>
+        <name>$PROJ_DIR$\..\..\Source\Common\CommonDataCtrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Board\Connector_Board_cfg.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Device\ConnectorApp.c</name>
       </file>
     </group>
     <group>

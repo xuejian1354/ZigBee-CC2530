@@ -117,7 +117,7 @@
 
 #define HAL_LED_BLINK_DELAY()   st( { volatile uint32 i; for (i=0; i<0x5800; i++) { }; } )
 
-#if !defined(HAL_PA_LNA) && !defined(HAL_MT7620_LED_MAP)
+#if defined (HAL_GPIO_DEFAULT) && !defined (HAL_GPIO_FEATURE)
 /* 1 - Green */
 #define LED1_BV           BV(0)
 #define LED1_SBIT         P1_0
@@ -137,17 +137,6 @@
   #define LED3_DDR          P1DIR
   #define LED3_POLARITY     ACTIVE_HIGH
 #endif
-#else
-#define LED1_BV           BV(3)
-#define LED1_SBIT         P1_3
-#define LED1_DDR          P1DIR
-#define LED1_POLARITY     ACTIVE_HIGH
-
-#define LED2_BV           BV(0)
-#define LED2_SBIT         P1_0
-#define LED2_DDR          P1DIR
-#define LED2_POLARITY     ACTIVE_HIGH
-#endif
 
 /* ------------------------------------------------------------------------------------------------
  *                                    Push Button Configuration
@@ -158,24 +147,16 @@
 #define ACTIVE_HIGH       !!    /* double negation forces result to be '1' */
 
 /* S1 */
-#ifndef HAL_KEY_MAP_GPIO5
 #define PUSH1_BV          BV(1)
 #define PUSH1_SBIT        P0_1
-#else
-#define PUSH1_BV          BV(5)
-#define PUSH1_SBIT        P0_5
-#endif
 
 #if defined (HAL_BOARD_CC2530EB_REV17)
-  #ifndef HAL_KEY_MAP_GPIO5
-    #define PUSH1_POLARITY    ACTIVE_HIGH
-  #else
-    #define PUSH1_POLARITY    ACTIVE_LOW
-  #endif
+  #define PUSH1_POLARITY    ACTIVE_HIGH
 #elif defined (HAL_BOARD_CC2530EB_REV13)
   #define PUSH1_POLARITY    ACTIVE_LOW
 #else
   #error Unknown Board Indentifier
+#endif
 #endif
 
 /* Joystick Center Press */
@@ -323,6 +304,7 @@ extern void MAC_RfFrontendSetup(void);
 /* ----------- Debounce ---------- */
 #define HAL_DEBOUNCE(expr)    { int i; for (i=0; i<500; i++) { if (!(expr)) i = 0; } }
 
+#if defined (HAL_GPIO_DEFAULT) && !defined (HAL_GPIO_FEATURE)
 /* ----------- Push Buttons ---------- */
 #define HAL_PUSH_BUTTON1()        (PUSH1_POLARITY (PUSH1_SBIT))
 #define HAL_PUSH_BUTTON2()        (PUSH2_POLARITY (PUSH2_SBIT))
@@ -357,31 +339,25 @@ extern void MAC_RfFrontendSetup(void);
 #elif defined (HAL_BOARD_CC2530EB_REV13) || defined (HAL_PA_LNA) || defined (HAL_PA_LNA_CC2590)
 
   #define HAL_TURN_OFF_LED1()       st( LED1_SBIT = LED1_POLARITY (0); )
+  #define HAL_TURN_OFF_LED2()       HAL_TURN_OFF_LED1()
   #define HAL_TURN_OFF_LED3()       HAL_TURN_OFF_LED1()
   #define HAL_TURN_OFF_LED4()       HAL_TURN_OFF_LED1()
 
   #define HAL_TURN_ON_LED1()        st( LED1_SBIT = LED1_POLARITY (1); )
+  #define HAL_TURN_ON_LED2()        HAL_TURN_ON_LED1()
   #define HAL_TURN_ON_LED3()        HAL_TURN_ON_LED1()
   #define HAL_TURN_ON_LED4()        HAL_TURN_ON_LED1()
 
   #define HAL_TOGGLE_LED1()         st( if (LED1_SBIT) { LED1_SBIT = 0; } else { LED1_SBIT = 1;} )
+  #define HAL_TOGGLE_LED2()         HAL_TOGGLE_LED1()
   #define HAL_TOGGLE_LED3()         HAL_TOGGLE_LED1()
   #define HAL_TOGGLE_LED4()         HAL_TOGGLE_LED1()
 
   #define HAL_STATE_LED1()          (LED1_POLARITY (LED1_SBIT))
+  #define HAL_STATE_LED2()          HAL_STATE_LED1()
   #define HAL_STATE_LED3()          HAL_STATE_LED1()
   #define HAL_STATE_LED4()          HAL_STATE_LED1()
 
-#ifndef HAL_MT7620_LED_MAP
-  #define HAL_TURN_OFF_LED3()       HAL_TURN_OFF_LED1()
-  #define HAL_TURN_ON_LED3()        HAL_TURN_ON_LED1()
-  #define HAL_TOGGLE_LED3()         HAL_TOGGLE_LED1()
-  #define HAL_STATE_LED4()          HAL_STATE_LED1()
-#else
-  #define HAL_TURN_OFF_LED2()       st( LED2_SBIT = LED2_POLARITY (0); )
-  #define HAL_TURN_ON_LED2()        st( LED2_SBIT = LED2_POLARITY (1); )
-  #define HAL_TOGGLE_LED2()         st( if (LED2_SBIT) { LED2_SBIT = 0; } else { LED2_SBIT = 1;} )
-  #define HAL_STATE_LED2()          (LED2_POLARITY (LED2_SBIT))
 #endif
 #endif
 
@@ -474,6 +450,7 @@ st( \
 #define HAL_LCD FALSE
 #endif
 
+#if defined (HAL_GPIO_DEFAULT) && !defined (HAL_GPIO_FEATURE)
 /* Set to TRUE enable LED usage, FALSE disable it */
 #ifndef HAL_LED
 #define HAL_LED TRUE
@@ -483,11 +460,9 @@ st( \
 #endif
 
 /* Set to TRUE enable KEY usage, FALSE disable it */
-#ifdef HAL_KEY_MAP_GPIO5
+#ifndef HAL_KEY
 #define HAL_KEY TRUE
 #endif
-#ifndef HAL_KEY
-#define HAL_KEY FALSE
 #endif
 
 /* Set to TRUE enable UART usage, FALSE disable it */

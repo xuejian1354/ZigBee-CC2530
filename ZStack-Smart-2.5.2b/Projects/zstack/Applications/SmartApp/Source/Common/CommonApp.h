@@ -84,7 +84,7 @@ extern "C"
 #define HEARTBEAT_TIMEOUT   30000	//Every 30 Seconds
 #define CMD_PEROID_TIMEOUT	5000	//Every 5 Seconds
 
-#define PERMIT_JOIN_TIMEOUT	10		//10 Seconds, <=255s
+#define PERMIT_JOIN_TIMEOUT	30		//30 Seconds, <=255s
 #define PERMIT_JOIN_FORBID	0
 #define PERMIT_JOIN_ALWAYS	0xFF
 
