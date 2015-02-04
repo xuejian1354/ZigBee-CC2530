@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE, 
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -35,6 +35,11 @@
 
   Should you have any questions regarding your right to use this Software,
   contact Texas Instruments Incorporated at www.TI.com. 
+**************************************************************************************************/
+
+/**************************************************************************************************
+Modify by Sam_Chen
+Date:2015-02-04
 **************************************************************************************************/
 
 #ifndef HAL_DRIVER_H
@@ -104,6 +109,12 @@ extern void Hal_ProcessPoll (void);
  * Initialize HW
  */
 extern void HalDriverInit (void);
+
+/*
+ * Initialize Device HW
+ */
+extern void HalDeviceInit (void);
+
 
 /**************************************************************************************************
 **************************************************************************************************/

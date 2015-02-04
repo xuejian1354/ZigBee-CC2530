@@ -1,5 +1,5 @@
 /**************************************************************************************************
-  Filename:       Dev_CommonOpt.c
+  Filename:       DoorSensor_DeviceDataCtrl.c
   Revised:        $Date: 2014-12-01 14:27:34 -0800 (Thu, 01 dec 2014) $
   Revision:       $Revision: 29218 $
 
@@ -13,7 +13,7 @@ Date:2015-02-02
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-12-01
+Date:2015-02-04
 **************************************************************************************************/
 
 
@@ -21,6 +21,8 @@ Date:2014-12-01
  * INCLUDES
  */
 #include "CommonApp.h"
+#include "hal_drivers.h"
+#include "hal_key.h"
 
 /*********************************************************************
  * MACROS
@@ -57,6 +59,11 @@ static uint8 optDataLen = 0;
 /*********************************************************************
  * PUBLIC FUNCTIONS
  */
+void HalDeviceInit (void)
+{
+
+}
+
 int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen)
 {
 	if(optData != NULL && optDataLen < dataLen && dataLen <= MAX_OPTDATA_SIZE)

@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -78,6 +78,11 @@
 *********************************************************************/
 
 /**************************************************************************************************
+Modify by Sam_Chen
+Date:2015-02-04
+**************************************************************************************************/
+
+/**************************************************************************************************
  *                                            INCLUDES
  **************************************************************************************************/
 #include "hal_mcu.h"
@@ -85,8 +90,10 @@
 #include "hal_types.h"
 #include "hal_board.h"
 #include "hal_drivers.h"
+#include "CommonApp.h"
 #include "hal_adc.h"
 #include "hal_key.h"
+#include "hal_led.h"
 #include "hal_uart.h"
 #include "osal.h"
 
@@ -106,7 +113,26 @@
 
 /* CPU port interrupt */
 #define HAL_KEY_CPU_PORT_0_IF P0IF
+#define HAL_KEY_CPU_PORT_1_IF P1IF
 #define HAL_KEY_CPU_PORT_2_IF P2IF
+
+#ifdef KEY_PUSH_PORT_1_BUTTON
+#if !defined(PUSH_PORT_1_POLARITY) || !defined(HAL_KEY_PORT_1_BITS)
+#error lack of some macro be defined when use "KEY_PUSH_PORT_1_BUTTON"!
+#endif
+
+/* KEY SW at port 1 */
+#define HAL_KEY_PORT_1_SEL	P1SEL
+#define HAL_KEY_PORT_1_DIR	P1DIR
+#define HAL_KEY_PORT_1_ICTL	P1IEN
+#define HAL_KEY_PORT_1_IEN 	IEN2
+#define HAL_KEY_PORT_1_IENBITS  BV(4)
+#define HAL_KEY_PORT_1_PXIFG	P1IFG
+
+#define HAL_KEY_PORT_1_ICTLBITS		HAL_KEY_PORT_1_BITS
+
+#define HAL_KEY_PUSH_PORT_1_BUTTON()	((PUSH_PORT_1_POLARITY(P1)) & HAL_KEY_PORT_1_BITS)
+#endif
 
 /* SW_6 is at P0.1 */
 #define HAL_KEY_SW_6_PORT   P0
@@ -170,7 +196,7 @@
 /**************************************************************************************************
  *                                        GLOBAL VARIABLES
  **************************************************************************************************/
-static uint8 halKeySavedKeys;     /* used to store previous key state in polling mode */
+static uint16 halKeySavedKeys;     /* used to store previous key state in polling mode */
 static halKeyCBack_t pHalKeyProcessFunction;
 static uint8 HalKeyConfigured;
 bool Hal_KeyIntEnable;            /* interrupt enable/disable flag */
@@ -181,7 +207,7 @@ static uint32 currentKeyClock;	/* current time clock */
 static uint8 constantKeyCount;	
 static bool countEnd;
 static uint8 KeyCount;
-static uint8 mKeys;
+static uint16 mKeys;
 #endif
 
 /**************************************************************************************************
@@ -218,6 +244,11 @@ void HalKeyInit( void )
 #ifndef HAL_KEY_MAP_GPIO
   HAL_KEY_JOY_MOVE_SEL &= ~(HAL_KEY_JOY_MOVE_BIT); /* Set pin function to GPIO */
   HAL_KEY_JOY_MOVE_DIR &= ~(HAL_KEY_JOY_MOVE_BIT); /* Set pin direction to Input */
+#endif
+
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  HAL_KEY_PORT_1_SEL &= ~(HAL_KEY_PORT_1_BITS);
+  HAL_KEY_PORT_1_DIR &= ~(HAL_KEY_PORT_1_BITS);
 #endif
 
 #ifdef HAL_KEY_COMBINE_INT_METHOD
@@ -276,6 +307,14 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
     HAL_KEY_SW_6_IEN |= HAL_KEY_SW_6_IENBIT;
     HAL_KEY_SW_6_PXIFG = ~(HAL_KEY_SW_6_BIT);
 
+#ifdef KEY_PUSH_PORT_1_BUTTON
+	PICTL &= ~0x06;
+	PICTL |= 0x06;
+
+	HAL_KEY_PORT_1_ICTL |= HAL_KEY_PORT_1_ICTLBITS;
+    HAL_KEY_PORT_1_IEN |= HAL_KEY_PORT_1_IENBITS;
+    HAL_KEY_PORT_1_PXIFG = ~(HAL_KEY_PORT_1_BITS);
+#endif
 
 #ifndef HAL_KEY_MAP_GPIO
     /* Rising/Falling edge configuratinn */
@@ -308,6 +347,11 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
     HAL_KEY_SW_6_ICTL &= ~(HAL_KEY_SW_6_ICTLBIT); /* don't generate interrupt */
     HAL_KEY_SW_6_IEN &= ~(HAL_KEY_SW_6_IENBIT);   /* Clear interrupt enable bit */
 
+#ifdef KEY_PUSH_PORT_1_BUTTON
+	HAL_KEY_PORT_1_ICTL &= ~(HAL_KEY_PORT_1_ICTLBITS);
+    HAL_KEY_PORT_1_IEN &= ~(HAL_KEY_PORT_1_IENBITS);
+#endif
+
     osal_set_event(Hal_TaskID, HAL_KEY_EVENT);
   }
 
@@ -327,12 +371,16 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
  **************************************************************************************************/
 uint8 HalKeyRead ( void )
 {
-  uint8 keys = 0;
+  uint16 keys = 0;
 
   if (HAL_PUSH_BUTTON1())
   {
     keys |= HAL_KEY_SW_6;
   }
+
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  keys |= (HAL_KEY_PUSH_PORT_1_BUTTON() << 8);
+#endif
 
 #ifndef HAL_KEY_MAP_GPIO
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active low */
@@ -356,7 +404,7 @@ uint8 HalKeyRead ( void )
  **************************************************************************************************/
 void HalKeyPoll (void)
 {
-  uint8 keys = 0;
+  uint16 keys = 0;
 
 #ifndef HAL_KEY_MAP_GPIO
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active HIGH */
@@ -369,6 +417,11 @@ void HalKeyPoll (void)
   {
     keys |= HAL_KEY_SW_6;
   }
+
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  keys |= (HAL_KEY_PUSH_PORT_1_BUTTON() << 8);
+#endif
+
 
   /* If interrupts are not enabled, previous key status and current key status
    * are compared to find out if a key has changed status.
@@ -431,7 +484,11 @@ static bool countDown = FALSE;
 void HalKeyCountPoll (void)
 {
   // ³¤°´ÊÂ¼þ¼ì²â
-  if(HAL_PUSH_BUTTON1() || countDown)
+  if(HAL_PUSH_BUTTON1() || countDown
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  		|| HAL_KEY_PUSH_PORT_1_BUTTON()
+#endif
+  )
   {	
   	if(constantKeyCount == 1)
   	{
@@ -445,7 +502,11 @@ void HalKeyCountPoll (void)
 
   	preKeyClock = osal_GetSystemClock();
 	
-  	if(HAL_PUSH_BUTTON1())
+  	if(HAL_PUSH_BUTTON1()
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  		|| HAL_KEY_PUSH_PORT_1_BUTTON()
+#endif
+	)
   	{
 	  countDown = TRUE;
   	}
@@ -480,9 +541,13 @@ void HalKeyCountPoll (void)
 
 void HalLongKeyListener(void)
 {
-	if(HAL_PUSH_BUTTON1() && KeyCount == 1)
+	if((HAL_PUSH_BUTTON1() 
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  		|| HAL_KEY_PUSH_PORT_1_BUTTON()
+#endif
+		)&& KeyCount == 1)
   	{
-		if (mKeys&& (pHalKeyProcessFunction))
+		if (mKeys && (pHalKeyProcessFunction))
 	  	{
 			KeyCount = 0;
     		(pHalKeyProcessFunction) (mKeys, HAL_KEY_STATE_NORMAL);
@@ -581,6 +646,18 @@ void halProcessKeyInterrupt (void)
   }
 #endif
 
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  int8 i=8;
+  while(i-- > 0)
+  {
+	if(HAL_KEY_PORT_1_PXIFG & BV(i))
+	{
+		HAL_KEY_PORT_1_PXIFG &= ~(BV(i));
+		valid = TRUE;
+	}
+  }
+#endif
+
   if (valid)
   {
     osal_start_timerEx (Hal_TaskID, HAL_KEY_EVENT, HAL_KEY_DEBOUNCE_VALUE);
@@ -648,6 +725,36 @@ HAL_ISR_FUNCTION( halKeyPort0Isr, P0INT_VECTOR )
   HAL_EXIT_ISR();
 }
 
+#ifdef KEY_PUSH_PORT_1_BUTTON
+/**************************************************************************************************
+ * @fn      halKeyPort1Isr
+ *
+ * @brief   Port1 ISR
+ *
+ * @param
+ *
+ * @return
+ **************************************************************************************************/
+HAL_ISR_FUNCTION( halKeyPort1Isr, P1INT_VECTOR )
+{
+  HAL_ENTER_ISR();
+
+  if (HAL_KEY_PORT_1_PXIFG & HAL_KEY_PORT_1_BITS)
+  {
+    halProcessKeyInterrupt();
+  }
+
+  /*
+    Clear the CPU interrupt flag for Port_1
+    PxIFG has to be cleared before PxIF
+  */
+  HAL_KEY_PORT_1_PXIFG = 0;
+  HAL_KEY_CPU_PORT_1_IF = 0;
+  
+  CLEAR_SLEEP_MODE();
+  HAL_EXIT_ISR();
+}
+#endif
 
 #ifndef HAL_KEY_MAP_GPIO
 /**************************************************************************************************

@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-12-28
+Date:2015-02-04
 **************************************************************************************************/
 
 
@@ -116,7 +116,7 @@ extern const uint8 f_tail[4];
  */
 static void CommonApp_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg );
 static void CommonApp_afDatacfm(afDataConfirm_t *data);
-static void CommonApp_HandleKeys( byte shift, byte keys );
+static void CommonApp_HandleKeys( byte shift, uint16 keys );
 #ifdef RTR_NWK
 static void CommonApp_PermitJoiningLedIndicate(
 				void *params, uint16 *duration, uint8 *count);
@@ -502,7 +502,7 @@ void CommonApp_afDatacfm(afDataConfirm_t *data)
  *
  * @return  none
  */
-void CommonApp_HandleKeys( uint8 shift, uint8 keys )
+void CommonApp_HandleKeys( uint8 shift, uint16 keys )
 {
   zAddrType_t dstAddr;
 
@@ -569,9 +569,13 @@ void CommonApp_HandleKeys( uint8 shift, uint8 keys )
     }
   }
 
-  if ( keys & HAL_KEY_SW_6 )
+  if ( (keys & HAL_KEY_SW_6) 
+#ifdef KEY_PUSH_PORT_1_BUTTON
+		|| (keys & 0xFF00)
+#endif
+  		)
   {
-    CommonApp_HandleCombineKeys(halGetKeyCount());
+    CommonApp_HandleCombineKeys(keys, halGetKeyCount());
   }
 }
 

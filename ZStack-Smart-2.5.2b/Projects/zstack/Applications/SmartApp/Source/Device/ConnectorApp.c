@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Edit by Sam_Chen
-Date:2014-12-28
+Date:2015-02-04
 **************************************************************************************************/
 
 
@@ -212,8 +212,10 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 }
 
 
-void CommonApp_HandleCombineKeys(uint8 keyCounts)
+void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 {
+  if(keys & HAL_KEY_SW_6)
+  {
 	switch( keyCounts)
 	{	
 	case 0: //长按事件
@@ -262,6 +264,7 @@ void CommonApp_HandleCombineKeys(uint8 keyCounts)
 
 	default: break;
 	}
+  }
 }
 
 #ifndef ZDO_COORDINATOR

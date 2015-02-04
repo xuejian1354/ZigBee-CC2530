@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE, 
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -35,6 +35,11 @@
 
   Should you have any questions regarding your right to use this Software,
   contact Texas Instruments Incorporated at www.TI.com. 
+**************************************************************************************************/
+
+/**************************************************************************************************
+Modify by Sam_Chen
+Date:2015-02-04
 **************************************************************************************************/
 
 #ifndef HAL_KEY_H
@@ -67,13 +72,13 @@ extern "C"
 #define HAL_KEY_STATE_SHIFT           0x01
 
 /* Switches (keys) */
-#define HAL_KEY_SW_1 0x01  // Joystick up
-#define HAL_KEY_SW_2 0x02  // Joystick right
-#define HAL_KEY_SW_5 0x04  // Joystick center
-#define HAL_KEY_SW_4 0x08  // Joystick left
-#define HAL_KEY_SW_3 0x10  // Joystick down
-#define HAL_KEY_SW_6 0x20  // Button S1 if available
-#define HAL_KEY_SW_7 0x40  // Button S2 if available
+#define HAL_KEY_SW_1 0x0001  // Joystick up
+#define HAL_KEY_SW_2 0x0002  // Joystick right
+#define HAL_KEY_SW_5 0x0004  // Joystick center
+#define HAL_KEY_SW_4 0x0008  // Joystick left
+#define HAL_KEY_SW_3 0x0010  // Joystick down
+#define HAL_KEY_SW_6 0x0020  // Button S1 if available
+#define HAL_KEY_SW_7 0x0040  // Button S2 if available
 
 /* Joystick */
 #define HAL_KEY_UP     0x01  // Joystick up
@@ -82,10 +87,19 @@ extern "C"
 #define HAL_KEY_LEFT   0x08  // Joystick left
 #define HAL_KEY_DOWN   0x10  // Joystick down
 
+#define HAL_KEY_PORT_1_SWITCH_1 0x0100 
+#define HAL_KEY_PORT_1_SWITCH_2 0x0200
+#define HAL_KEY_PORT_1_SWITCH_3 0x0400
+#define HAL_KEY_PORT_1_SWITCH_4 0x0800
+#define HAL_KEY_PORT_1_SWITCH_5 0x1000
+#define HAL_KEY_PORT_1_SWITCH_6 0x2000
+#define HAL_KEY_PORT_1_SWITCH_7 0x4000
+#define HAL_KEY_PORT_1_SWITCH_8 0x8000
+
 /**************************************************************************************************
  * TYPEDEFS
  **************************************************************************************************/
-typedef void (*halKeyCBack_t) (uint8 keys, uint8 state);
+typedef void (*halKeyCBack_t) (uint16 keys, uint8 state);
 
 /**************************************************************************************************
  *                                             GLOBAL VARIABLES

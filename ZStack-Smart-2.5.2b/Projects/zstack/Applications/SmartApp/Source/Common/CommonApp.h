@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-12-28
+Date:2015-02-04
 **************************************************************************************************/
 
 
@@ -131,7 +131,10 @@ extern void CommonApp_SendTheMessage(uint16 dstNwkAddr, uint8 *data, uint8 lengt
 extern void CommonApp_InitConfirm( byte task_id );
 extern void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pckt );
 extern void CommonApp_ProcessZDOStates(devStates_t status);
-extern void CommonApp_HandleCombineKeys(uint8 keyCounts);
+extern void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts);
+#ifdef KEY_PUSH_PORT_1_BUTTON
+extern void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts);
+#endif
 
 
 extern void CommonApp_CmdPeroidCB( void *params, uint16 *duration, uint8 *count);

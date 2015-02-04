@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-12-28
+Date:2015-02-04
 **************************************************************************************************/
 
 /*********************************************************************
@@ -123,6 +123,7 @@ static void Data_Analysis(uint8 *data, uint16 length);
 void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
+  //ZDOInitDevice( 0 );
 }
 
 
@@ -281,51 +282,58 @@ void CommonApp_ProcessZDOStates(devStates_t status)
   }
 }
 
-void CommonApp_HandleCombineKeys(uint8 keyCounts)
+void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 {
-  switch( keyCounts)
+  if(keys & HAL_KEY_SW_6)
   {
-  case 0:	//长按事件
+  	switch( keyCounts)
+  	{
+  	case 0:	//长按事件
 #if defined(HOLD_INIT_AUTHENTICATION)
-    if(devState != DEV_HOLD)
-    {
-      HalLedBlink ( HAL_LED_4, 0, 50, 100 );
-      devStates_t tStates;
-      if (ZSUCCESS == osal_nv_item_init( 
+      if(devState != DEV_HOLD)
+      {
+      	HalLedBlink ( HAL_LED_4, 0, 50, 100 );
+      	devStates_t tStates;
+      	if (ZSUCCESS == osal_nv_item_init( 
                                         ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
-      {
-        tStates = DEV_HOLD;
-        osal_nv_write(
+      	{
+          tStates = DEV_HOLD;
+          osal_nv_write(
                       ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates);
-      }
+      	}
 
-      zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);
-      WatchDogEnable( WDTIMX );
-    }
+      	zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);
+      	WatchDogEnable( WDTIMX );
+      }
 #endif
-    break;
+      break;
 	
-  case 3:
-    //转发器允许/禁止入网,入网认证
-    if(devState == DEV_HOLD)
-    {
-      ZDOInitDevice( 0 );
-    }
-    else
-    {
-      if(isPermitJoining)
+    case 3:
+      //转发器允许/禁止入网,入网认证
+      if(devState == DEV_HOLD)
       {
-        CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
+        ZDOInitDevice( 0 );
       }
       else
       {
-        CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
+        if(isPermitJoining)
+        {
+          CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
+        }
+        else
+        {
+          CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
+        }
       }
-    }
-    break;
+      break;
 
-  default: break;
+    default: break;
+    }
   }
+
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  DeviceCtrl_HandlePort1Keys(keys, keyCounts);
+#endif
 }
 
 void EndNodeApp_HeartBeatEvent(void)

@@ -1,5 +1,5 @@
 /**************************************************************************************************
-  Filename:       Dev_CommonOpt.c
+  Filename:       LightSwitchThree_DeviceDataCtrl.c
   Revised:        $Date: 2014-12-01 14:27:34 -0800 (Thu, 01 dec 2014) $
   Revision:       $Revision: 29218 $
 
@@ -13,7 +13,7 @@ Date:2014-12-01
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-02
+Date:2015-02-04
 **************************************************************************************************/
 
 
@@ -21,6 +21,8 @@ Date:2015-02-02
  * INCLUDES
  */
 #include "CommonApp.h"
+#include "hal_drivers.h"
+#include "hal_key.h"
 
 /*********************************************************************
  * MACROS
@@ -57,6 +59,31 @@ static uint8 optDataLen = 0;
 /*********************************************************************
  * PUBLIC FUNCTIONS
  */
+void HalDeviceInit (void)
+{
+
+}
+
+#ifdef KEY_PUSH_PORT_1_BUTTON
+void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
+{
+  if(keys & HAL_KEY_PORT_1_SWITCH_3)
+  {
+	CommonApp_SendTheMessage(0x0000, "switch 1", 8);
+  }
+
+  if(keys & HAL_KEY_PORT_1_SWITCH_4)
+  {
+	CommonApp_SendTheMessage(0x0000, "switch 2", 8);
+  }
+
+  if(keys & HAL_KEY_PORT_1_SWITCH_5)
+  {
+	CommonApp_SendTheMessage(0x0000, "switch 3", 8);
+  }
+}
+#endif
+
 int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen)
 {
 	if(optData != NULL && optDataLen < dataLen && dataLen <= MAX_OPTDATA_SIZE)
