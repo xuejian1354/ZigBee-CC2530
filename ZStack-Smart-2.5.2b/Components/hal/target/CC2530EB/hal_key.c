@@ -210,12 +210,23 @@ static uint8 KeyCount;
 static uint16 mKeys;
 #endif
 
+#ifdef HAL_KEY_MATCH_ID
+#ifndef HAL_KEY_COMBINE_INT_METHOD
+#error must define "HAL_KEY_COMBINE_INT_METHOD" before "HAL_KEY_MATCH_ID".
+#endif
+
+static const char keylist[] = {'a', '1', '2','3','4','5','6','7','8'};
+static uint8 keyID[HAL_KEY_MATCH_ID_SIZE];
+#endif
+
 /**************************************************************************************************
  *                                        FUNCTIONS - Local
  **************************************************************************************************/
 void halProcessKeyInterrupt(void);
 uint8 halGetJoyKeyInput(void);
-
+#ifdef HAL_KEY_MATCH_ID
+extern void set_keys_id(uint16 keys);
+#endif
 
 
 /**************************************************************************************************
@@ -258,7 +269,6 @@ void HalKeyInit( void )
 	countEnd = FALSE;
 	KeyCount = 0;
 #endif
-
 
   /* Initialize callback function */
   pHalKeyProcessFunction  = NULL;
@@ -359,7 +369,6 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
   HalKeyConfigured = TRUE;
 }
 
-
 /**************************************************************************************************
  * @fn      HalKeyRead
  *
@@ -455,8 +464,11 @@ void HalKeyPoll (void)
 	{
 		constantKeyCount++;
 		preKeyClock = currentKeyClock;
-		mKeys = keys;
 		
+		mKeys = keys;
+#ifdef HAL_KEY_MATCH_ID
+		set_keys_id(keys);
+#endif
 		osal_start_timerEx( Hal_TaskID, 
 			HAL_KEY_COUNT_EVENT, HAL_INTERVAL_KEY_CLOCK_THRESHOLD);
 
@@ -562,6 +574,60 @@ uint8 halGetKeyCount(void)
 	
 	return mCount;
 }
+
+
+#ifdef HAL_KEY_MATCH_ID
+void set_keys_id(uint16 keys)
+{
+	switch(keys)
+	{
+	case HAL_KEY_SW_6: 
+		keyID[constantKeyCount-1] = keylist[0];
+		break;
+		
+	case HAL_KEY_PORT_1_SWITCH_1: 
+		keyID[constantKeyCount-1] = keylist[1];
+		break;
+		
+	case HAL_KEY_PORT_1_SWITCH_2: 
+		keyID[constantKeyCount-1] = keylist[2];
+		break;
+		
+	case HAL_KEY_PORT_1_SWITCH_3: 
+		keyID[constantKeyCount-1] = keylist[3];
+		break;
+		
+	case HAL_KEY_PORT_1_SWITCH_4: 
+		keyID[constantKeyCount-1] = keylist[4];
+		break;
+		
+	case HAL_KEY_PORT_1_SWITCH_5: 
+		keyID[constantKeyCount-1] = keylist[5];
+		break;
+		
+	case HAL_KEY_PORT_1_SWITCH_6: 
+		keyID[constantKeyCount-1] = keylist[6];
+		break;
+		
+	case HAL_KEY_PORT_1_SWITCH_7: 
+		keyID[constantKeyCount-1] = keylist[7];
+		break;
+		
+	case HAL_KEY_PORT_1_SWITCH_8: 
+		keyID[constantKeyCount-1] = keylist[8];
+		break;
+		
+	default: break;
+	}
+
+}
+
+uint8 *get_keys_id(void)
+{
+	return keyID;
+}
+#endif
+
 #endif
 
 /**************************************************************************************************
@@ -647,14 +713,10 @@ void halProcessKeyInterrupt (void)
 #endif
 
 #ifdef KEY_PUSH_PORT_1_BUTTON
-  int8 i=8;
-  while(i-- > 0)
+  if(HAL_KEY_PORT_1_PXIFG & HAL_KEY_PORT_1_BITS)
   {
-	if(HAL_KEY_PORT_1_PXIFG & BV(i))
-	{
-		HAL_KEY_PORT_1_PXIFG &= ~(BV(i));
-		valid = TRUE;
-	}
+	HAL_KEY_PORT_1_PXIFG &= ~HAL_KEY_PORT_1_BITS;
+	valid = TRUE;
   }
 #endif
 

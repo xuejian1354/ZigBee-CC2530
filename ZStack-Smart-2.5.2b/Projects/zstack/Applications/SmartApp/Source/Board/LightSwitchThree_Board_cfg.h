@@ -13,7 +13,7 @@ Date:2015-02-02
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-05
+Date:2015-02-04
 **************************************************************************************************/
 
 
@@ -105,6 +105,43 @@ extern "C"
 
 #define PUSH_PORT_1_POLARITY    ~
 #define HAL_KEY_PORT_1_BITS (KEY_S1_PORT_BIT | KEY_S2_PORT_BIT | KEY_S3_PORT_BIT)
+
+
+/* Output Logic Control */
+/* OLC 1*/
+#define OLC1_BV           BV(5)
+#define OLC1_SBIT         P1_5
+#define OLC1_DDR          P1DIR
+#define OLC1_POLARITY     ACTIVE_LOW
+
+/* OLC 2*/
+#define OLC2_BV           BV(6)
+#define OLC2_SBIT         P1_6
+#define OLC2_DDR          P1DIR
+#define OLC2_POLARITY     ACTIVE_LOW
+
+/* OLC 3*/
+#define OLC3_BV           BV(7)
+#define OLC3_SBIT         P1_7
+#define OLC3_DDR          P1DIR
+#define OLC3_POLARITY     ACTIVE_LOW
+
+
+#define HAL_TURN_OFF_OLC1()       st( OLC1_SBIT = OLC1_POLARITY (0); )
+#define HAL_TURN_ON_OLC1()        st( OLC1_SBIT = OLC1_POLARITY (1); )
+#define HAL_TOGGLE_OLC1()         st( if (OLC1_SBIT) { OLC1_SBIT = 0; } else { OLC1_SBIT = 1;} )
+#define HAL_STATE_OLC1()          (OLC1_POLARITY (OLC1_SBIT))
+
+
+#define HAL_TURN_OFF_OLC2()       st( OLC2_SBIT = OLC2_POLARITY (0); )
+#define HAL_TURN_ON_OLC2()        st( OLC2_SBIT = OLC2_POLARITY (1); )
+#define HAL_TOGGLE_OLC2()         st( if (OLC2_SBIT) { OLC2_SBIT = 0; } else { OLC2_SBIT = 1;} )
+#define HAL_STATE_OLC2()          (OLC2_POLARITY (OLC2_SBIT))
+
+#define HAL_TURN_OFF_OLC3()       st( OLC3_SBIT = OLC3_POLARITY (0); )
+#define HAL_TURN_ON_OLC3()        st( OLC3_SBIT = OLC3_POLARITY (1); )
+#define HAL_TOGGLE_OLC3()         st( if (OLC3_SBIT) { OLC3_SBIT = 0; } else { OLC3_SBIT = 1;} )
+#define HAL_STATE_OLC3()          (OLC3_POLARITY (OLC3_SBIT))
 
 
 #define HAL_LED TRUE

@@ -20,9 +20,23 @@ Date:2015-02-04
 /*********************************************************************
  * INCLUDES
  */
+#include "OSAL.h"
+#include "AF.h"
+#include "ZDApp.h"
+#include "ZDObject.h"
+#include "ZDProfile.h"
+#include "OSAL_Nv.h"
+#include "OnBoard.h"
+
+#include "ZComDef.h"
 #include "CommonApp.h"
-#include "hal_drivers.h"
+
+/* HAL */
+#include "hal_lcd.h"
+#include "hal_led.h"
 #include "hal_key.h"
+#include "hal_uart.h"
+#include "hal_drivers.h"
 
 /*********************************************************************
  * MACROS
@@ -39,7 +53,8 @@ Date:2015-02-04
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
- 
+extern bool isPermitJoining;
+
 /*********************************************************************
  * GLOBAL VARIABLES
  */
@@ -61,25 +76,80 @@ static uint8 optDataLen = 0;
  */
 void HalDeviceInit (void)
 {
-
+  HAL_TURN_OFF_OLC1();
+  OLC1_DDR |= OLC1_BV;
+  HAL_TURN_OFF_OLC2();
+  OLC2_DDR |= OLC2_BV;
+  HAL_TURN_OFF_OLC3();
+  OLC3_DDR |= OLC3_BV; 
 }
 
 #ifdef KEY_PUSH_PORT_1_BUTTON
 void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
 {
-  if(keys & HAL_KEY_PORT_1_SWITCH_3)
+  uint8 *keysID = get_keys_id();
+
+  /* Initial Join NWK */
+  if(osal_memcmp(keysID, "34543", keyCounts))
   {
-	CommonApp_SendTheMessage(0x0000, "switch 1", 8);
+	if(devState == DEV_HOLD)
+    {
+      ZDOInitDevice( 0 );
+    }
+    else
+    {
+      if(isPermitJoining)
+      {
+        CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
+      }
+      else
+      {
+        CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
+      }
+    }
   }
 
-  if(keys & HAL_KEY_PORT_1_SWITCH_4)
+  if(keys & (HAL_KEY_PORT_1_SWITCH_3 | HAL_KEY_PORT_1_SWITCH_4 | HAL_KEY_PORT_1_SWITCH_5))
   {
-	CommonApp_SendTheMessage(0x0000, "switch 2", 8);
-  }
+  	/* Output Logic Control */
+	if (keyCounts == 1)
+	{
+	  if(keys & HAL_KEY_PORT_1_SWITCH_3)
+	  {
+	    HAL_TOGGLE_OLC1();
+	  }
+	  else if(keys & HAL_KEY_PORT_1_SWITCH_3)
+	  {
+	    HAL_TOGGLE_OLC2();
+	  }
+	  else if(keys & HAL_KEY_PORT_1_SWITCH_3)
+	  {
+	    HAL_TOGGLE_OLC3();
+	  }
+	}
+#if defined(HOLD_INIT_AUTHENTICATION)
+	/* Reset Factory Mode */
+    else if(devState!=DEV_HOLD && keyCounts==0)
+    {
+      HalLedBlink ( HAL_LED_4, 0, 50, 100 );
+      devStates_t tStates;
+      if (ZSUCCESS == osal_nv_item_init( 
+                  ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
+      {
+         tStates = DEV_HOLD;
+         osal_nv_write(
+                ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates);
+      }
 
-  if(keys & HAL_KEY_PORT_1_SWITCH_5)
-  {
-	CommonApp_SendTheMessage(0x0000, "switch 3", 8);
+      zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);
+      WatchDogEnable( WDTIMX );
+    }
+#endif
+	/* Ouput Keys Combine */
+	else
+	{
+	  CommonApp_SendTheMessage(0x0000, keysID, keyCounts);
+	}
   }
 }
 #endif

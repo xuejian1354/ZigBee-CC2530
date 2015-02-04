@@ -96,6 +96,8 @@ extern "C"
 #define HAL_KEY_PORT_1_SWITCH_7 0x4000
 #define HAL_KEY_PORT_1_SWITCH_8 0x8000
 
+#define HAL_KEY_MATCH_ID_SIZE	32
+
 /**************************************************************************************************
  * TYPEDEFS
  **************************************************************************************************/
@@ -144,6 +146,9 @@ extern void HalKeyPoll ( void );
 extern void HalKeyCountPoll ( void );
 extern void HalLongKeyListener( void );
 extern uint8 halGetKeyCount( void );
+#ifdef HAL_KEY_MATCH_ID
+extern uint8 *get_keys_id(void);
+#endif
 #endif
 
 /*
