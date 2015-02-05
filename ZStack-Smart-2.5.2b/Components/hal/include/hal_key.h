@@ -39,7 +39,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-04
+Date:2015-02-05
 **************************************************************************************************/
 
 #ifndef HAL_KEY_H
@@ -95,6 +95,7 @@ extern "C"
 #define HAL_KEY_PORT_1_SWITCH_6 0x2000
 #define HAL_KEY_PORT_1_SWITCH_7 0x4000
 #define HAL_KEY_PORT_1_SWITCH_8 0x8000
+#define HAL_KEY_PORT_1_SWITCHS	0xFF00	//switch 1.  ~  switch 8.
 
 #define HAL_KEY_MATCH_ID_SIZE	32
 

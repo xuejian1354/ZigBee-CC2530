@@ -3,7 +3,7 @@
   Revised:        $Date: 2014-12-01 14:27:34 -0800 (Thu, 01 dec 2014) $
   Revision:       $Revision: 29218 $
 
-  Description:    This file contains interface of device common data operations
+  Description:    This file contains interface of light switch three device data operations
 **************************************************************************************************/
 
 /**************************************************************************************************
@@ -13,7 +13,7 @@ Date:2014-12-01
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-04
+Date:2015-02-05
 **************************************************************************************************/
 
 
@@ -32,7 +32,6 @@ Date:2015-02-04
 #include "CommonApp.h"
 
 /* HAL */
-#include "hal_lcd.h"
 #include "hal_led.h"
 #include "hal_key.h"
 #include "hal_uart.h"
@@ -41,6 +40,7 @@ Date:2015-02-04
 /*********************************************************************
  * MACROS
  */
+#define SW3_DATA_SIZE	6
 
 /*********************************************************************
  * CONSTANTS
@@ -49,23 +49,22 @@ Date:2015-02-04
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
+extern bool isPermitJoining;
+
+extern uint8 *optData;
+extern uint8 optDataLen;
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
-extern bool isPermitJoining;
 
 /*********************************************************************
  * GLOBAL VARIABLES
  */
-static uint8 *optData = NULL;
-static uint8 optDataLen = 0;
 
 /*********************************************************************
  * LOCAL VARIABLES
  */
-//static uint8 devData[FRAME_DATA_SIZE] = {0};
-//static uint8 devDataLen = 0;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -148,43 +147,120 @@ void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
 	/* Ouput Keys Combine */
 	else
 	{
-	  CommonApp_SendTheMessage(0x0000, keysID, keyCounts);
+	  CommonApp_SendTheMessage(COORDINATOR_ADDR, keysID, keyCounts);
 	}
   }
 }
 #endif
 
-int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen)
+/*
+  * "00"	Open
+  * "01"	Close
+  * Total 6 bits.
+ */
+int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
-	if(optData != NULL && optDataLen < dataLen && dataLen <= MAX_OPTDATA_SIZE)
-	{
-		osal_mem_free(optData);
-		optData = NULL;
-	}
+	uint8 i;
 
-	if(dataLen <= MAX_OPTDATA_SIZE)
+	for(i=0; i<SW3_DATA_SIZE; i+=2)
 	{
-		if(optData == NULL && dataLen != 0)
+		if (osal_memcmp(data+i, "00", 2))
 		{
-			optData = osal_mem_alloc(dataLen);
+			if(i == 0)
+			{
+				HAL_TURN_OFF_OLC1();
+			}
+			else if(i == 2)
+			{
+				HAL_TURN_OFF_OLC2();
+			}
+			else if(i == 4)
+			{
+				HAL_TURN_OFF_OLC3();
+			}
 		}
+		else if (osal_memcmp(data+i, "01", 2))
+		{
+			if(i == 0)
+			{
+				HAL_TURN_ON_OLC1();
+			}
+			else if(i == 2)
+			{
+				HAL_TURN_ON_OLC2();
+			}
+			else if(i == 4)
+			{
+				HAL_TURN_ON_OLC3();
+			}
+		}
+		else
+		{
+			if(optData!=NULL && optDataLen<SW3_DATA_SIZE)
+			{
+				osal_mem_free(optData);
+				optData = NULL;
+				optDataLen = 0;
+			}
 
-		osal_memcpy(optData, data, dataLen);
-		optDataLen = dataLen;
-
-		return 0;
-	}	
-	
-	return -1;
-}
-
-
-int8 CommonDevice_GetData(uint8 *data, uint8 *dataLen)
-{
-	*dataLen = optDataLen;
-	osal_memcpy(data, optData, *dataLen);
+			if(optData == NULL)
+			{
+				osal_mem_alloc(SW3_DATA_SIZE);
+				optDataLen = SW3_DATA_SIZE;
+			}
+			
+			osal_memcpy(optData+i, "FF", 2);
+		}
+	}
 	
 	return 0;
 }
 
 
+int8 get_device_data(uint8 *data, uint8 *dataLen)
+{
+	if(optData!=NULL && optDataLen<SW3_DATA_SIZE)
+	{
+		osal_mem_free(optData);
+		optData = NULL;
+		optDataLen = 0;
+	}
+
+	if(optData == NULL)
+	{
+		osal_mem_alloc(SW3_DATA_SIZE);
+		optDataLen = SW3_DATA_SIZE;
+	}
+
+	if (HAL_STATE_OLC1())
+	{
+		osal_memcpy(optData, "01", 2);
+	}
+	else
+	{
+		osal_memcpy(optData, "00", 2);
+	}
+
+	if (HAL_STATE_OLC2())
+	{
+		osal_memcpy(optData, "01", 2);
+	}
+	else
+	{
+		osal_memcpy(optData, "00", 2);
+	}
+
+	if (HAL_STATE_OLC3())
+	{
+		osal_memcpy(optData, "01", 2);
+	}
+	else
+	{
+		osal_memcpy(optData, "00", 2);
+	}
+
+	*dataLen = optDataLen;
+	osal_memcpy(data, optData, *dataLen);
+	
+	return 0;
+}

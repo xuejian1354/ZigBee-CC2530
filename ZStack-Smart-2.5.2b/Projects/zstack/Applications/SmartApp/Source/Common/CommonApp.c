@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-04
+Date:2015-02-05
 **************************************************************************************************/
 
 
@@ -105,6 +105,11 @@ uint8 SHORT_ADDR_G[4] = "";
 
 uint8 EXT_ADDR_G[16] = "";
 
+#ifdef SSA_ENDNODE
+/* operations data */
+uint8 *optData = NULL;
+uint8 optDataLen = 0;
+#endif
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
@@ -571,7 +576,7 @@ void CommonApp_HandleKeys( uint8 shift, uint16 keys )
 
   if ( (keys & HAL_KEY_SW_6) 
 #ifdef KEY_PUSH_PORT_1_BUTTON
-		|| (keys & 0xFF00)
+		|| (keys & HAL_KEY_PORT_1_SWITCHS)
 #endif
   		)
   {
@@ -620,6 +625,38 @@ void CommonApp_GetDeviceInfo ( uint8 param, void *pValue )
       osal_memcpy(pValue, &_NIB.extendedPANID, Z_EXTADDR_LEN);
       break;
   }
+}
+
+
+#ifdef SSA_ENDNODE
+int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen)
+{
+	if(optData != NULL && optDataLen < dataLen && dataLen <= MAX_OPTDATA_SIZE)
+	{
+		osal_mem_free(optData);
+		optData = NULL;
+	}
+
+	if(dataLen <= MAX_OPTDATA_SIZE)
+	{
+		if(optData == NULL && dataLen != 0)
+		{
+			optData = osal_mem_alloc(dataLen);
+		}
+
+		osal_memcpy(optData, data, dataLen);
+		optDataLen = dataLen;
+
+		return set_device_data(optData, optDataLen);
+	}	
+	
+	return -1;
+}
+
+
+int8 CommonDevice_GetData(uint8 *data, uint8 *dataLen)
+{
+	return get_device_data(data, dataLen);
 }
 
 
@@ -675,7 +712,7 @@ void Update_Refresh(uint8 *data, uint8 length)
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
 }
-
+#endif
 
 
 void PermitJoin_Refresh(uint8 *data, uint8 length)

@@ -40,7 +40,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-04
+Date:2015-02-05
 **************************************************************************************************/
 
 /*********************************************************************
@@ -103,8 +103,10 @@ int main( void )
   // Initialze HAL drivers
   HalDriverInit();
 
-  // Initialze device hardware
+#ifdef SSA_ENDNODE
+  // Initialze end device hardware
   HalDeviceInit();
+#endif
 
   // Initialize NV System
   osal_nv_init( NULL );

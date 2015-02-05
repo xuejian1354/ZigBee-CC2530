@@ -2163,9 +2163,6 @@
     <group>
       <name>Connector</name>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Common\CommonDataCtrl.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\Source\Board\Connector_Board_cfg.h</name>
       </file>
       <file>

@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-04
+Date:2015-02-05
 **************************************************************************************************/
 
 
@@ -136,19 +136,19 @@ extern void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts);
 extern void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts);
 #endif
 
+#ifdef SSA_ENDNODE
+extern int8 set_device_data(uint8 const *data, uint8 dataLen);
+extern int8 get_device_data(uint8 *data, uint8 *dataLen);
+
+extern int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen);
+extern int8 CommonDevice_GetData(uint8 *data, uint8 *dataLen);
 
 extern void CommonApp_CmdPeroidCB( void *params, uint16 *duration, uint8 *count);
 extern int8 DataCmd_Ctrl(uint8 *data, uint8 length);
 extern void Update_Refresh(uint8 *data, uint8 length);
+#endif
 extern void PermitJoin_Refresh(uint8 *data, uint8 length);
 ZStatus_t CommonApp_PermitJoiningRequest( byte PermitDuration );
-
-
-/*********************************************************************
- * different interface depend on device
- *********************************************************************/
-extern int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen);
-extern int8 CommonDevice_GetData(uint8 *data, uint8 *dataLen);
 
 
 /*********************************************************************

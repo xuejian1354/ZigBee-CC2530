@@ -39,7 +39,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-04
+Date:2015-02-05
 **************************************************************************************************/
 
 #ifndef HAL_DRIVER_H
@@ -111,9 +111,11 @@ extern void Hal_ProcessPoll (void);
 extern void HalDriverInit (void);
 
 /*
- * Initialize Device HW
+ * Initialize End Device HW
  */
+#if defined(SSA_ENDNODE) 
 extern void HalDeviceInit (void);
+#endif
 
 
 /**************************************************************************************************
