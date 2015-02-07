@@ -49,6 +49,10 @@ Date:2015-02-05
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
+extern uint8 SHORT_ADDR_G[4];
+extern uint8 EXT_ADDR_G[16];
+extern const uint8 f_tail[4];
+
 extern bool isPermitJoining;
 
 extern uint8 *optData;
@@ -115,16 +119,41 @@ void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
 	{
 	  if(keys & HAL_KEY_PORT_1_SWITCH_3)
 	  {
+	  	//OLC1_DDR |= OLC1_BV;
 	    HAL_TOGGLE_OLC1();
 	  }
-	  else if(keys & HAL_KEY_PORT_1_SWITCH_3)
+	  else if(keys & HAL_KEY_PORT_1_SWITCH_4)
 	  {
+	  	//OLC2_DDR |= OLC2_BV;
 	    HAL_TOGGLE_OLC2();
 	  }
-	  else if(keys & HAL_KEY_PORT_1_SWITCH_3)
+	  else if(keys & HAL_KEY_PORT_1_SWITCH_5)
 	  {
+	  	//OLC2_DDR |= OLC3_BV;
 	    HAL_TOGGLE_OLC3();
 	  }
+
+	  UO_t mFrame;
+      memcpy(mFrame.head, FR_HEAD_UO, 3);
+#ifdef RTR_NWK
+      mFrame.type = FR_DEV_ROUTER;
+#else
+      mFrame.type = FR_DEV_ENDDEV;
+#endif
+      memcpy(mFrame.ed_type, FR_APP_DEV, 2);
+      memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
+      memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
+	  get_device_data(NULL, NULL);
+      mFrame.data = optData;
+	  mFrame.data_len = optDataLen;
+      memcpy(mFrame.tail, f_tail, 4);
+
+      uint8 *fBuf;
+	  uint16 fLen;
+      if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
+      {
+        CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+      }
 	}
 #if defined(HOLD_INIT_AUTHENTICATION)
 	/* Reset Factory Mode */
@@ -145,10 +174,10 @@ void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
     }
 #endif
 	/* Ouput Keys Combine */
-	else
-	{
-	  CommonApp_SendTheMessage(COORDINATOR_ADDR, keysID, keyCounts);
-	}
+	//else
+	//{
+	  //CommonApp_SendTheMessage(COORDINATOR_ADDR, keysID, keyCounts);
+	//}
   }
 }
 #endif
@@ -243,24 +272,27 @@ int8 get_device_data(uint8 *data, uint8 *dataLen)
 
 	if (HAL_STATE_OLC2())
 	{
-		osal_memcpy(optData, "01", 2);
+		osal_memcpy(optData+2, "01", 2);
 	}
 	else
 	{
-		osal_memcpy(optData, "00", 2);
+		osal_memcpy(optData+2, "00", 2);
 	}
 
 	if (HAL_STATE_OLC3())
 	{
-		osal_memcpy(optData, "01", 2);
+		osal_memcpy(optData+4, "01", 2);
 	}
 	else
 	{
-		osal_memcpy(optData, "00", 2);
+		osal_memcpy(optData+4, "00", 2);
 	}
 
-	*dataLen = optDataLen;
-	osal_memcpy(data, optData, *dataLen);
+	if(data != NULL)
+	{
+		*dataLen = optDataLen;
+		osal_memcpy(data, optData, *dataLen);
+	}
 	
 	return 0;
 }

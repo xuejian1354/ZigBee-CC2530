@@ -129,18 +129,18 @@ extern "C"
 
 #define HAL_TURN_OFF_OLC1()       st( OLC1_SBIT = OLC1_POLARITY (0); )
 #define HAL_TURN_ON_OLC1()        st( OLC1_SBIT = OLC1_POLARITY (1); )
-#define HAL_TOGGLE_OLC1()         st( if (OLC1_SBIT) { OLC1_SBIT = 0; } else { OLC1_SBIT = 1;} )
+#define HAL_TOGGLE_OLC1()         st( OLC1_SBIT ^= 1;)
 #define HAL_STATE_OLC1()          (OLC1_POLARITY (OLC1_SBIT))
 
 
 #define HAL_TURN_OFF_OLC2()       st( OLC2_SBIT = OLC2_POLARITY (0); )
 #define HAL_TURN_ON_OLC2()        st( OLC2_SBIT = OLC2_POLARITY (1); )
-#define HAL_TOGGLE_OLC2()         st( if (OLC2_SBIT) { OLC2_SBIT = 0; } else { OLC2_SBIT = 1;} )
+#define HAL_TOGGLE_OLC2()         st( OLC2_SBIT ^= 1; )
 #define HAL_STATE_OLC2()          (OLC2_POLARITY (OLC2_SBIT))
 
 #define HAL_TURN_OFF_OLC3()       st( OLC3_SBIT = OLC3_POLARITY (0); )
 #define HAL_TURN_ON_OLC3()        st( OLC3_SBIT = OLC3_POLARITY (1); )
-#define HAL_TOGGLE_OLC3()         st( if (OLC3_SBIT) { OLC3_SBIT = 0; } else { OLC3_SBIT = 1;} )
+#define HAL_TOGGLE_OLC3()         st( OLC3_SBIT ^= 1; )
 #define HAL_STATE_OLC3()          (OLC3_POLARITY (OLC3_SBIT))
 
 
