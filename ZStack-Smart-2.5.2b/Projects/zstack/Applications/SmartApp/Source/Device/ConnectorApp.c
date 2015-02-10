@@ -214,7 +214,13 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 {
-  if(keys & HAL_KEY_SW_6)
+  if(
+#ifdef KEY_PUSH_PORT_1_BUTTON
+    keys & HAL_KEY_PORT_1_SWITCH_3
+#else
+	keys & HAL_KEY_SW_6
+#endif
+  )
   {
 	switch( keyCounts)
 	{	

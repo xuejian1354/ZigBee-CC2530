@@ -13,7 +13,7 @@ Date:2015-02-02
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-03
+Date:2015-02-09
 **************************************************************************************************/
 
 
@@ -31,7 +31,7 @@ extern "C"
 #if (DEVICE_TYPE_ID==0)
 
 #define HAL_GPIO_FEATURE
-//#define HAL_MT7620_GPIO_MAP		/*MT7620上GPIO 映射位置*/
+#define HAL_MT7620_GPIO_MAP		/*MT7620上GPIO 映射位置*/
 
 /*********************************************************************
  * INCLUDES
@@ -45,9 +45,6 @@ extern "C"
  * MACROS
  */
 #ifdef HAL_MT7620_GPIO_MAP
-#define POWER_AMPLIFIER_POSITION_1	/*映射在功放位置1(default)*/
-//#define POWER_AMPLIFIER_POSITION_2	/*映射在功放位置1(custom)*/
-
 #define LED1_BV           BV(3)
 #define LED1_SBIT         P1_3
 #define LED1_DDR          P1DIR
@@ -56,14 +53,25 @@ extern "C"
 #define LED2_BV           BV(0)
 #define LED2_SBIT         P1_0
 #define LED2_DDR          P1DIR
-#define LED2_POLARITY     ACTIVE_HIGH
+#define LED2_POLARITY     ACTIVE_LOW
 
+#define LED3_BV           LED1_BV
+#define LED3_SBIT         LED1_SBIT
+#define LED3_DDR          LED1_DDR
+#define LED3_POLARITY     LED1_POLARITY
 
-//push button default use port 0 that cannot be changed
-//must define HAL_KEY_MAP_GPIO, otherwise use default gpio is P0.1
+/* Unused */
 #define PUSH1_BV          BV(5)
 #define PUSH1_SBIT        P0_5
 #define PUSH1_POLARITY    ACTIVE_LOW
+
+/*Really Key*/
+#define KEY_PUSH_PORT_1_BUTTON
+
+#define KEY_S1_PORT_BIT		BV(2)
+
+#define PUSH_PORT_1_POLARITY    ~
+#define HAL_KEY_PORT_1_BITS KEY_S1_PORT_BIT
 
 
 #define HAL_PUSH_BUTTON1()        (PUSH1_POLARITY (PUSH1_SBIT))
@@ -102,9 +110,6 @@ extern "C"
 #define HAL_KEY TRUE
 
 #else
-//#define POWER_AMPLIFIER_POSITION_1	/*映射在功放位置1(default)*/
-//#define POWER_AMPLIFIER_POSITION_2	/*映射在功放位置1(custom)*/
-
 /* 1 - Green */
 #define LED1_BV           BV(0)
 #define LED1_SBIT         P1_0
