@@ -2156,12 +2156,12 @@ void ZDO_NetworkFormationConfirmCB( ZStatus_t Status )
 
   if ( Status == ZSUCCESS )
   {
+#ifndef HAL_MT7620_GPIO_MAP
     // LED on shows Coordinator started
     HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
-
     // LED off forgets HOLD_AUTO_START
     HalLedSet (HAL_LED_4, HAL_LED_MODE_OFF);
-
+#endif
 #if defined ( ZBIT )
     SIM_SetColor(0xd0ffd0);
 #endif

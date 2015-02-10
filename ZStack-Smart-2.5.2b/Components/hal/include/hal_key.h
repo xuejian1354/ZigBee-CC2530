@@ -146,11 +146,11 @@ extern void HalKeyPoll ( void );
 #ifdef HAL_KEY_COMBINE_INT_METHOD
 extern void HalKeyCountPoll ( void );
 extern void HalLongKeyListener( void );
-extern uint8 halGetKeyCount( void );
 #ifdef HAL_KEY_MATCH_ID
 extern uint8 *get_keys_id(void);
 #endif
 #endif
+extern uint8 halGetKeyCount( void );
 
 /*
  * This is for internal used by hal_sleep

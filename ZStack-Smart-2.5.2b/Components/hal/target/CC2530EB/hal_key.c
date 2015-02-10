@@ -140,7 +140,7 @@ Date:2015-02-04
 #define HAL_KEY_SW_6_BIT    BV(1)
 #else
 /* SW_6 change to P0.5 */
-#define HAL_KEY_SW_6_BIT    PUSH1_BV
+#define HAL_KEY_SW_6_BIT    BV(5)
 #endif
 #define HAL_KEY_SW_6_SEL    P0SEL
 #define HAL_KEY_SW_6_DIR    P0DIR
@@ -157,7 +157,7 @@ Date:2015-02-04
 #ifndef HAL_KEY_MAP_GPIO
 #define HAL_KEY_SW_6_ICTLBIT  BV(1) /* P0IEN - P0.1 enable/disable bit */
 #else
-#define HAL_KEY_SW_6_ICTLBIT  PUSH1_BV /* P0IEN - P0.5 enable/disable bit */
+#define HAL_KEY_SW_6_ICTLBIT  BV(5) /* P0IEN - P0.5 enable/disable bit */
 #endif
 #define HAL_KEY_SW_6_PXIFG    P0IFG /* Interrupt flag at source */
 
@@ -628,6 +628,11 @@ uint8 *get_keys_id(void)
 }
 #endif
 
+#else
+uint8 halGetKeyCount(void)
+{	
+	return 0;
+}
 #endif
 
 /**************************************************************************************************
