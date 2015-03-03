@@ -31,6 +31,7 @@ extern "C"
 #if (DEVICE_TYPE_ID==3)
 
 #define HAL_GPIO_FEATURE
+#define HAL_KEY_LONG_SHORT_DISTINGUISH
 
 /*********************************************************************
  * INCLUDES

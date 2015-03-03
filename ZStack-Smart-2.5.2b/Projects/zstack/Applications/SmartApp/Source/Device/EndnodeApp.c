@@ -123,7 +123,7 @@ static void Data_Analysis(uint8 *data, uint16 length);
 void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-  //ZDOInitDevice( 0 );
+  ZDOInitDevice( 0 );
 }
 
 

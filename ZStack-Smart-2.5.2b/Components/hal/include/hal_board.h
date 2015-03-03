@@ -7,7 +7,7 @@
 
 #define HAL_KEY_COMBINE_INT_METHOD	/*中断下 按键组合功能 */
 #define HAL_KEY_MATCH_ID	/*按键匹配ID */
-#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
+//#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
 
 #define HAL_UART_DMA_DISABLE_RTCT	/*串口RT , CT 引脚无效*/
 

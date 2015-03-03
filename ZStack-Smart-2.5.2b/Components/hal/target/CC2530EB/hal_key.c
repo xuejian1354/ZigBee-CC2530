@@ -437,8 +437,12 @@ uint8 HalKeyRead ( void )
 void HalKeyPoll (void)
 {
   uint16 keys = 0;
-  static uint16 tKeys = 0;
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
   uint8 mKeyPush = 0;
+#ifdef KEY_PUSH_PORT_1_BUTTON
+  static uint16 tKeys = 0;
+#endif
+#endif
 
 #ifndef KEY_PUSH_PORT_0_BUTTON
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active HIGH */
@@ -527,7 +531,9 @@ void HalKeyPoll (void)
 		preKeyClock = osal_GetSystemClock();
 #ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
 		isCombine = 1;
+#ifdef KEY_PUSH_PORT_1_BUTTON
 		tKeys = 0;
+#endif
 #endif
 	}
 	
@@ -577,7 +583,9 @@ void HalKeyPoll (void)
 #endif
   }
 
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
 functionSolve:
+#endif
   /* Invoke Callback if new keys were depressed */
   if (keys && (pHalKeyProcessFunction))
   {
@@ -636,6 +644,7 @@ uint32 HalKeyEdgeChanged(uint8 port)
 		return 0;
 	}
   }
+#ifdef KEY_PUSH_PORT_1_BUTTON
   else if (port == 1)
   {
 	if((!!HAL_KEY_PUSH_PORT_1_BUTTON()) ^ (PUSH_PORT_1_POLARITY(0) & 0x01))
@@ -667,6 +676,7 @@ uint32 HalKeyEdgeChanged(uint8 port)
 		return 0;
 	}
   }
+#endif
 
   return 0;
 }

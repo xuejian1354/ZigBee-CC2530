@@ -221,7 +221,7 @@ endPointDesc_t *ZDApp_AutoFindMode_epDesc = (endPointDesc_t *)NULL;
 uint8 ZDApp_LeaveCtrl;
 
 #if defined(HOLD_INIT_AUTHENTICATION)
-//#define HOLD_AUTO_START
+#define HOLD_AUTO_START
 #endif
 
 #if defined( HOLD_AUTO_START )
