@@ -31,7 +31,7 @@ extern "C"
 #if (DEVICE_TYPE_ID==0)
 
 #define HAL_GPIO_FEATURE
-#define HAL_MT7620_GPIO_MAP		/*MT7620上GPIO 映射位置*/
+//#define HAL_MT7620_GPIO_MAP		/*MT7620上GPIO 映射位置*/
 
 /*********************************************************************
  * INCLUDES

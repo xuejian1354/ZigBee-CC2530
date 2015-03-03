@@ -79,7 +79,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-04
+Date:2015-03-03
 **************************************************************************************************/
 
 /**************************************************************************************************
@@ -136,7 +136,7 @@ Date:2015-02-04
 
 /* SW_6 is at P0.1 */
 #define HAL_KEY_SW_6_PORT   P0
-#ifndef HAL_KEY_MAP_GPIO
+#ifndef KEY_PUSH_PORT_0_BUTTON
 #define HAL_KEY_SW_6_BIT    BV(1)
 #else
 /* SW_6 change to P0.5 */
@@ -154,7 +154,7 @@ Date:2015-02-04
 #define HAL_KEY_SW_6_IEN      IEN1  /* CPU interrupt mask register */
 #define HAL_KEY_SW_6_IENBIT   BV(5) /* Mask bit for all of Port_0 */
 #define HAL_KEY_SW_6_ICTL     P0IEN /* Port Interrupt Control register */
-#ifndef HAL_KEY_MAP_GPIO
+#ifndef KEY_PUSH_PORT_0_BUTTON
 #define HAL_KEY_SW_6_ICTLBIT  BV(1) /* P0IEN - P0.1 enable/disable bit */
 #else
 #define HAL_KEY_SW_6_ICTLBIT  PUSH1_BV /* P0IEN - P0.5 enable/disable bit */
@@ -182,6 +182,9 @@ Date:2015-02-04
 
 #define HAL_INTERVAL_KEY_CLOCK_THRESHOLD	900u
 #define HAL_LONG_KEY_TIMEOUT	4100u
+
+#define HAL_KEY_PUSH_CLOCK_SHORT_THRESHOLD	0x200
+#define HAL_KEY_PUSH_CLOCK_LONG_THRESHOLD	0x400
 
 #if !(defined HAL_KEY_INT_METHOD) && (defined HAL_KEY_COMBINE_INT_METHOD)
 #error "you must define HAL_KEY_INT_METHOD before define HAL_KEY_COMBINE_INT_METHOD"
@@ -219,6 +222,15 @@ static const char keylist[] = {'a', '1', '2','3','4','5','6','7','8'};
 static uint8 keyID[HAL_KEY_MATCH_ID_SIZE];
 #endif
 
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+static uint8 keysPush[HAL_KEY_MATCH_ID_SIZE];
+static uint8 isCombine;
+#endif
+
+#if defined(HAL_KEY_LONG_SHORT_DISTINGUISH) && !defined(HAL_KEY_INT_METHOD)
+#error must define "HAL_KEY_INT_METHOD" before "HAL_KEY_LONG_SHORT_DISTINGUISH".
+#endif
+
 /**************************************************************************************************
  *                                        FUNCTIONS - Local
  **************************************************************************************************/
@@ -226,6 +238,9 @@ void halProcessKeyInterrupt(void);
 uint8 halGetJoyKeyInput(void);
 #ifdef HAL_KEY_MATCH_ID
 extern void set_keys_id(uint16 keys);
+#endif
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+extern void set_keys_push(uint8 keyPush);
 #endif
 
 
@@ -252,7 +267,7 @@ void HalKeyInit( void )
   HAL_KEY_SW_6_DIR &= ~(HAL_KEY_SW_6_BIT);    /* Set pin direction to Input */
 
   /* No KEY JOY */
-#ifndef HAL_KEY_MAP_GPIO
+#ifndef KEY_PUSH_PORT_0_BUTTON
   HAL_KEY_JOY_MOVE_SEL &= ~(HAL_KEY_JOY_MOVE_BIT); /* Set pin function to GPIO */
   HAL_KEY_JOY_MOVE_DIR &= ~(HAL_KEY_JOY_MOVE_BIT); /* Set pin direction to Input */
 #endif
@@ -301,11 +316,15 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
   {
     /* Rising/Falling edge configuratinn */
 
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
     PICTL &= ~(HAL_KEY_SW_6_EDGEBIT);    /* Clear the edge bit */
     /* For falling edge, the bit must be set. */
   #if (HAL_KEY_SW_6_EDGE == HAL_KEY_FALLING_EDGE)
     PICTL |= HAL_KEY_SW_6_EDGEBIT;
   #endif
+#else
+    HalKeyEdgeChanged(0);
+#endif
 
 
     /* Interrupt configuration:
@@ -318,15 +337,19 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
     HAL_KEY_SW_6_PXIFG = ~(HAL_KEY_SW_6_BIT);
 
 #ifdef KEY_PUSH_PORT_1_BUTTON
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
 	PICTL &= ~0x06;
 	PICTL |= 0x06;
+#else
+    HalKeyEdgeChanged(1);
+#endif
 
 	HAL_KEY_PORT_1_ICTL |= HAL_KEY_PORT_1_ICTLBITS;
     HAL_KEY_PORT_1_IEN |= HAL_KEY_PORT_1_IENBITS;
     HAL_KEY_PORT_1_PXIFG = ~(HAL_KEY_PORT_1_BITS);
 #endif
 
-#ifndef HAL_KEY_MAP_GPIO
+#ifndef KEY_PUSH_PORT_0_BUTTON
     /* Rising/Falling edge configuratinn */
 
     HAL_KEY_JOY_MOVE_ICTL &= ~(HAL_KEY_JOY_MOVE_EDGEBIT);    /* Clear the edge bit */
@@ -391,7 +414,7 @@ uint8 HalKeyRead ( void )
   keys |= (HAL_KEY_PUSH_PORT_1_BUTTON() << 8);
 #endif
 
-#ifndef HAL_KEY_MAP_GPIO
+#ifndef KEY_PUSH_PORT_0_BUTTON
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active low */
   {
     keys |= halGetJoyKeyInput();
@@ -414,21 +437,70 @@ uint8 HalKeyRead ( void )
 void HalKeyPoll (void)
 {
   uint16 keys = 0;
+  static uint16 tKeys = 0;
+  uint8 mKeyPush = 0;
 
-#ifndef HAL_KEY_MAP_GPIO
+#ifndef KEY_PUSH_PORT_0_BUTTON
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active HIGH */
   {
     keys = halGetJoyKeyInput();
   }
 #endif
 
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
   if (HAL_PUSH_BUTTON1())
   {
     keys |= HAL_KEY_SW_6;
   }
+#else
+  if (HalKeyGetEdge(0) ^ PUSH1_SBIT)
+  {
+    uint16 pushclock = (uint16)HalKeyEdgeChanged(0);
+    if(pushclock != 0)
+    {
+	  if (pushclock < HAL_KEY_PUSH_CLOCK_SHORT_THRESHOLD)
+	  {
+		mKeyPush = HAL_KEY_SHORT_PUSH;
+	  }
+	  else if (pushclock > HAL_KEY_PUSH_CLOCK_LONG_THRESHOLD)
+	  {
+		mKeyPush = HAL_KEY_LONG_PUSH;
+	  }
+
+	  keys |= HAL_KEY_SW_6;
+    }
+  }
+#endif
 
 #ifdef KEY_PUSH_PORT_1_BUTTON
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
   keys |= (HAL_KEY_PUSH_PORT_1_BUTTON() << 8);
+#else
+
+  if ((!!HalKeyGetEdge(1)) ^ (!HAL_KEY_PUSH_PORT_1_BUTTON()))
+  {
+
+    uint16 pushclock = (uint16)HalKeyEdgeChanged(1);
+	
+    if(pushclock != 0)
+    {
+	  if (pushclock < HAL_KEY_PUSH_CLOCK_SHORT_THRESHOLD)
+	  {
+		mKeyPush = HAL_KEY_SHORT_PUSH;
+	  }
+	  else if (pushclock > HAL_KEY_PUSH_CLOCK_LONG_THRESHOLD)
+	  {
+		mKeyPush = HAL_KEY_LONG_PUSH;
+	  }
+
+	  keys |= tKeys;
+    }
+	else
+	{
+	  tKeys = (HAL_KEY_PUSH_PORT_1_BUTTON() << 8);
+	}
+  }
+#endif
 #endif
 
 
@@ -453,6 +525,10 @@ void HalKeyPoll (void)
 	if (!constantKeyCount)
 	{
 		preKeyClock = osal_GetSystemClock();
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+		isCombine = 1;
+		tKeys = 0;
+#endif
 	}
 	
 	currentKeyClock = osal_GetSystemClock();
@@ -469,6 +545,24 @@ void HalKeyPoll (void)
 #ifdef HAL_KEY_MATCH_ID
 		set_keys_id(keys);
 #endif
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+		if(constantKeyCount == 1 && mKeyPush == HAL_KEY_SHORT_PUSH)
+		{
+			isCombine = 0;
+			memset(keyID, 0, sizeof(keyID));
+			memset(keysPush, 0, sizeof(keysPush));
+		}
+
+		set_keys_push(mKeyPush);
+		
+		if(!isCombine)
+		{
+			KeyCount = constantKeyCount;
+			constantKeyCount = 0;
+			goto functionSolve;
+		}
+#endif
+
 		osal_start_timerEx( Hal_TaskID, 
 			HAL_KEY_COUNT_EVENT, HAL_INTERVAL_KEY_CLOCK_THRESHOLD);
 
@@ -483,12 +577,100 @@ void HalKeyPoll (void)
 #endif
   }
 
+functionSolve:
   /* Invoke Callback if new keys were depressed */
   if (keys && (pHalKeyProcessFunction))
   {
     (pHalKeyProcessFunction) (keys, HAL_KEY_STATE_NORMAL);
   }
 }
+
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+uint8 HalKeyGetEdge(uint8 port)
+{
+  if (port == 0)
+  {
+	  return (PICTL & HAL_KEY_SW_6_EDGEBIT);
+  }
+  else if (port == 1)
+  {
+	  return (PICTL & 0x06);
+  }
+
+  return 0;
+}
+
+
+uint32 HalKeyEdgeChanged(uint8 port)
+{
+  static uint32 highClock, lowClock;
+  
+  if (port == 0)
+  {
+    if (PUSH1_SBIT)
+    {
+	  PICTL |= HAL_KEY_SW_6_EDGEBIT;
+	  //HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+	  highClock = osal_GetSystemClock();
+	}
+	else
+	{
+	  PICTL &= ~HAL_KEY_SW_6_EDGEBIT;
+	  //HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);
+	  lowClock = osal_GetSystemClock();
+	}
+
+	if(!HAL_PUSH_BUTTON1())
+	{
+	  if(PUSH1_POLARITY(0))
+	  {
+		return highClock-lowClock;
+	  }
+	  else
+	  {
+	  	return lowClock-highClock;
+	  }
+	}
+	else
+	{
+		return 0;
+	}
+  }
+  else if (port == 1)
+  {
+	if((!!HAL_KEY_PUSH_PORT_1_BUTTON()) ^ (PUSH_PORT_1_POLARITY(0) & 0x01))
+    {
+	  PICTL |= 0x06;
+	  //HalLedSet(HAL_LED_1, HAL_LED_MODE_OFF);
+	  highClock = osal_GetSystemClock();
+	}
+	else
+	{
+	  PICTL &= ~0x06;
+	  //HalLedSet(HAL_LED_1, HAL_LED_MODE_ON);
+	  lowClock = osal_GetSystemClock();
+	}
+
+	if(!HAL_KEY_PUSH_PORT_1_BUTTON())
+	{
+	  if(PUSH_PORT_1_POLARITY(0) & 0x01)
+	  {
+		return highClock-lowClock;
+	  }
+	  else
+	  {
+	  	return lowClock-highClock;
+	  }
+	}
+	else
+	{
+		return 0;
+	}
+  }
+
+  return 0;
+}
+#endif
 
 
 #ifdef HAL_KEY_COMBINE_INT_METHOD
@@ -502,6 +684,7 @@ void HalKeyCountPoll (void)
 #endif
   )
   {	
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
   	if(constantKeyCount == 1)
   	{
 	  countDown = FALSE;
@@ -511,6 +694,7 @@ void HalKeyCountPoll (void)
 			HAL_LONG_KEY_EVENT, HAL_LONG_KEY_TIMEOUT);
 	  return;
 	}
+#endif
 
   	preKeyClock = osal_GetSystemClock();
 	
@@ -539,7 +723,9 @@ void HalKeyCountPoll (void)
   	KeyCount = 0;
     constantKeyCount = 0;
   	countEnd = FALSE;
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
 	return;
+#endif
   }
 
   //组合按键事件处理
@@ -551,6 +737,7 @@ void HalKeyCountPoll (void)
   }
 }
 
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
 void HalLongKeyListener(void)
 {
 	if((HAL_PUSH_BUTTON1() 
@@ -566,6 +753,7 @@ void HalLongKeyListener(void)
   		}
 	}
 }
+#endif
 
 uint8 halGetKeyCount(void)
 {
@@ -625,6 +813,18 @@ void set_keys_id(uint16 keys)
 uint8 *get_keys_id(void)
 {
 	return keyID;
+}
+#endif
+
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+void set_keys_push(uint8 keyPush)
+{
+	keysPush[constantKeyCount-1] = keyPush;
+}
+
+uint8 *get_keys_push(void)
+{
+	return keysPush;
 }
 #endif
 
@@ -706,10 +906,17 @@ void halProcessKeyInterrupt (void)
   if (HAL_KEY_SW_6_PXIFG & HAL_KEY_SW_6_BIT)  /* Interrupt Flag has been set */
   {
     HAL_KEY_SW_6_PXIFG = ~(HAL_KEY_SW_6_BIT); /* Clear Interrupt Flag */
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
     valid = TRUE;
+#else
+    if (HalKeyGetEdge(0) ^ PUSH1_SBIT)
+    {
+	  valid = TRUE;
+	}
+#endif
   }
 
-#ifndef HAL_KEY_MAP_GPIO
+#ifndef KEY_PUSH_PORT_0_BUTTON
   if (HAL_KEY_JOY_MOVE_PXIFG & HAL_KEY_JOY_MOVE_BIT)  /* Interrupt Flag has been set */
   {
     HAL_KEY_JOY_MOVE_PXIFG = ~(HAL_KEY_JOY_MOVE_BIT); /* Clear Interrupt Flag */
@@ -720,8 +927,15 @@ void halProcessKeyInterrupt (void)
 #ifdef KEY_PUSH_PORT_1_BUTTON
   if(HAL_KEY_PORT_1_PXIFG & HAL_KEY_PORT_1_BITS)
   {
-	HAL_KEY_PORT_1_PXIFG &= ~HAL_KEY_PORT_1_BITS;
-	valid = TRUE;
+    HAL_KEY_PORT_1_PXIFG &= ~HAL_KEY_PORT_1_BITS;
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
+    valid = TRUE;
+#else
+    if ((!!HalKeyGetEdge(1)) ^ (!HAL_KEY_PUSH_PORT_1_BUTTON()))
+    {
+      valid = TRUE;
+    }
+#endif
   }
 #endif
 
@@ -823,7 +1037,7 @@ HAL_ISR_FUNCTION( halKeyPort1Isr, P1INT_VECTOR )
 }
 #endif
 
-#ifndef HAL_KEY_MAP_GPIO
+#ifndef KEY_PUSH_PORT_0_BUTTON
 /**************************************************************************************************
  * @fn      halKeyPort2Isr
  *

@@ -99,6 +99,12 @@ extern "C"
 
 #define HAL_KEY_MATCH_ID_SIZE	32
 
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+#define HAL_KEY_SHORT_PUSH	1
+#define HAL_KEY_LONG_PUSH	2
+#define HAL_KEY_LONG_LONG_PUSH	3
+#endif
+
 /**************************************************************************************************
  * TYPEDEFS
  **************************************************************************************************/
@@ -143,11 +149,20 @@ extern uint8 HalKeyExitSleep ( void );
  */
 extern void HalKeyPoll ( void );
 
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+extern uint8 HalKeyGetEdge(uint8 port);
+extern uint32 HalKeyEdgeChanged(uint8 port);
+#endif
 #ifdef HAL_KEY_COMBINE_INT_METHOD
 extern void HalKeyCountPoll ( void );
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
 extern void HalLongKeyListener( void );
+#endif
 #ifdef HAL_KEY_MATCH_ID
 extern uint8 *get_keys_id(void);
+#endif
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+uint8 *get_keys_push(void);
 #endif
 #endif
 extern uint8 halGetKeyCount( void );

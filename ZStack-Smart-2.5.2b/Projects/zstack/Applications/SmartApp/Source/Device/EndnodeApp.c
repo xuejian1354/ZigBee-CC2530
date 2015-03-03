@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-04
+Date:2015-03-03
 **************************************************************************************************/
 
 /*********************************************************************
@@ -282,6 +282,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
   }
 }
 
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
 void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 {
   if(keys & HAL_KEY_SW_6)
@@ -335,6 +336,68 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
   DeviceCtrl_HandlePort1Keys(keys, keyCounts);
 #endif
 }
+#else
+void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
+{
+  uint8 *keysID = get_keys_id();
+  uint8 *keysPush = get_keys_push();
+
+  if (keysPush[0] == HAL_KEY_LONG_PUSH)
+  {
+	if((osal_memcmp(keysID, "345", keyCounts)
+		|| osal_memcmp(keysID, "354", keyCounts)
+		|| osal_memcmp(keysID, "435", keyCounts)
+		|| osal_memcmp(keysID, "453", keyCounts)
+		|| osal_memcmp(keysID, "534", keyCounts)
+		|| osal_memcmp(keysID, "543", keyCounts)) && keyCounts == 3)
+    { 
+#if defined(HOLD_INIT_AUTHENTICATION)
+      if(devState != DEV_HOLD)
+      {
+      	HalLedBlink ( HAL_LED_4, 0, 50, 100 );
+        devStates_t tStates;
+        if (ZSUCCESS == osal_nv_item_init( 
+                  ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
+        {
+           tStates = DEV_HOLD;
+          osal_nv_write(
+                ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates);
+        }
+
+        zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);
+        WatchDogEnable( WDTIMX );
+      }
+#endif
+    }
+	else if((keysID[0]=='3' || keysID[0]=='4' || keysID[0]=='5')
+		&& keyCounts == 1)
+    {
+      //转发器允许/禁止入网,入网认证
+      if(devState == DEV_HOLD)
+      {
+        ZDOInitDevice( 0 );
+      }
+      else
+      {
+        if(isPermitJoining)
+        {
+          CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
+        }
+        else
+        {
+          CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
+        }
+      }
+    }
+  }
+  else if (keysPush[0] == HAL_KEY_SHORT_PUSH)
+  {
+#ifdef KEY_PUSH_PORT_1_BUTTON
+    DeviceCtrl_HandlePort1Keys(keys, keyCounts);
+#endif
+  }
+}
+#endif
 
 void EndNodeApp_HeartBeatEvent(void)
 {

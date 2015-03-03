@@ -247,11 +247,13 @@ uint16 Hal_ProcessEvent( uint8 task_id, uint16 events )
 	return events ^ HAL_KEY_COUNT_EVENT;
   }
 
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
   if (events & HAL_LONG_KEY_EVENT)
   {
   	HalLongKeyListener();
 	return events ^ HAL_LONG_KEY_EVENT;
   }
+#endif
 #endif
 
 #ifdef POWER_SAVING

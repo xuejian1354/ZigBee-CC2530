@@ -90,6 +90,7 @@ void HalDeviceInit (void)
 #ifdef KEY_PUSH_PORT_1_BUTTON
 void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
 {
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
   uint8 *keysID = get_keys_id();
 
   /* Initial Join NWK */
@@ -111,6 +112,7 @@ void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
       }
     }
   }
+#endif
 
   if(keys & (HAL_KEY_PORT_1_SWITCH_3 | HAL_KEY_PORT_1_SWITCH_4 | HAL_KEY_PORT_1_SWITCH_5))
   {
@@ -155,7 +157,7 @@ void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
         CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
       }
 	}
-#if defined(HOLD_INIT_AUTHENTICATION)
+#if defined(HOLD_INIT_AUTHENTICATION) && !defined(HAL_KEY_LONG_SHORT_DISTINGUISH)
 	/* Reset Factory Mode */
     else if(devState!=DEV_HOLD && keyCounts==0)
     {
