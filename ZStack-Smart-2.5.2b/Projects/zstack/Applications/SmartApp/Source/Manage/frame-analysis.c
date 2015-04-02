@@ -160,7 +160,7 @@ void *SSAFrame_Analysis(frHeadType_t hType, uint8 SrcBuf[], uint8 SrcLen)
 			memset(aDataBuffer, 0, sizeof(aDataBuffer));
 			memcpy(aDataBuffer, SrcBuf+10, SrcLen-FR_HR_DATA_FIX_LEN);
 			aDataLen = SrcLen-FR_HR_DATA_FIX_LEN;
-			uoFrame.data_len = aDataLen;
+			urFrame.data_len = aDataLen;
 			urFrame.data = aDataBuffer;
 			
 			memcpy(urFrame.tail, SrcBuf+SrcLen-4, 4);
