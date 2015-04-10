@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Edit by Sam_Chen
-Date:2015-03-03
+Date:2015-04-10
 **************************************************************************************************/
 
 
@@ -225,8 +225,8 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
   {
 	switch( keyCounts)
 	{	
-	case 0: //长按事件
-	//恢复出厂设置
+	case 0: //Long click listen
+	//Reset factory mode
 #if defined(HOLD_INIT_AUTHENTICATION)
 		HalLedBlink ( HAL_LED_4, 0, 50, 100 );
 #if !defined(ZDO_COORDINATOR)
@@ -251,7 +251,7 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 		break;
 
 	case 3:
-		//转发器允许/禁止入网,入网认证
+		//permit\forbid add znet
 		if(devState == DEV_HOLD)
 		{
 			ZDOInitDevice( 0 );
@@ -283,7 +283,7 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
   {
   	if(osal_memcmp(keysID, "a", keyCounts) && keyCounts == 1)
     {
-		//转发器允许/禁止入网,入网认证
+		//permit\forbid add znet
 		if(devState == DEV_HOLD)
 		{
 			ZDOInitDevice( 0 );
@@ -302,7 +302,7 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
     }
     else if(osal_memcmp(keysID, "aaa", keyCounts) && keyCounts == 3)
     {
-		//恢复出厂设置
+		//Reset factory mode
 #if defined(HOLD_INIT_AUTHENTICATION)
 		HalLedBlink ( HAL_LED_4, 0, 50, 100 );
 #if !defined(ZDO_COORDINATOR)
@@ -344,7 +344,7 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
 	uint16 Send_shortAddr = 0;
 
-	//处理控制命令
+	//Command Handler
 	{
 		if(txLen>=16 && !memcmp(txBuf, FR_HEAD_DE, 2)
 			&& !memcmp(txBuf+2, FR_CMD_JOIN_CTRL, 4)
@@ -376,6 +376,12 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 			&& !memcmp(txBuf+2, FR_CMD_BROCAST_REFRESH, 4)
 			&& !memcmp(txBuf+txLen-4, f_tail, 4))
 		{
+			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+			if(Send_shortAddr == COORDINATOR_ADDR)
+			{
+				CommonApp_ProcessZDOStates(DEV_ZB_COORD);
+			}
+			
 			CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
 		}
 		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
@@ -392,7 +398,7 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 			&& !memcmp(txBuf+txLen-4, f_tail, 4))
 		{
 			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-			if(Send_shortAddr == COORDINATOR_ADDR) //协调器本身
+			if(Send_shortAddr == COORDINATOR_ADDR) //coord self
 			{
 				CommonApp_ProcessZDOStates(DEV_ZB_COORD);
 			}
