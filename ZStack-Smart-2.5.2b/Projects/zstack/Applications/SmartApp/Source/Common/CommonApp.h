@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-05
+Date:2015-04-22
 **************************************************************************************************/
 
 
@@ -75,14 +75,16 @@ extern "C"
  * MACROS
  */
 //User events message
-#define SERIAL_CMD_EVT		0x4000		//serial receive event by user defined
-#define HEARTBERAT_EVT		0x0001		//heart beat event by user defined
-#define CMD_PEROID_EVT		0x0002		//cmd period control event
-#define PERMIT_JOIN_EVT		0x0004
+#define SERIAL_CMD_EVT			0x4000		//serial receive event by user defined
+#define HEARTBERAT_EVT			0x0001		//heart beat event by user defined
+#define CMD_PEROID_EVT			0x0002		//cmd period control event
+#define PERMIT_JOIN_EVT			0x0004
+#define DOORSENSOR_DETECT_EVT	0x0010
 
 //event peroid
 #define HEARTBEAT_TIMEOUT   30000	//Every 30 Seconds
 #define CMD_PEROID_TIMEOUT	5000	//Every 5 Seconds
+#define DOORSENSOR_TIMEOUT  5000
 
 #define PERMIT_JOIN_TIMEOUT	30		//30 Seconds, <=255s
 #define PERMIT_JOIN_FORBID	0
@@ -109,6 +111,9 @@ typedef void(*UART_TxHandler)(uint8[], uint8);
 /*********************************************************************
  * FUNCTIONS
  */
+#if defined(SSA_ENDNODE) 
+extern void HalStatesInit(devStates_t status);
+#endif
 
 /*
  * Task Initialization for the Common Application

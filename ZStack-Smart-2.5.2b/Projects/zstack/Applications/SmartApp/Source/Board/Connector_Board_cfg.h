@@ -13,7 +13,7 @@ Date:2015-02-02
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-09
+Date:2015-04-22
 **************************************************************************************************/
 
 
@@ -65,7 +65,7 @@ extern "C"
 #define PUSH1_SBIT        P0_5
 #define PUSH1_POLARITY    ACTIVE_LOW
 
-/*Really Key*/
+/*Real Key*/
 #define KEY_PUSH_PORT_1_BUTTON
 
 #define KEY_S1_PORT_BIT		BV(2)

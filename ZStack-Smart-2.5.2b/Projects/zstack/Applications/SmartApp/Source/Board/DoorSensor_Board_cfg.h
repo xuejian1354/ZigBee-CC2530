@@ -13,7 +13,7 @@ Date:2015-02-02
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-03
+Date:2015-04-22
 **************************************************************************************************/
 
 
@@ -44,21 +44,21 @@ extern "C"
  * MACROS
  */
 /* 1 - Green */
-#define LED1_BV           BV(0)
-#define LED1_SBIT         P1_0
-#define LED1_DDR          P1DIR
-#define LED1_POLARITY     ACTIVE_HIGH
+#define LED1_BV           BV(6)
+#define LED1_SBIT         P0_6
+#define LED1_DDR          P0DIR
+#define LED1_POLARITY     ACTIVE_LOW
 
 /* 2 - Red */
-#define LED2_BV           BV(1)
-#define LED2_SBIT         P1_1
-#define LED2_DDR          P1DIR
-#define LED2_POLARITY     ACTIVE_HIGH
+#define LED2_BV           BV(7)
+#define LED2_SBIT         P0_7
+#define LED2_DDR          P0DIR
+#define LED2_POLARITY     ACTIVE_LOW
 
 /* 3 - Yellow */
-#define LED3_BV           BV(4)
-#define LED3_SBIT         P1_4
-#define LED3_DDR          P1DIR
+#define LED3_BV           LED1_BV
+#define LED3_SBIT         LED1_SBIT
+#define LED3_DDR          LED1_DDR
 #define LED3_POLARITY     ACTIVE_HIGH
 
 /* S1 */
@@ -96,6 +96,16 @@ extern "C"
 #define HAL_TOGGLE_LED4()         HAL_TOGGLE_LED1()
 #define HAL_STATE_LED4()          HAL_STATE_LED1()
 
+/* Door Sensor Input Control */
+#define DIC_BV           BV(0)
+#define DIC_SBIT         P1_0
+#define DIC_DDR          P1DIR
+#define DIC_POLARITY     ACTIVE_HIGH
+
+#define HAL_TURN_OFF_DIC()       st( DIC_SBIT = DIC_POLARITY (0); )
+#define HAL_TURN_ON_DIC()        st( DIC_SBIT = DIC_POLARITY (1); )
+#define HAL_TOGGLE_DIC()         st( DIC_SBIT ^= 1;)
+#define HAL_STATE_DIC()          (DIC_POLARITY (DIC_SBIT))
 
 #define HAL_LED TRUE
 #define BLINK_LEDS

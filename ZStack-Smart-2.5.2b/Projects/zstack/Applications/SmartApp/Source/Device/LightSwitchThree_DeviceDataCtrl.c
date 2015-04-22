@@ -13,7 +13,7 @@ Date:2014-12-01
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-07
+Date:2015-04-22
 **************************************************************************************************/
 
 
@@ -86,6 +86,9 @@ void HalDeviceInit (void)
   HAL_TURN_OFF_OLC3();
   OLC3_DDR |= OLC3_BV; 
 }
+
+void HalStatesInit(devStates_t status)
+{}
 
 #ifdef KEY_PUSH_PORT_1_BUTTON
 void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
