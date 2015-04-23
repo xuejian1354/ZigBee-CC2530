@@ -102,7 +102,7 @@ void incode_16_to_2(uint16 *dest , uint8 *src,uint8 len)
     uint8 temp = 0;
     for(i = 0;i< len;i++){
         temp = src[i]-'0';
-        temp = (temp<9)?temp:(temp-7);
+        temp = (temp<=9)?temp:(temp-7);
         *dest += (temp << ((len-1-i)<<2));
     }
 }
