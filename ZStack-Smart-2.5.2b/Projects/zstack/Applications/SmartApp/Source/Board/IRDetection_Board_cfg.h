@@ -37,7 +37,6 @@ extern "C"
 
 #define HAL_KEY_COMBINE_INT_METHOD	/*中断下 按键组合功能 */
 #define HAL_KEY_MATCH_ID	/*按键匹配ID */
-//#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
 
 
 /*********************************************************************
@@ -103,6 +102,20 @@ extern "C"
 #define HAL_TURN_ON_LED4()        HAL_TURN_ON_LED1()
 #define HAL_TOGGLE_LED4()         HAL_TOGGLE_LED1()
 #define HAL_STATE_LED4()          HAL_STATE_LED1()
+
+/* IR Detect Input Control */
+#define IDC_BV           BV(7)
+#define IDC_SBIT         P1_7
+#define IDC_DDR          P1DIR
+#define IDC_POLARITY     ACTIVE_LOW
+
+#define IDC_SEL		P1SEL
+#define IDC_ICTL	P1IEN
+#define IDC_IEN		IEN2
+#define IDC_PXIFG	P1IFG
+#define IDC_IF		P1IF
+
+#define HAL_STATE_IDC()          (IDC_POLARITY (IDC_SBIT))
 
 
 #define HAL_LED TRUE

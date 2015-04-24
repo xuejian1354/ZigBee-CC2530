@@ -25,7 +25,10 @@ Date:2015-04-22
 /*********************************************************************
  * MACROS
  */
+#define HAL_IDC_DEBOUNCE_VALUE  100
 
+#define TRIGGER_MODE_QUERY 	1
+#define TRIGGER_MODE_ISR	2
 /*********************************************************************
  * CONSTANTS
  */
@@ -33,6 +36,8 @@ Date:2015-04-22
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
+extern devStates_t CommonApp_NwkState;
+
 extern uint8 *optData;
 extern uint8 optDataLen;
 
@@ -51,17 +56,68 @@ extern uint8 optDataLen;
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-
+void CommonApp_IRDetectStatusCB( void *params, uint16 *duration, uint8 *count);
+void CommonApp_IRDetectQueryShowCB( void *params, uint16 *duration, uint8 *count);
 /*********************************************************************
  * PUBLIC FUNCTIONS
  */
 void HalDeviceInit (void)
 {
+  IDC_SEL &= ~(IDC_BV);
+  IDC_DDR &= ~(IDC_BV);
 
+  PICTL &= ~0x06;
+  PICTL |= 0x06;
+
+  IDC_ICTL |= IDC_BV;
+  IDC_IEN |= BV(4);
+  IDC_PXIFG &= ~(IDC_BV);
 }
 
 void HalStatesInit(devStates_t status)
-{}
+{
+  CommonApp_SetUserEvent(IRDETECT_DETECT_EVT, CommonApp_IRDetectStatusCB, 
+  	IRDETECT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, (void *)TRIGGER_MODE_QUERY);
+
+  CommonApp_SetUserEvent(IRDETECT_QUERY_EVT, CommonApp_IRDetectQueryShowCB, 
+  	IRDETECT_QUERY_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
+}
+
+void CommonApp_IRDetectStatusCB( void *params, uint16 *duration, uint8 *count)
+{
+  int Trigger_Mode = (int)params;
+  if( CommonApp_NwkState == DEV_ROUTER || CommonApp_NwkState == DEV_END_DEVICE)
+  {
+	switch(Trigger_Mode)
+	{
+	case TRIGGER_MODE_QUERY:
+		if (!HAL_STATE_IDC())
+		{
+		  Update_Refresh("00", 2);
+		}
+		
+	case TRIGGER_MODE_ISR:
+		if (HAL_STATE_IDC())
+	    {
+		  Update_Refresh("01", 2);
+	    }
+		break;
+	}
+  }
+}
+
+
+void CommonApp_IRDetectQueryShowCB( void *params, uint16 *duration, uint8 *count)
+{
+	if (HAL_STATE_IDC())
+	{
+		HAL_TURN_ON_LED2();
+	}
+	else
+	{
+		HAL_TURN_OFF_LED2();
+	}
+}
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
@@ -73,4 +129,35 @@ int8 get_device_data(uint8 *data, uint8 *dataLen)
 {
 	return 0;
 }
+
+
+#if (DEVICE_TYPE_ID==12)
+#ifndef KEY_PUSH_PORT_1_BUTTON
+HAL_ISR_FUNCTION( halKeyPort1Isr, P1INT_VECTOR )
+{
+  HAL_ENTER_ISR();
+
+  if (IDC_PXIFG & IDC_BV)
+  {
+    IDC_PXIFG &= ~IDC_BV;
+	
+	CommonApp_UpdateUserEvent(IRDETECT_ISR_EVT, CommonApp_IRDetectStatusCB, 
+  		HAL_IDC_DEBOUNCE_VALUE, TIMER_ONE_EXECUTION|TIMER_EVENT_RESIDENTS, (void *)TRIGGER_MODE_ISR);
+  }
+
+  /*
+    Clear the CPU interrupt flag for Port_1
+    PxIFG has to be cleared before PxIF
+  */
+  IDC_PXIFG = 0;
+  IDC_IF = 0;
+  
+  CLEAR_SLEEP_MODE();
+  HAL_EXIT_ISR();
+}
+
+#else
+#error conflict with ISR function
+#endif
+#endif
 

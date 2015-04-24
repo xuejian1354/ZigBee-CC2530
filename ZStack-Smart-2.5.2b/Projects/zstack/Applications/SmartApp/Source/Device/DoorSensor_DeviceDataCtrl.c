@@ -75,7 +75,7 @@ void HalDeviceInit (void)
 
   DIC_ICTL |= DIC_BV;
   DIC_IEN |= BV(4);
-  DIC_PXIFG = ~(DIC_BV);
+  DIC_PXIFG &= ~(DIC_BV);
 }
 
 void HalStatesInit(devStates_t status)
