@@ -79,7 +79,8 @@ extern "C"
 #define HEARTBERAT_EVT			0x0001		//heart beat event by user defined
 #define CMD_PEROID_EVT			0x0002		//cmd period control event
 #define PERMIT_JOIN_EVT			0x0004
-#define DOORSENSOR_DETECT_EVT	0x0010
+#define DOORSENSOR_ISR_EVT		0x0010
+#define DOORSENSOR_DETECT_EVT	0x0020
 
 //event peroid
 #define HEARTBEAT_TIMEOUT   30000	//Every 30 Seconds

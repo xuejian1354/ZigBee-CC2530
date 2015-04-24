@@ -274,7 +274,7 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
           break;
 
         case AF_INCOMING_MSG_CMD:
-#ifdef HAL_MT7620_GPIO_MAP
+#if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13)
 		  HalLedSet( HAL_LED_1,  HAL_LED_MODE_BLINK);
 #else
 		  HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
@@ -580,7 +580,9 @@ void CommonApp_HandleKeys( uint8 shift, uint16 keys )
 #endif
   		)
   {
+#ifdef HAL_KEY_COMBINE_INT_METHOD	
     CommonApp_HandleCombineKeys(keys, halGetKeyCount());
+#endif
   }
 }
 
@@ -743,7 +745,7 @@ void CommonApp_PermitJoiningLedIndicate(
 	{
 	case HAL_LED_MODE_ON:
 		isPermitJoining = TRUE;
-#ifdef HAL_MT7620_GPIO_MAP
+#if defined(HAL_MT7620_GPIO_MAP)  || (DEVICE_TYPE_ID==13)
 		HalLedSet( HAL_LED_2,  mode);
 #else
 		HalLedSet( HAL_LED_1,  mode);
@@ -752,7 +754,7 @@ void CommonApp_PermitJoiningLedIndicate(
 
 	case HAL_LED_MODE_OFF:
 		isPermitJoining = FALSE;
-#ifdef HAL_MT7620_GPIO_MAP
+#if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13)
 		HalLedSet( HAL_LED_2,  mode);
 #else
 		HalLedSet( HAL_LED_1,  mode);

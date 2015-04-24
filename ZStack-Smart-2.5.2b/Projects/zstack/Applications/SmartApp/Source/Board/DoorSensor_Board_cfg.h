@@ -32,6 +32,10 @@ extern "C"
 
 #define HAL_GPIO_FEATURE
 
+#define KEY_PUSH_PORT_0_BUTTON		/* 自定义映射按键IO  */
+#define HAL_KEY_INT_METHOD		/*按键触发方式为中断(默认为查询)*/
+
+
 /*********************************************************************
  * INCLUDES
  */
@@ -101,6 +105,12 @@ extern "C"
 #define DIC_SBIT         P1_0
 #define DIC_DDR          P1DIR
 #define DIC_POLARITY     ACTIVE_HIGH
+
+#define DIC_SEL		P1SEL
+#define DIC_ICTL	P1IEN
+#define DIC_IEN		IEN2
+#define DIC_PXIFG	P1IFG
+#define DIC_IF		P1IF
 
 #define HAL_TURN_OFF_DIC()       st( DIC_SBIT = DIC_POLARITY (0); )
 #define HAL_TURN_ON_DIC()        st( DIC_SBIT = DIC_POLARITY (1); )
