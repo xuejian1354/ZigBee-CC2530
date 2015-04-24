@@ -31,7 +31,7 @@ extern "C"
 #if (DEVICE_TYPE_ID==0)
 
 #define HAL_GPIO_FEATURE
-//#define HAL_MT7620_GPIO_MAP		/*MT7620上GPIO 映射位置*/
+#define HAL_MT7620_GPIO_MAP		/*MT7620上GPIO 映射位置*/
 
 #define KEY_PUSH_PORT_0_BUTTON		/* 自定义映射按键IO  */
 #define HAL_KEY_INT_METHOD		/*按键触发方式为中断(默认为查询)*/
