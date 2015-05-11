@@ -86,6 +86,7 @@ extern "C"
 #define IRDETECT_QUERY_EVT		0x0040
 
 //event peroid
+#ifndef POWER_SAVING
 #define HEARTBEAT_TIMEOUT   	30000	//Every 30 Seconds
 #define CMD_PEROID_TIMEOUT		5000	//Every 5 Seconds
 #define DOORSENSOR_TIMEOUT  	5000
@@ -93,6 +94,14 @@ extern "C"
 #define IRDETECT_QUERY_TIMEOUT	500
 
 #define PERMIT_JOIN_TIMEOUT	30		//30 Seconds, <=255s
+#else
+#define HEARTBEAT_TIMEOUT   	6000	//Every 36 Seconds
+#define CMD_PEROID_TIMEOUT		1000	//Every 6 Seconds
+#define DOORSENSOR_TIMEOUT  	1000	//Every 6 Seconds
+
+#define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
+#endif
+
 #define PERMIT_JOIN_FORBID	0
 #define PERMIT_JOIN_ALWAYS	0xFF
 

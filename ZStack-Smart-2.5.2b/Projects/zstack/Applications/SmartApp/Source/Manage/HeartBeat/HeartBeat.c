@@ -41,6 +41,7 @@ Date:2014-12-01
  * EXTERNAL FUNCTIONS
  */
 extern uint8 SHORT_ADDR_G[4];
+extern uint8 EXT_ADDR_G[16];
 extern const uint8 f_tail[4]; 
  
 /*********************************************************************
@@ -81,6 +82,24 @@ void CommonApp_HeartBeatCB( void *params, uint16 *duration, uint8 *count)
 
 	if(!SSAFrame_Package(HEAD_UH, &mFrame, &fBuf, &fLen))
 	{
-		CommonApp_SendTheMessage(0x0000, fBuf, fLen);
+		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
+
+#ifdef POWER_SAVING
+	UO_t oFrame;
+
+	memcpy(oFrame.head, FR_HEAD_UO, 3);
+	oFrame.type = FR_DEV_ENDDEV;
+	memcpy(oFrame.ed_type, FR_APP_DEV, 2);
+	memcpy(oFrame.short_addr, SHORT_ADDR_G, 4);
+	memcpy(oFrame.ext_addr, EXT_ADDR_G, 16);
+	oFrame.data = NULL;
+	oFrame.data_len = 0;
+	memcpy(oFrame.tail, f_tail, 4);
+
+	if(!SSAFrame_Package(HEAD_UO, &oFrame, &fBuf, &fLen))
+	{
+		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+	}
+#endif
 }
