@@ -13,7 +13,7 @@ Date:2014-12-01
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-12-01
+Date:2015-05-12
 **************************************************************************************************/
 
 
@@ -87,14 +87,15 @@ void CommonApp_HeartBeatCB( void *params, uint16 *duration, uint8 *count)
 
 #ifdef POWER_SAVING
 	UO_t oFrame;
+	uint8 dbuf[16];
 
 	memcpy(oFrame.head, FR_HEAD_UO, 3);
 	oFrame.type = FR_DEV_ENDDEV;
 	memcpy(oFrame.ed_type, FR_APP_DEV, 2);
 	memcpy(oFrame.short_addr, SHORT_ADDR_G, 4);
 	memcpy(oFrame.ext_addr, EXT_ADDR_G, 16);
-	oFrame.data = NULL;
-	oFrame.data_len = 0;
+	oFrame.data = dbuf;
+    CommonDevice_GetData(oFrame.data, &oFrame.data_len);
 	memcpy(oFrame.tail, f_tail, 4);
 
 	if(!SSAFrame_Package(HEAD_UO, &oFrame, &fBuf, &fLen))

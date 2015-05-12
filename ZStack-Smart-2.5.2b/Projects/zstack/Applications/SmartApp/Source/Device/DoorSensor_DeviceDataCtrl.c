@@ -13,7 +13,7 @@ Date:2014-12-01
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-04-22
+Date:2015-05-12
 **************************************************************************************************/
 
 
@@ -115,6 +115,17 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 
 int8 get_device_data(uint8 *data, uint8 *dataLen)
 {
+	if (HAL_STATE_DIC())
+	{
+	  memcpy(data, "01", 2);
+	  *dataLen = 2;
+	}
+	else
+	{
+	  memcpy(data, "00", 2);
+	  *dataLen = 2;
+	}
+	
 	return 0;
 }
 

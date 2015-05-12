@@ -13,7 +13,7 @@ Date:2014-04-16
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-05
+Date:2015-05-12
 **************************************************************************************************/
 
 
@@ -274,12 +274,14 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
           break;
 
         case AF_INCOMING_MSG_CMD:
+#ifndef POWER_SAVING
 #if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13)
 		  HalLedSet( HAL_LED_1,  HAL_LED_MODE_BLINK);
 #else
 		  HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
 #endif
           CommonApp_MessageMSGCB( MSGpkt );
+#endif
           break;
 
         case ZDO_STATE_CHANGE:
