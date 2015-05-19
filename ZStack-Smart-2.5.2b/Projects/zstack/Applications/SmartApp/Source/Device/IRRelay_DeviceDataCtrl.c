@@ -13,7 +13,7 @@ Date:2014-12-01
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-04-22
+Date:2015-05-19
 **************************************************************************************************/
 
 
@@ -26,6 +26,11 @@ Date:2015-04-22
 /*********************************************************************
  * MACROS
  */
+#define IRRELAY_LEARN_METHOD	"LEA"
+#define IRRELAY_SEND_METHOD		"SEN"
+
+#define IRRELAY_LEARN_CMD	0x88
+#define IRRELAY_SEND_CMD	0x86
 
 /*********************************************************************
  * CONSTANTS
@@ -48,6 +53,7 @@ extern uint8 optDataLen;
 /*********************************************************************
  * LOCAL VARIABLES
  */
+void IRRelayApp_TxHandler(uint8 txBuf[], uint8 txLen);
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -58,14 +64,37 @@ extern uint8 optDataLen;
  */
 void HalDeviceInit (void)
 {
-
+	CommonApp_SetUARTTxHandler(IRRelayApp_TxHandler);
 }
 
 void HalStatesInit(devStates_t status)
 {}
 
+void IRRelayApp_TxHandler(uint8 txBuf[], uint8 txLen)
+{}
+
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
+	uint8 ctrlData[5] = {0};
+        uint8 tmpData[10] = {0};
+        memcpy(tmpData, data, dataLen);
+	if(osal_memcmp(IRRELAY_LEARN_METHOD, data, 3))
+	{
+		ctrlData[0] = IRRELAY_LEARN_CMD;
+	}
+	else if(osal_memcmp(IRRELAY_SEND_METHOD, data, 3))
+	{
+		ctrlData[0] = IRRELAY_SEND_CMD;
+	}
+	else
+	{
+		return -1;
+	}
+
+	ctrlData[1] = atox((uint8 *)(data+3), 2);
+	ctrlData[4] = ctrlData[0] ^ ctrlData[1];
+	HalUARTWrite(SERIAL_COM_PORT, ctrlData, 5);
+
 	return 0;
 }
 

@@ -103,11 +103,6 @@ int main( void )
   // Initialze HAL drivers
   HalDriverInit();
 
-#ifdef SSA_ENDNODE
-  // Initialze end device hardware
-  HalDeviceInit();
-#endif
-
   // Initialize NV System
   osal_nv_init( NULL );
 

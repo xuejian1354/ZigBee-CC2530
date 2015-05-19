@@ -268,7 +268,7 @@
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=21</state>
           <state>xNWK_AUTO_POLL</state>
-          <state>xHAL_UART_DMA=2</state>
+          <state>HAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
           <state>xJIAJU_BUILDIN</state>
           <state>MT_TASK</state>
