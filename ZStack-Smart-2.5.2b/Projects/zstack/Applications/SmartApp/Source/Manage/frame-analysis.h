@@ -58,6 +58,7 @@ extern "C"
 #define FR_APP_ALARM				"11"
 #define FR_APP_IR_DETECTION			"12"
 #define FR_APP_DOOR_SENSOR			"13"
+#define FR_APP_SMOG					"14"
 #define FR_APP_IR_RELAY				"21"
 
 #if(DEVICE_TYPE_ID==0)
@@ -76,6 +77,8 @@ extern "C"
 #define FR_APP_DEV FR_APP_IR_DETECTION
 #elif(DEVICE_TYPE_ID==13)
 #define FR_APP_DEV FR_APP_DOOR_SENSOR
+#elif(DEVICE_TYPE_ID==14)
+#define FR_APP_DEV FR_APP_SMOG
 #elif(DEVICE_TYPE_ID==21)
 #define FR_APP_DEV FR_APP_IR_RELAY
 #else
