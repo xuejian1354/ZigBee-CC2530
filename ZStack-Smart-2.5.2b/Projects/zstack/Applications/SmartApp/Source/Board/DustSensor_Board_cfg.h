@@ -13,12 +13,12 @@ Date:2015-05-21
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-05-21
+Date:2015-05-22
 **************************************************************************************************/
 
 
-#ifndef SMOG_BOARD_CFG_H
-#define SMOG_BOARD_CFG_H
+#ifndef DUSTSENSOR_BOARD_CFG_H
+#define DUSTSENSOR_BOARD_CFG_H
 
 #ifdef __cplusplus
 extern "C"
@@ -126,4 +126,4 @@ extern "C"
 }
 #endif
 
-#endif /* SMOG_BOARD_CFG_H */
+#endif /* DUSTSENSOR_BOARD_CFG_H */

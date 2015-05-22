@@ -13,7 +13,7 @@
 #include "Alarm_Board_cfg.h"
 #include "IRDetection_Board_cfg.h"
 #include "DoorSensor_Board_cfg.h"
-#include "Smog_Board_cfg.h"
+#include "DustSensor_Board_cfg.h"
 #include "IRRelay_Board_cfg.h"
 
 

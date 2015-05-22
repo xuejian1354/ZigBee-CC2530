@@ -126,15 +126,15 @@
         </option>
         <option>
           <name>ExePath</name>
-          <state>..\bin\SmogZD\Exe</state>
+          <state>..\bin\DustSensorZD\Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>..\bin\SmogZD\Obj</state>
+          <state>..\bin\DustSensorZD\Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>..\bin\SmogZD\List</state>
+          <state>..\bin\DustSensorZD\List</state>
         </option>
         <option>
           <name>GOutputBinary</name>
@@ -733,7 +733,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state>Smog.d51</state>
+          <state>DustSensor.d51</state>
         </option>
         <option>
           <name>OutputFormat</name>
@@ -935,7 +935,7 @@
         </option>
         <option>
           <name>ExtraOutputFile</name>
-          <state>Smog.sim</state>
+          <state>DustSensor.sim</state>
         </option>
         <option>
           <name>ExtraOutputFormat</name>
@@ -1198,15 +1198,15 @@
         </option>
         <option>
           <name>ExePath</name>
-          <state>..\bin\SmogZR\Exe</state>
+          <state>..\bin\DustSensorZR\Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>..\bin\SmogZR\Obj</state>
+          <state>..\bin\DustSensorZR\Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>..\bin\SmogZR\List</state>
+          <state>..\bin\DustSensorZR\List</state>
         </option>
         <option>
           <name>GOutputBinary</name>
@@ -1805,7 +1805,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state>Smog.d51</state>
+          <state>DustSensor.d51</state>
         </option>
         <option>
           <name>OutputFormat</name>
@@ -2007,7 +2007,7 @@
         </option>
         <option>
           <name>ExtraOutputFile</name>
-          <state>Smog.sim</state>
+          <state>DustSensor.sim</state>
         </option>
         <option>
           <name>ExtraOutputFormat</name>
@@ -2166,10 +2166,10 @@
         <name>$PROJ_DIR$\..\..\Source\Device\EndnodeApp.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Board\Smog_Board_cfg.h</name>
+        <name>$PROJ_DIR$\..\..\Source\Board\DustSensor_Board_cfg.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Device\Smog_DeviceDataCtrl.c</name>
+        <name>$PROJ_DIR$\..\..\Source\Device\DustSensor_DeviceDataCtrl.c</name>
       </file>
     </group>
     <group>
