@@ -26,6 +26,9 @@
     <path>$WS_DIR$\Devices\DoorSensor.ewp</path>
   </project>
   <project>
+    <path>$WS_DIR$\Devices\EnvDetection.ewp</path>
+  </project>
+  <project>
     <path>$WS_DIR$\Devices\DustSensor.ewp</path>
   </project>
   <project>

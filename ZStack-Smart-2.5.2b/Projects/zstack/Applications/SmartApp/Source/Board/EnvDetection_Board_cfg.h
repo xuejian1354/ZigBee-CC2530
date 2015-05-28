@@ -1,24 +1,24 @@
 /**************************************************************************************************
-  Filename:       Smog_Board_cfg.h
+  Filename:       EnvDetection_Board_cfg.h
   Revised:        $Date: 2015-02-02 19:24:32 -0800 (Tue, 02 Feb 2015) $
   Revision:       $Revision: 29217 $
 
-  Description:    Smog Board Configuration.
+  Description:    EnvDetection Board Configuration.
 **************************************************************************************************/
 
 /**************************************************************************************************
 Create by Sam_Chen
-Date:2015-05-21
+Date:2015-05-28
 **************************************************************************************************/
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-05-22
+Date:2015-05-28
 **************************************************************************************************/
 
 
-#ifndef DUSTSENSOR_BOARD_CFG_H
-#define DUSTSENSOR_BOARD_CFG_H
+#ifndef ENVDETECTION_BOARD_CFG_H
+#define ENVDETECTION_BOARD_CFG_H
 
 #ifdef __cplusplus
 extern "C"
@@ -28,7 +28,7 @@ extern "C"
 #include "frame-analysis.h"
 
 
-#if (DEVICE_TYPE_ID==15)
+#if (DEVICE_TYPE_ID==14)
 
 #define HAL_GPIO_FEATURE
 
@@ -126,4 +126,4 @@ extern "C"
 }
 #endif
 
-#endif /* DUSTSENSOR_BOARD_CFG_H */
+#endif /* ENVDETECTION_BOARD_CFG_H */

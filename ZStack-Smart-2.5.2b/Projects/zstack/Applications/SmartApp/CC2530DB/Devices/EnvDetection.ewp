@@ -126,15 +126,15 @@
         </option>
         <option>
           <name>ExePath</name>
-          <state>..\bin\DustSensorZD\Exe</state>
+          <state>..\bin\EnvDetectionZD\Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>..\bin\DustSensorZD\Obj</state>
+          <state>..\bin\EnvDetectionZD\Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>..\bin\DustSensorZD\List</state>
+          <state>..\bin\EnvDetectionZD\List</state>
         </option>
         <option>
           <name>GOutputBinary</name>
@@ -266,7 +266,7 @@
         <option>
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
-          <state>DEVICE_TYPE_ID=15</state>
+          <state>DEVICE_TYPE_ID=14</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
@@ -733,7 +733,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state>DustSensor.d51</state>
+          <state>EnvDetection.d51</state>
         </option>
         <option>
           <name>OutputFormat</name>
@@ -935,7 +935,7 @@
         </option>
         <option>
           <name>ExtraOutputFile</name>
-          <state>DustSensor.sim</state>
+          <state>EnvDetection.sim</state>
         </option>
         <option>
           <name>ExtraOutputFormat</name>
@@ -1198,15 +1198,15 @@
         </option>
         <option>
           <name>ExePath</name>
-          <state>..\bin\DustSensorZR\Exe</state>
+          <state>..\bin\EnvDetectionZR\Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>..\bin\DustSensorZR\Obj</state>
+          <state>..\bin\EnvDetectionZR\Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>..\bin\DustSensorZR\List</state>
+          <state>..\bin\EnvDetectionZR\List</state>
         </option>
         <option>
           <name>GOutputBinary</name>
@@ -1338,7 +1338,7 @@
         <option>
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
-          <state>DEVICE_TYPE_ID=15</state>
+          <state>DEVICE_TYPE_ID=14</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
@@ -1805,7 +1805,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state>DustSensor.d51</state>
+          <state>EnvDetection.d51</state>
         </option>
         <option>
           <name>OutputFormat</name>
@@ -2007,7 +2007,7 @@
         </option>
         <option>
           <name>ExtraOutputFile</name>
-          <state>DustSensor.sim</state>
+          <state>EnvDetection.sim</state>
         </option>
         <option>
           <name>ExtraOutputFormat</name>
@@ -2163,13 +2163,13 @@
     <group>
       <name>EndNode</name>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Board\DustSensor_Board_cfg.h</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Source\Device\DustSensor_DeviceDataCtrl.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\Source\Device\EndnodeApp.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Board\EnvDetection_Board_cfg.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Device\EnvDetection_DeviceDataCtrl.c</name>
       </file>
     </group>
     <group>
