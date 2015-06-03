@@ -152,8 +152,8 @@ extern "C"
 #define HAL_STATE_OLC3()          (OLC3_POLARITY (OLC3_SBIT))
 
 
-#define HAL_LED TRUE
-#define BLINK_LEDS
+#define HAL_LED FALSE
+//#define BLINK_LEDS
 
 #define HAL_KEY TRUE
 

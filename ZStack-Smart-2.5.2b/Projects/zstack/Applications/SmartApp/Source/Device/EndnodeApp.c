@@ -345,12 +345,9 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 
   if (keysPush[0] == HAL_KEY_LONG_PUSH)
   {
-	if((osal_memcmp(keysID, "345", keyCounts)
-		|| osal_memcmp(keysID, "354", keyCounts)
-		|| osal_memcmp(keysID, "435", keyCounts)
-		|| osal_memcmp(keysID, "453", keyCounts)
-		|| osal_memcmp(keysID, "534", keyCounts)
-		|| osal_memcmp(keysID, "543", keyCounts)) && keyCounts == 3)
+	if(keyCounts == 6 &&(osal_memcmp(keysID, "333333", keyCounts)
+		|| osal_memcmp(keysID, "444444", keyCounts)
+		|| osal_memcmp(keysID, "555555", keyCounts)))
     { 
 #if defined(HOLD_INIT_AUTHENTICATION)
       if(devState != DEV_HOLD)
