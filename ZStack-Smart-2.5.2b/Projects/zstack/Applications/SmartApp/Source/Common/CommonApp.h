@@ -38,7 +38,7 @@ extern "C"
 #include "HeartBeat.h"
 #include "incode.h"
 
-#include "serial-com.h"
+#include "serial-comm.h"
 #include "frame-analysis.h"
 
 /*********************************************************************
