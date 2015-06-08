@@ -22,7 +22,7 @@ Date:2015-02-02
  * INCLUDES
  */
 #include "frame-analysis.h"
-#include "serial-com.h"
+#include "serial-comm.h"
 
 /*********************************************************************
  * MACROS
