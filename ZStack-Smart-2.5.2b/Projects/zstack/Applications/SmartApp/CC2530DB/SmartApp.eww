@@ -5,6 +5,9 @@
     <path>$WS_DIR$\Devices\Connector.ewp</path>
   </project>
   <project>
+    <path>$WS_DIR$\Devices\DemoBase.ewp</path>
+  </project>
+  <project>
     <path>$WS_DIR$\Devices\LightSwitchOne.ewp</path>
   </project>
   <project>

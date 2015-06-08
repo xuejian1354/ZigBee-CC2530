@@ -50,7 +50,7 @@ extern "C"
 
 //应用类型
 #define FR_APP_CONNECTOR			"00"
-#define FR_APP_ENDNODE				"00"
+#define FR_APP_DEMOBASE				"FE"
 #define FR_APP_LIGHTSWITCH_ONE		"01"
 #define FR_APP_LIGHTSWITCH_TWO		"02"
 #define FR_APP_LIGHTSWITCH_THREE	"03"
@@ -63,6 +63,8 @@ extern "C"
 
 #if(DEVICE_TYPE_ID==0)
 #define FR_APP_DEV FR_APP_CONNECTOR
+#elif(DEVICE_TYPE_ID==0xFE)
+#define FR_APP_DEV FR_APP_DEMOBASE
 #elif(DEVICE_TYPE_ID==1)
 #define FR_APP_DEV FR_APP_LIGHTSWITCH_ONE
 #elif(DEVICE_TYPE_ID==2)

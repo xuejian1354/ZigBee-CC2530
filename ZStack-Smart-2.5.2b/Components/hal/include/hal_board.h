@@ -5,6 +5,7 @@
 #define HOLD_INIT_AUTHENTICATION	/* 自定义初始化认证方式 */
 
 #include "Connector_Board_cfg.h"
+#include "DemoBase_Board_cfg.h"
 
 #include "LightSwitchOne_Board_cfg.h"
 #include "LightSwitchTwo_Board_cfg.h"
