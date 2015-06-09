@@ -1,24 +1,19 @@
 /**************************************************************************************************
-  Filename:       Connector_Board_cfg.h
+  Filename:       AirController_Board_cfg.h
   Revised:        $Date: 2015-02-02 21:06:12 -0800 (Tue, 02 Feb 2015) $
   Revision:       $Revision: 29217 $
 
-  Description:    Connector Board Configuration.
-**************************************************************************************************/
-
-/**************************************************************************************************
-Create by Sam_Chen
-Date:2015-02-02
+  Description:    AirController Board Configuration.
 **************************************************************************************************/
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-04-22
+Date:2015-06-09
 **************************************************************************************************/
 
 
-#ifndef CONNECTOR_BOARD_CFG_H
-#define CONNECTOR_BOARD_CFG_H
+#ifndef AIRCONTROLLER_BOARD_CFG_H
+#define AIRCONTROLLER_BOARD_CFG_H
 
 #ifdef __cplusplus
 extern "C"
@@ -194,4 +189,4 @@ extern "C"
 }
 #endif
 
-#endif /* CONNECTOR_BOARD_CFG_H */
+#endif /* AIRCONTROLLER_BOARD_CFG_H */
