@@ -13,7 +13,7 @@ Date:2014-04-25
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-02
+Date:2015-06-09
 **************************************************************************************************/
 
 
@@ -49,22 +49,25 @@ extern "C"
 #define FR_DEV_ENDDEV	'1'
 
 //应用类型
-#define FR_APP_CONNECTOR			"00"
-#define FR_APP_DEMOBASE				"FE"
+#define FR_APP_CONNECTOR		"00"
+#define FR_APP_DEMOBASE			"FE"
+#define FR_APP_AIRCONTROLLER 		"F0"
 #define FR_APP_LIGHTSWITCH_ONE		"01"
 #define FR_APP_LIGHTSWITCH_TWO		"02"
 #define FR_APP_LIGHTSWITCH_THREE	"03"
 #define FR_APP_LIGHTSWITCH_FOUR		"04"
-#define FR_APP_ALARM				"11"
-#define FR_APP_IR_DETECTION			"12"
-#define FR_APP_DOOR_SENSOR			"13"
-#define FR_APP_SMOG					"14"
-#define FR_APP_IR_RELAY				"21"
+#define FR_APP_ALARM			"11"
+#define FR_APP_IR_DETECTION		"12"
+#define FR_APP_DOOR_SENSOR		"13"
+#define FR_APP_SMOG			"14"
+#define FR_APP_IR_RELAY			"21"
 
 #if(DEVICE_TYPE_ID==0)
 #define FR_APP_DEV FR_APP_CONNECTOR
 #elif(DEVICE_TYPE_ID==0xFE)
 #define FR_APP_DEV FR_APP_DEMOBASE
+#elif(DEVICE_TYPE_ID==0xF0)
+#define FR_APP_DEV FR_APP_AIRCONTROLLER
 #elif(DEVICE_TYPE_ID==1)
 #define FR_APP_DEV FR_APP_LIGHTSWITCH_ONE
 #elif(DEVICE_TYPE_ID==2)
