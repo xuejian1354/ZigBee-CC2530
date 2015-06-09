@@ -2208,10 +2208,10 @@
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Manage\serial-commm.c</name>
+        <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Manage\serial-commm.h</name>
+        <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.h</name>
       </file>
     </group>
   </group>

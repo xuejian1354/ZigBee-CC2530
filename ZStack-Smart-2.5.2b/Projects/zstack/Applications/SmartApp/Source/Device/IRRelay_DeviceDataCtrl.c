@@ -64,7 +64,7 @@ void IRRelayApp_TxHandler(uint8 txBuf[], uint8 txLen);
  */
 void HalDeviceInit (void)
 {
-	CommonApp_SetUARTTxHandler(IRRelayApp_TxHandler);
+	CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, IRRelayApp_TxHandler);
 }
 
 void HalStatesInit(devStates_t status)

@@ -126,7 +126,7 @@ static void ConnectorApp_HeartBeatEvent(void);
 void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-  CommonApp_SetUARTTxHandler(ConnectorApp_TxHandler);
+  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
 }
 
 
