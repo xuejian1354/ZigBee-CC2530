@@ -475,6 +475,8 @@ st( \
 #endif
 
 #if HAL_UART
+#ifndef HAL_UART01_BOTH
+
 #ifndef HAL_UART_DMA
 #if HAL_DMA
 #if (defined ZAPP_P2) || (defined ZTOOL_P2)
@@ -506,6 +508,15 @@ st( \
 #define HAL_UART_PRIPO             0x00
 #else
 #define HAL_UART_PRIPO             0x40
+#endif
+
+#else
+// Used priority USART1 over USART0
+#define HAL_UART_PRIPO             0x00
+//#define HAL_UART_PRIPO             0x40
+
+#define HAL_UART_DMA  2
+#define HAL_UART_ISR  1
 #endif
 
 #else

@@ -192,7 +192,7 @@ extern int8 CommonApp_UpdateUserEvent(uint16 event,
 /*
  *Task Update UART Receive Handler for the Common Application
  */
-extern void CommonApp_SetUARTTxHandler(UART_TxHandler txHandler);
+extern void CommonApp_SetUARTTxHandler(int port, UART_TxHandler txHandler);
 
 /*********************************************************************
 *********************************************************************/

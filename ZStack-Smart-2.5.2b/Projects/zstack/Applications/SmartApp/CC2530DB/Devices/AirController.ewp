@@ -269,6 +269,7 @@
           <state>DEVICE_TYPE_ID=0xF0</state>
           <state>POWER_AMPLIFIER_POSITION_1</state>
           <state>xNWK_AUTO_POLL</state>
+          <state>HAL_UART01_BOTH</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
           <state>xJIAJU_BUILDIN</state>
