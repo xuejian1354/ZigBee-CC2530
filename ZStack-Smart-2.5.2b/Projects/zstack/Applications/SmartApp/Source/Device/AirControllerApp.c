@@ -121,7 +121,9 @@ static void ConnectorApp_HeartBeatEvent(void);
 void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-  CommonApp_SetUARTTxHandler(ConnectorApp_TxHandler);
+#ifndef HAL_UART01_BOTH
+  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
+#endif
 }
 
 
@@ -142,7 +144,11 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
   switch ( pkt->clusterId )
   {
     case COMMONAPP_CLUSTERID:
+#ifndef HAL_UART01_BOTH
       HalUARTWrite(SERIAL_COM_PORT, pkt->cmd.Data, pkt->cmd.DataLength);
+#else
+	  HalUARTWrite(SERIAL_COM_PORT1, pkt->cmd.Data, pkt->cmd.DataLength);
+#endif
       break; 
   }
 }
@@ -181,7 +187,11 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UC, &mFrame, &fBuf, &fLen))
 	{
+#ifndef HAL_UART01_BOTH
 		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
+#else
+		HalUARTWrite(SERIAL_COM_PORT1, fBuf, fLen);
+#endif
 	}
 #else
 	UO_t mFrame;
@@ -197,7 +207,11 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
 	{
+#ifndef HAL_UART01_BOTH
 		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
+#else
+		HalUARTWrite(SERIAL_COM_PORT1, fBuf, fLen);
+#endif
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
 	
