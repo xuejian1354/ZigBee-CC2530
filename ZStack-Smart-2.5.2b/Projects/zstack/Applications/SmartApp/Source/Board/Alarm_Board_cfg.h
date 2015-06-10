@@ -53,8 +53,8 @@ extern "C"
  */
 /* 1 - Green */
 #define LED1_BV           BV(0)
-#define LED1_SBIT         P1_0
-#define LED1_DDR          P1DIR
+#define LED1_SBIT         P2_0
+#define LED1_DDR          P2DIR
 #define LED1_POLARITY     ACTIVE_HIGH
 
 /* 2 - Red */
@@ -103,6 +103,18 @@ extern "C"
 #define HAL_TURN_ON_LED4()        HAL_TURN_ON_LED1()
 #define HAL_TOGGLE_LED4()         HAL_TOGGLE_LED1()
 #define HAL_STATE_LED4()          HAL_STATE_LED1()
+
+
+/*Alarm GPIO*/
+#define ALARMIO_BV           BV(5)
+#define ALARMIO_SBIT         P1_5
+#define ALARMIO_DDR          P1DIR
+#define ALARMIO_POLARITY     ACTIVE_HIGH
+
+#define HAL_TURN_OFF_ALARM()       st( ALARMIO_SBIT = ALARMIO_POLARITY (0); )
+#define HAL_TURN_ON_ALARM()        st( ALARMIO_SBIT = ALARMIO_POLARITY (1); )
+#define HAL_TOGGLE_ALARM()         st( if (ALARMIO_SBIT) { ALARMIO_SBIT = 0; } else { ALARMIO_SBIT = 1;} )
+#define HAL_STATE_ALARM()          (ALARMIO_POLARITY (ALARMIO_SBIT))
 
 
 #define HAL_LED TRUE
