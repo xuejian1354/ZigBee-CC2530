@@ -25,6 +25,7 @@ Date:2015-06-09
 #include "OnBoard.h"
 
 #include "CommonApp.h"
+#include "OLCD.h"
 
 /* HAL */
 #include "hal_lcd.h"
@@ -44,6 +45,20 @@ Date:2015-06-09
 /*********************************************************************
  * TYPEDEFS
  */
+typedef union DATA_CMD
+{
+   uint8 data_buf[10];
+   struct cn_data_t
+   {
+       uint8 Head; //52 
+       uint8 CMD;//80
+       uint8 PM25[2]; //
+       uint8 PM10[2]; //
+       uint8 data[2];//保留
+       uint8 Check_sum;//
+       uint8 Tail;//53
+   }data_core;
+}DATA_CMD_T;
 
 /*********************************************************************
  * GLOBAL VARIABLES
@@ -90,10 +105,14 @@ static uint16 fLen;		//buffer data length
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen);
-#ifndef ZDO_COORDINATOR
-static void ConnectorApp_HeartBeatEvent(void);
+static void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen);
+#ifdef HAL_UART01_BOTH
+static void AirControllerDetect_TxHandler(uint8 txBuf[], uint8 txLen);
 #endif
+#ifndef ZDO_COORDINATOR
+static void AirControllerApp_HeartBeatEvent(void);
+#endif
+static void Show_company(void);
 
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
@@ -106,7 +125,7 @@ static void ConnectorApp_HeartBeatEvent(void);
 /*********************************************************************
  * @fn      CommonApp_InitConfirm
  *
- * @brief   Initialization function for the Connector App Task.
+ * @brief   Initialization function for the AirController App Task.
  *          This is called during initialization and should contain
  *          any application specific initialization (ie. hardware
  *          initialization/setup, table initialization, power up
@@ -122,8 +141,17 @@ void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
 #ifndef HAL_UART01_BOTH
-  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
+  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, AirControllerApp_TxHandler);
+#else
+  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT0, AirControllerDetect_TxHandler);
+  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT1, AirControllerApp_TxHandler);
 #endif
+
+  LCD_Init();			//oled 初始化  
+  LCD_Fill(0xff);		//屏全亮 
+  LCD_Fill(0x00);
+  //LCD_CLS(); 
+  Show_company();		//显示抬头
 }
 
 
@@ -215,7 +243,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
 	
-	ConnectorApp_HeartBeatEvent();
+	AirControllerApp_HeartBeatEvent();
 #endif
   }
 }
@@ -339,7 +367,7 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 #endif
 
 #ifndef ZDO_COORDINATOR
-void ConnectorApp_HeartBeatEvent(void)
+void AirControllerApp_HeartBeatEvent(void)
 {
 	CommonApp_HeartBeatCB(NULL, NULL, NULL);
 	
@@ -348,8 +376,50 @@ void ConnectorApp_HeartBeatEvent(void)
 }
 #endif
 
+#ifdef HAL_UART01_BOTH
+void AirControllerDetect_TxHandler(uint8 txBuf[], uint8 txLen)
+{
+	DATA_CMD_T data_cmd;
+   	uint8 PM25_Buf[9];
+	//uint8 PM10_DATA[9];
+	//uint16 DATA_PM10;
+	
+	osal_memcpy(data_cmd.data_buf, txBuf, txLen);
+    if(data_cmd.data_core.Head==0xAA)
+  	{
+    
+    	uint16 PM25_val=(data_cmd.data_core.PM25[0]+data_cmd.data_core.PM25[1]*256)/10;
+    	PM25_Buf[0]=PM25_val/100+'0';
+    	PM25_Buf[1]=(PM25_val/10)%10+'0';
+    	PM25_Buf[2]=PM25_val%10+'0';
+    	PM25_Buf[3]='u';
+    	PM25_Buf[4]='g';
+    	PM25_Buf[5]='/';
+    	PM25_Buf[6]='m';
+    	PM25_Buf[7]=3+'0';
+    	PM25_Buf[8]='\0';
+    	//注意小端模式
+   		/* DATA_PM10=(data_cmd.data_core.PM10[0]+data_cmd.data_core.PM10[1]*256)/10;
+	   	PM10_DATA[0]=DATA_PM10/100+'0';
+    		PM10_DATA[1]=(DATA_PM10/10)%10+'0';
+    		PM10_DATA[2]=DATA_PM10%10+'0';
+    		PM10_DATA[3]='u';
+    		PM10_DATA[4]='g';
+    		PM10_DATA[5]='/';
+    		PM10_DATA[6]='m';
+    		PM10_DATA[7]=3+'0';
+    		PM10_DATA[8]='\0';
+    		*/
+    	//LCD_CLS();
+    	LCD_P8x16Str(0, 3, "PM2.5");
+    	LCD_P8x16Str(0, 6, PM25_Buf);
+   		// LCD_P8x16Str(64,0,"PM10");
+   		// LCD_P8x16Str(64,4,PM10_DATA);
+  	} 
+}
+#endif
 
-void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
+void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
 	uint16 Send_shortAddr = 0;
 
@@ -421,4 +491,14 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 
 /*********************************************************************
  */
-
+void Show_company(void)
+{   
+	uint8 i;
+   	for(i=0; i<7; i++)
+	{
+		LCD_P16x16Ch(i*16, 0, i);  //点阵显示,y为显示的行数
+		//LCD_P16x16Ch(i*16,2,i+8);
+		// LCD_P16x16Ch(i*16,4,i+16);
+		// LCD_P16x16Ch(i*16,6,i+24);
+	} 
+}
