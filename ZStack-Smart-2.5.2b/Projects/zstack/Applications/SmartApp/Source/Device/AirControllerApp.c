@@ -209,7 +209,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	memcpy(mFrame.head, FR_HEAD_UC, 3);
 	mFrame.type = FR_DEV_COORD;
-	memcpy(mFrame.ed_type, FR_APP_CONNECTOR, 2);
+	memcpy(mFrame.ed_type, FR_APP_DEV, 2);
 	memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
 	memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
 	incode_2_to_16(mFrame.panid, (uint8 *)&_NIB.nwkPanId, 2);
