@@ -999,7 +999,7 @@ uint8 osal_init_system( void )
   // Initialize the system tasks.
   osalInitTasks();
 
-#ifdef SSA_ENDNODE
+#if(DEVICE_TYPE_ID!=0)
   // Initialze end device hardware
   HalDeviceInit();
 #endif
