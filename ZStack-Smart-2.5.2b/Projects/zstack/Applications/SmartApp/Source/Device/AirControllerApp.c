@@ -399,8 +399,9 @@ void AirControllerDetect_TxHandler(uint8 txBuf[], uint8 txLen)
 	osal_memcpy(data_cmd.data_buf, txBuf, txLen);
     if(data_cmd.data_core.Head==0xAA)
   	{
-    
     	uint16 PM25_val=(data_cmd.data_core.PM25[0]+data_cmd.data_core.PM25[1]*256)/10;
+		SetPM25Val(PM25_val);
+		
     	PM25_Buf[0]=PM25_val/100+'0';
     	PM25_Buf[1]=(PM25_val/10)%10+'0';
     	PM25_Buf[2]=PM25_val%10+'0';
@@ -483,7 +484,9 @@ void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen)
 	        DataCmd_Ctrl(txBuf+10, txLen-FR_DE_DATA_FIX_LEN);
 
 	        if(!CommonDevice_GetData(buf, &len))
+	        {
 	          Update_Refresh(buf, len);
+	        }
 		  }
 		  else
 		  {
