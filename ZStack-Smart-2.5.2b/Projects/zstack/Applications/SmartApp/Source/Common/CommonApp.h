@@ -125,6 +125,10 @@ typedef void(*UART_TxHandler)(uint8[], uint8);
 extern void HalStatesInit(devStates_t status);
 #endif
 
+#if (DEVICE_TYPE_ID==0xF0)
+extern void SetPM25Val(uint16 val);
+#endif
+
 /*
  * Task Initialization for the Common Application
  */
