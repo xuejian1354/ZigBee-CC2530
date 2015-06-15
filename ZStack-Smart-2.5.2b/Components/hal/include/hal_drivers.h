@@ -39,7 +39,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-05
+Date:2015-06-15
 **************************************************************************************************/
 
 #ifndef HAL_DRIVER_H
@@ -113,7 +113,7 @@ extern void HalDriverInit (void);
 /*
  * Initialize End Device HW
  */
-#if defined(SSA_ENDNODE) 
+#if(DEVICE_TYPE_ID!=0)
 extern void HalDeviceInit (void);
 #endif
 

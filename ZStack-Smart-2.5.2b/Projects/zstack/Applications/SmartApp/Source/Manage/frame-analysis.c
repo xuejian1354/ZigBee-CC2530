@@ -8,13 +8,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-04-25
-**************************************************************************************************/
-
-/**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-02
+Date:2015-06-15
 **************************************************************************************************/
 
 
@@ -223,9 +218,10 @@ int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *Ds
 		memcpy(pFrameBuffer+10, p_ucFrame->ext_addr, 16);
 		memcpy(pFrameBuffer+26, p_ucFrame->panid, 4);
 		memcpy(pFrameBuffer+30, p_ucFrame->channel, 4);
-		memcpy(pFrameBuffer+34, p_ucFrame->tail, 4);
+		memcpy(pFrameBuffer+34, p_ucFrame->data, p_ucFrame->data_len);
+		memcpy(pFrameBuffer+34+p_ucFrame->data_len, p_ucFrame->tail, 4);
 
-		pFrameLen = FR_UC_DATA_FIX_LEN;
+		pFrameLen = FR_UC_DATA_FIX_LEN+p_ucFrame->data_len;
 
 		*DstBuf = pFrameBuffer;
 		*DstLen = pFrameLen;

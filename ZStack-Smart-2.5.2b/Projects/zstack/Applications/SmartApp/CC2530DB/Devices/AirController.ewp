@@ -1084,6 +1084,9 @@
         <name>$PROJ_DIR$\..\..\Source\Board\AirController_Board_cfg.h</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\..\Source\Device\AirController_DeviceDataCtrl.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\..\Source\Device\AirControllerApp.c</name>
       </file>
     </group>

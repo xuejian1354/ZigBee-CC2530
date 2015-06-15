@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-09
+Date:2015-06-15
 **************************************************************************************************/
 
 
@@ -143,7 +143,9 @@ void CommonApp_InitConfirm( uint8 task_id )
 #ifndef HAL_UART01_BOTH
   CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, AirControllerApp_TxHandler);
 #else
+  /*UART1:Comm*/
   CommonApp_SetUARTTxHandler(SERIAL_COM_PORT0, AirControllerDetect_TxHandler);
+  /*UART0: Device*/
   CommonApp_SetUARTTxHandler(SERIAL_COM_PORT1, AirControllerApp_TxHandler);
 #endif
 
@@ -193,6 +195,8 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
  */
 void CommonApp_ProcessZDOStates(devStates_t status)
 {
+  uint8 buf[FRAME_DATA_SIZE] = {0};
+  
   if(status == DEV_ZB_COORD || status == DEV_ROUTER)
   {
 	nwkAddr = NLME_GetShortAddr();
@@ -211,6 +215,8 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 	incode_2_to_16(mFrame.panid, (uint8 *)&_NIB.nwkPanId, 2);
 	uint16 channel = _NIB.nwkLogicalChannel;
 	incode_2_to_16(mFrame.channel, (uint8 *)&channel, 2);
+	mFrame.data = buf;
+    CommonDevice_GetData(mFrame.data, &mFrame.data_len);
 	memcpy(mFrame.tail, f_tail, 4);
 
 	if(!SSAFrame_Package(HEAD_UC, &mFrame, &fBuf, &fLen))
@@ -229,8 +235,13 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 	memcpy(mFrame.ed_type, FR_APP_DEV, 2);
 	memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
 	memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
+#if(DEVICE_TYPE_ID==0)
 	mFrame.data = NULL;
 	mFrame.data_len = 0;
+#else
+	mFrame.data = buf;
+    CommonDevice_GetData(mFrame.data, &mFrame.data_len);
+#endif
 	memcpy(mFrame.tail, f_tail, 4);
 
 	if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
@@ -244,6 +255,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 	}
 	
 	AirControllerApp_HeartBeatEvent();
+	HalStatesInit(status);
 #endif
   }
 }
@@ -421,15 +433,17 @@ void AirControllerDetect_TxHandler(uint8 txBuf[], uint8 txLen)
 
 void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
+	uint8 buf[FRAME_DATA_SIZE] = {0};
+	uint8 len = 0;
 	uint16 Send_shortAddr = 0;
 
 	//Command Handler
 	{
-		if(txLen>=16 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& !memcmp(txBuf+2, FR_CMD_JOIN_CTRL, 4)
-			&& !memcmp(txBuf+txLen-4, f_tail, 4))
+		if(txLen>=16 && osal_memcmp(txBuf, FR_HEAD_DE, 2)
+			&& osal_memcmp(txBuf+2, FR_CMD_JOIN_CTRL, 4)
+			&& osal_memcmp(txBuf+txLen-4, f_tail, 4))
 		{
-			if(!memcmp(txBuf+6, SHORT_ADDR_G, 4))
+			if(osal_memcmp(txBuf+6, SHORT_ADDR_G, 4))
 			{
 				uint8 cmdData, ret;
 				uint8 retData[2] = {0};
@@ -451,33 +465,71 @@ void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen)
 			}
 			
 		}
-		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& !memcmp(txBuf+2, FR_CMD_BROCAST_REFRESH, 4)
-			&& !memcmp(txBuf+txLen-4, f_tail, 4))
+		else if(txLen>=14 && osal_memcmp(txBuf, FR_HEAD_DE, 2)
+			&& osal_memcmp(txBuf+2, FR_CMD_BROCAST_REFRESH, 4)
+			&& osal_memcmp(txBuf+txLen-4, f_tail, 4))
 		{
 			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-			if(Send_shortAddr == COORDINATOR_ADDR)
-			{
-				CommonApp_ProcessZDOStates(DEV_ZB_COORD);
-			}
-			
+			CommonApp_ProcessZDOStates(DEV_ZB_COORD);
 			CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
 		}
-		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& (!memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)
-			|| !memcmp(txBuf+2, FR_CMD_PEROID_EXCUTE, 4)
-			|| !memcmp(txBuf+2, FR_CMD_PEROID_STOP, 4))
-			&& !memcmp(txBuf+txLen-4, f_tail, 4))
+		else if(txLen>=14 && osal_memcmp(txBuf, FR_HEAD_DE, 2)
+			&& osal_memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)
+			&& osal_memcmp(txBuf+txLen-4, f_tail, 4))
+	    {
+		  incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+		  if(nwkAddr == Send_shortAddr)
+		  {
+	        DataCmd_Ctrl(txBuf+10, txLen-FR_DE_DATA_FIX_LEN);
+
+	        if(!CommonDevice_GetData(buf, &len))
+	          Update_Refresh(buf, len);
+		  }
+		  else
+		  {
+		    CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+		  }
+	    }
+	    else if(txLen>=14 && osal_memcmp(txBuf, FR_HEAD_DE, 2)
+			&& osal_memcmp(txBuf+2, FR_CMD_PEROID_EXCUTE, 4)
+			&& osal_memcmp(txBuf+txLen-4, f_tail, 4))
+	    {
+		  incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+		  if(nwkAddr == Send_shortAddr)
+		  {
+	        CommonApp_SetUserEvent(CMD_PEROID_EVT, CommonApp_CmdPeroidCB, 
+	        	CMD_PEROID_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
+				
+	        Update_Refresh(txBuf+10, txLen-FR_DE_DATA_FIX_LEN);
+		  }
+		  else
+		  {
+		    CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+		  }
+	    }
+	    else if(txLen>=14 && osal_memcmp(txBuf, FR_HEAD_DE, 2)
+			&& osal_memcmp(txBuf+2, FR_CMD_PEROID_STOP, 4)
+			&& osal_memcmp(txBuf+txLen-4, f_tail, 4))
+	    {
+		  incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+		  if(nwkAddr == Send_shortAddr)
+		  {
+	        CommonApp_UpdateUserEvent(CMD_PEROID_EVT, 
+	        	NULL, TIMER_NO_LIMIT, TIMER_CLEAR_EXECUTION, NULL);
+				
+	        Update_Refresh(txBuf+10, txLen-FR_DE_DATA_FIX_LEN);
+		  }
+		  else
+		  {
+		    CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+		  }
+	    }
+		else if(txLen>=14 && osal_memcmp(txBuf, FR_HEAD_DE, 2)
+			&& osal_memcmp(txBuf+2, FR_CMD_SINGLE_REFRESH, 4)
+			&& osal_memcmp(txBuf+txLen-4, f_tail, 4))
 		{
 			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-			CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
-		}
-		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& !memcmp(txBuf+2, FR_CMD_SINGLE_REFRESH, 4)
-			&& !memcmp(txBuf+txLen-4, f_tail, 4))
-		{
-			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-			if(Send_shortAddr == COORDINATOR_ADDR) //coord self
+			if(nwkAddr == Send_shortAddr) //coord self
 			{
 				CommonApp_ProcessZDOStates(DEV_ZB_COORD);
 			}

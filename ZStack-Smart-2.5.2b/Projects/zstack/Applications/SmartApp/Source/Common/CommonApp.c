@@ -7,13 +7,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-04-16
-**************************************************************************************************/
-
-/**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-05-12
+Date:2015-06-15
 **************************************************************************************************/
 
 
@@ -105,7 +100,7 @@ uint8 SHORT_ADDR_G[4] = "";
 
 uint8 EXT_ADDR_G[16] = "";
 
-#ifdef SSA_ENDNODE
+#if(DEVICE_TYPE_ID!=0)
 /* operations data */
 uint8 *optData = NULL;
 uint8 optDataLen = 0;
@@ -742,7 +737,7 @@ void CommonApp_GetDeviceInfo ( uint8 param, void *pValue )
 }
 
 
-#ifdef SSA_ENDNODE
+#if(DEVICE_TYPE_ID!=0)
 int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen)
 {
 	if(optData != NULL && optDataLen < dataLen && dataLen <= MAX_OPTDATA_SIZE)
