@@ -7,13 +7,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-04-16
-**************************************************************************************************/
-
-/**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-05-12
+Date:2015-06-15
 **************************************************************************************************/
 
 
@@ -105,7 +100,7 @@ uint8 SHORT_ADDR_G[4] = "";
 
 uint8 EXT_ADDR_G[16] = "";
 
-#ifdef SSA_ENDNODE
+#if(DEVICE_TYPE_ID!=0)
 /* operations data */
 uint8 *optData = NULL;
 uint8 optDataLen = 0;
@@ -130,7 +125,12 @@ static void CommonApp_PermitJoiningLedIndicate(
 static void set_app_event(ssaUserEvent_t *ssaUserEvent);
 #if(HAL_UART==TRUE)
 static void SerialTx_CallBack(uint8 port, uint8 event);
+#ifndef HAL_UART01_BOTH
 static void Data_TxHandler(uint8 txBuf[], uint8 txLen);
+#else
+static void Data0_TxHandler(uint8 txBuf[], uint8 txLen);
+static void Data1_TxHandler(uint8 txBuf[], uint8 txLen);
+#endif
 static void CommonApp_SerialTxCB( void *params, uint16 *duration, uint8 *count);
 #endif
 
@@ -139,6 +139,7 @@ static void CommonApp_SerialTxCB( void *params, uint16 *duration, uint8 *count);
  */
 /*串口缓冲区*/
 #if(HAL_UART==TRUE)
+#ifndef HAL_UART01_BOTH
 //static uint8 Serial_TxSeq;
 static uint8 Serial_TxBuf[SERIAL_COM_TX_MAX];
 static uint8 Serial_TxLen;
@@ -147,6 +148,20 @@ static uint8 Serial_TxLen;
 static uint8 data_TxLen;
 static uint8 data_TxBuf[FRAME_DATA_LENGTH];
 static UART_TxHandler mData_TxHandler;
+#else
+static uint8 Serial0_TxBuf[SERIAL_COM_TX_MAX];
+static uint8 Serial1_TxBuf[SERIAL_COM_TX_MAX];
+static uint8 Serial0_TxLen;
+static uint8 Serial1_TxLen;
+
+/*解析串口数据得到的有效命令缓冲区*/
+static uint8 data0_TxLen;
+static uint8 data1_TxLen;
+static uint8 data0_TxBuf[FRAME_DATA_LENGTH];
+static uint8 data1_TxBuf[FRAME_DATA_LENGTH];
+static UART_TxHandler mData0_TxHandler;
+static UART_TxHandler mData1_TxHandler;
+#endif
 #endif
 
 
@@ -176,9 +191,15 @@ void CommonApp_Init( uint8 task_id )
     CommonApp_TransID = 0;
 
 #if(HAL_UART==TRUE)
-	//串口初始化
-    Serial_TxLen = 0;
+#ifndef HAL_UART01_BOTH
+   	Serial_TxLen = 0;
 	mData_TxHandler = Data_TxHandler;
+#else
+	Serial0_TxLen = 0;
+	Serial1_TxLen = 0;
+	mData0_TxHandler = Data0_TxHandler;
+	mData1_TxHandler = Data1_TxHandler;
+#endif
     Serial_Init(SerialTx_CallBack);
 #endif
 
@@ -354,6 +375,7 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
  * Event Generation Functions
  */
 #if(HAL_UART==TRUE)
+#ifndef HAL_UART01_BOTH
 /*********************************************************************
  * @fn      SerialTx_CallBack()
  *
@@ -372,7 +394,7 @@ void SerialTx_CallBack(uint8 port, uint8 event)
   {
     if (Serial_TxLen < SERIAL_COM_TX_MAX)
     {
-      Serial_TxLen = HalUARTRead( SERIAL_COM_PORT,Serial_TxBuf,SERIAL_COM_TX_MAX);
+      Serial_TxLen = HalUARTRead( port, Serial_TxBuf, SERIAL_COM_TX_MAX);
     }
 
     if(Serial_TxLen)
@@ -393,11 +415,69 @@ void SerialTx_CallBack(uint8 port, uint8 event)
 	  
       //CommonApp_UpdateUserEvent(SERIAL_CMD_EVT, CommonApp_SerialTxCB, 
   			//TIMER_NO_LIMIT, TIMER_ONE_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
-  	  CommonApp_SerialTxCB(NULL, NULL, NULL);
+  	  CommonApp_SerialTxCB((void *)port, NULL, NULL);
 	}
   }
 }
+#else
+void SerialTx_CallBack(uint8 port, uint8 event)
+{
+  if(port == SERIAL_COM_PORT0)
+  {
+    if ((event & (HAL_UART_RX_FULL | HAL_UART_RX_ABOUT_FULL 
+  			| HAL_UART_RX_TIMEOUT)) && !Serial0_TxLen)
+    {
+      if (Serial0_TxLen < SERIAL_COM_TX_MAX)
+      {
+        Serial0_TxLen = HalUARTRead( port, Serial0_TxBuf, SERIAL_COM_TX_MAX);
+      }
 
+      if(Serial0_TxLen)
+      {  
+        memset(data0_TxBuf, 0, FRAME_DATA_LENGTH);
+
+	    if(Serial0_TxLen<FRAME_DATA_LENGTH)
+          data0_TxLen = Serial0_TxLen;
+	    else
+	  	  data0_TxLen = FRAME_DATA_LENGTH;
+	  
+        memcpy(data0_TxBuf,Serial0_TxBuf,data0_TxLen);
+
+        memset(Serial0_TxBuf, 0, SERIAL_COM_TX_MAX);
+        Serial0_TxLen = 0;
+  	    CommonApp_SerialTxCB((void *)port, NULL, NULL);
+	  }
+    }
+  }
+  else if(port == SERIAL_COM_PORT1)
+  {
+	if ((event & (HAL_UART_RX_FULL | HAL_UART_RX_ABOUT_FULL 
+  			| HAL_UART_RX_TIMEOUT)) && !Serial1_TxLen)
+    {
+      if (Serial1_TxLen < SERIAL_COM_TX_MAX)
+      {
+        Serial1_TxLen = HalUARTRead( port, Serial1_TxBuf, SERIAL_COM_TX_MAX);
+      }
+
+      if(Serial1_TxLen)
+      {  
+        memset(data1_TxBuf, 0, FRAME_DATA_LENGTH);
+
+	    if(Serial1_TxLen<FRAME_DATA_LENGTH)
+          data1_TxLen = Serial1_TxLen;
+	    else
+	  	  data1_TxLen = FRAME_DATA_LENGTH;
+	  
+        memcpy(data1_TxBuf,Serial1_TxBuf,data1_TxLen);
+
+        memset(Serial1_TxBuf, 0, SERIAL_COM_TX_MAX);
+        Serial1_TxLen = 0;
+  	    CommonApp_SerialTxCB((void *)port, NULL, NULL);
+	  }
+    }
+  }
+}
+#endif
 
 /*********************************************************************
  * @fn      CommonApp_SerialTxCB()
@@ -411,10 +491,24 @@ void SerialTx_CallBack(uint8 port, uint8 event)
 void CommonApp_SerialTxCB( void *params, uint16 *duration, uint8 *count)
 {
   HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
+#ifndef HAL_UART01_BOTH
   mData_TxHandler(data_TxBuf, data_TxLen);
+#else
+  int port = (int)params;
+
+  if(port == SERIAL_COM_PORT0)
+  {
+	mData0_TxHandler(data0_TxBuf, data0_TxLen);
+  }
+  else if(port == SERIAL_COM_PORT1)
+  {
+	mData1_TxHandler(data1_TxBuf, data1_TxLen);
+  }
+#endif
 }
 
 
+#ifndef HAL_UART01_BOTH
 /*********************************************************************
  * @fn      Data_TxHandler()
  *
@@ -428,6 +522,17 @@ void Data_TxHandler(uint8 txBuf[], uint8 txLen)
 {
   HalUARTWrite(SERIAL_COM_PORT, txBuf, txLen);
 }
+#else
+void Data0_TxHandler(uint8 txBuf[], uint8 txLen)
+{
+  HalUARTWrite(SERIAL_COM_PORT1, txBuf, txLen);
+}
+
+void Data1_TxHandler(uint8 txBuf[], uint8 txLen)
+{
+  HalUARTWrite(SERIAL_COM_PORT0, txBuf, txLen);
+}
+#endif
 #endif
 
 
@@ -632,7 +737,7 @@ void CommonApp_GetDeviceInfo ( uint8 param, void *pValue )
 }
 
 
-#ifdef SSA_ENDNODE
+#if(DEVICE_TYPE_ID!=0)
 int8 CommonDevice_SetData(uint8 const *data, uint8 dataLen)
 {
 	if(optData != NULL && optDataLen < dataLen && dataLen <= MAX_OPTDATA_SIZE)
@@ -731,7 +836,11 @@ void PermitJoin_Refresh(uint8 *data, uint8 length)
 	memcpy(buf+7+length, f_tail, 4);
 	
 #ifdef SSA_CONNECTOR
+#ifndef HAL_UART01_BOTH
 	HalUARTWrite(SERIAL_COM_PORT, buf, 11+length);
+#else
+	HalUARTWrite(SERIAL_COM_PORT1, buf, 11+length);
+#endif
 #else
 	CommonApp_SendTheMessage(COORDINATOR_ADDR, buf, 11+length);
 #endif
@@ -885,11 +994,24 @@ int8 CommonApp_UpdateUserEvent(uint16 event,
  *
  * @return  none
  */
-void CommonApp_SetUARTTxHandler(UART_TxHandler txHandler)
+void CommonApp_SetUARTTxHandler(int port, UART_TxHandler txHandler)
 {
 #if(HAL_UART==TRUE)
   if(txHandler != NULL)
+  {
+#ifndef HAL_UART01_BOTH
   	mData_TxHandler = txHandler;
+#else
+	if(port == SERIAL_COM_PORT0)
+	{
+	  mData0_TxHandler = txHandler;
+	}
+	else if(port == SERIAL_COM_PORT1)
+	{
+	  mData1_TxHandler = txHandler;
+	}
+#endif
+  }
 #endif
 }
  

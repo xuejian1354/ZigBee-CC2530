@@ -29,6 +29,7 @@ extern "C"
 /*********************************************************************
  * CONSTANTS
  */
+#ifndef HAL_UART01_BOTH
 #ifndef SERIAL_COM_PORT
 #if HAL_UART_DMA==2 || HAL_UART_ISR==2
 #define SERIAL_COM_PORT  1
@@ -40,6 +41,14 @@ extern "C"
 #if !defined( SERIAL_COM_BAUD )
 //#define SERIAL_COM_BAUD  HAL_UART_BR_38400
 #define SERIAL_COM_BAUD  HAL_UART_BR_115200
+#endif
+
+#else
+#define SERIAL_COM_PORT0  0
+#define SERIAL_COM_PORT1  1
+
+#define SERIAL_COM_BAUD0  HAL_UART_BR_9600
+#define SERIAL_COM_BAUD1  HAL_UART_BR_115200
 #endif
 
 // When the Rx buf space is less than this threshold, invoke the Rx callback.

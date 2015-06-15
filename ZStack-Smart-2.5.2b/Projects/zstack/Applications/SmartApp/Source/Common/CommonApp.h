@@ -7,13 +7,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-04-16
-**************************************************************************************************/
-
-/**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-04-22
+Date:2015-06-15
 **************************************************************************************************/
 
 
@@ -126,7 +121,7 @@ typedef void(*UART_TxHandler)(uint8[], uint8);
 /*********************************************************************
  * FUNCTIONS
  */
-#if defined(SSA_ENDNODE) 
+#if(DEVICE_TYPE_ID!=0)
 extern void HalStatesInit(devStates_t status);
 #endif
 
@@ -156,7 +151,7 @@ extern void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts);
 extern void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts);
 #endif
 
-#ifdef SSA_ENDNODE
+#if(DEVICE_TYPE_ID!=0)
 extern int8 set_device_data(uint8 const *data, uint8 dataLen);
 extern int8 get_device_data(uint8 *data, uint8 *dataLen);
 
@@ -192,7 +187,7 @@ extern int8 CommonApp_UpdateUserEvent(uint16 event,
 /*
  *Task Update UART Receive Handler for the Common Application
  */
-extern void CommonApp_SetUARTTxHandler(UART_TxHandler txHandler);
+extern void CommonApp_SetUARTTxHandler(int port, UART_TxHandler txHandler);
 
 /*********************************************************************
 *********************************************************************/

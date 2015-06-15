@@ -7,13 +7,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-04-25
-**************************************************************************************************/
-
-/**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-02-02
+Date:2015-06-15
 **************************************************************************************************/
 
 
@@ -49,22 +44,25 @@ extern "C"
 #define FR_DEV_ENDDEV	'1'
 
 //应用类型
-#define FR_APP_CONNECTOR			"00"
-#define FR_APP_DEMOBASE				"FE"
+#define FR_APP_CONNECTOR		"00"
+#define FR_APP_DEMOBASE			"FE"
+#define FR_APP_AIRCONTROLLER 		"F0"
 #define FR_APP_LIGHTSWITCH_ONE		"01"
 #define FR_APP_LIGHTSWITCH_TWO		"02"
 #define FR_APP_LIGHTSWITCH_THREE	"03"
 #define FR_APP_LIGHTSWITCH_FOUR		"04"
-#define FR_APP_ALARM				"11"
-#define FR_APP_IR_DETECTION			"12"
-#define FR_APP_DOOR_SENSOR			"13"
-#define FR_APP_SMOG					"14"
-#define FR_APP_IR_RELAY				"21"
+#define FR_APP_ALARM			"11"
+#define FR_APP_IR_DETECTION		"12"
+#define FR_APP_DOOR_SENSOR		"13"
+#define FR_APP_SMOG			"14"
+#define FR_APP_IR_RELAY			"21"
 
 #if(DEVICE_TYPE_ID==0)
 #define FR_APP_DEV FR_APP_CONNECTOR
 #elif(DEVICE_TYPE_ID==0xFE)
 #define FR_APP_DEV FR_APP_DEMOBASE
+#elif(DEVICE_TYPE_ID==0xF0)
+#define FR_APP_DEV FR_APP_AIRCONTROLLER
 #elif(DEVICE_TYPE_ID==1)
 #define FR_APP_DEV FR_APP_LIGHTSWITCH_ONE
 #elif(DEVICE_TYPE_ID==2)
@@ -91,12 +89,12 @@ extern "C"
 
 
 //控制命令
-#define FR_CMD_BROCAST_REFRESH	"/BR/"		//广播刷新
-#define FR_CMD_SINGLE_REFRESH	"/SR/"		//单播刷新
-#define FR_CMD_SINGLE_EXCUTE	"/EC/"		//单次执行发送
-#define FR_CMD_PEROID_EXCUTE	"/EP/"		//周期性执行发送
-#define FR_CMD_PEROID_STOP		"/ES/"		//停止周期性发送
-#define FR_CMD_JOIN_CTRL		"/CJ/"		//网关允许/不允许加入
+#define FR_CMD_BROCAST_REFRESH	    "/BR/"		//广播刷新
+#define FR_CMD_SINGLE_REFRESH	    "/SR/"		//单播刷新
+#define FR_CMD_SINGLE_EXCUTE	    "/EC/"		//单次执行发送
+#define FR_CMD_PEROID_EXCUTE	    "/EP/"		//周期性执行发送
+#define FR_CMD_PEROID_STOP	    "/ES/"		//停止周期性发送
+#define FR_CMD_JOIN_CTRL	    "/CJ/"		//网关允许/不允许加入
 
 #define FR_UC_DATA_FIX_LEN		38		//UC帧固定长度
 #define FR_UO_DATA_FIX_LEN		30		//UO帧固定长度
@@ -107,8 +105,8 @@ extern "C"
 /*********************************************************************
  * MACROS
  */
-#define FRAME_DATA_SIZE		32
-#define FRAME_BUFFER_SIZE 	64
+#define FRAME_DATA_SIZE		64
+#define FRAME_BUFFER_SIZE 	128
 #define MAX_OPTDATA_SIZE	FRAME_DATA_SIZE
 
 /*********************************************************************
@@ -136,6 +134,8 @@ typedef struct
 	uint8 ext_addr[16];  //设备长地址  
 	uint8 panid[4];    //网络PANID号
 	uint8 channel[4]; //网络信道
+	uint8 data_len;
+	uint8 *data; //终端设备初始数据
 	uint8 tail[4];    //:O/r/n
 }UC_t;
 
