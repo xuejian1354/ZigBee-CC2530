@@ -76,8 +76,6 @@ void IRRelayApp_TxHandler(uint8 txBuf[], uint8 txLen)
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
 	uint8 ctrlData[5] = {0};
-        uint8 tmpData[10] = {0};
-        memcpy(tmpData, data, dataLen);
 	if(osal_memcmp(IRRELAY_LEARN_METHOD, data, 3))
 	{
 		ctrlData[0] = IRRELAY_LEARN_CMD;
