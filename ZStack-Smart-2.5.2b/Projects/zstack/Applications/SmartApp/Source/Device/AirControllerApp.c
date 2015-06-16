@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-15
+Date:2015-06-16
 **************************************************************************************************/
 
 
@@ -113,6 +113,7 @@ static void AirControllerDetect_TxHandler(uint8 txBuf[], uint8 txLen);
 static void AirControllerApp_HeartBeatEvent(void);
 #endif
 static void Show_company(void);
+static void Show_PM25(void);
 
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
@@ -148,6 +149,8 @@ void CommonApp_InitConfirm( uint8 task_id )
   /*UART0: Device*/
   CommonApp_SetUARTTxHandler(SERIAL_COM_PORT1, AirControllerApp_TxHandler);
 #endif
+
+  SetPM25ThresCallBack(AIRCONTROL_PM25_THRESMODE_UNABLE, 0, NULL);
 
   LCD_Init();			//oled 初始化  
   LCD_Fill(0xff);		//屏全亮 
@@ -392,42 +395,19 @@ void AirControllerApp_HeartBeatEvent(void)
 void AirControllerDetect_TxHandler(uint8 txBuf[], uint8 txLen)
 {
 	DATA_CMD_T data_cmd;
-   	uint8 PM25_Buf[9];
-	//uint8 PM10_DATA[9];
-	//uint16 DATA_PM10;
-	
+   	
 	osal_memcpy(data_cmd.data_buf, txBuf, txLen);
     if(data_cmd.data_core.Head==0xAA)
   	{
-    	uint16 PM25_val=(data_cmd.data_core.PM25[0]+data_cmd.data_core.PM25[1]*256)/10;
-		SetPM25Val(PM25_val);
-		
-    	PM25_Buf[0]=PM25_val/100+'0';
-    	PM25_Buf[1]=(PM25_val/10)%10+'0';
-    	PM25_Buf[2]=PM25_val%10+'0';
-    	PM25_Buf[3]='u';
-    	PM25_Buf[4]='g';
-    	PM25_Buf[5]='/';
-    	PM25_Buf[6]='m';
-    	PM25_Buf[7]=3+'0';
-    	PM25_Buf[8]='\0';
-    	//注意小端模式
-   		/* DATA_PM10=(data_cmd.data_core.PM10[0]+data_cmd.data_core.PM10[1]*256)/10;
-	   	PM10_DATA[0]=DATA_PM10/100+'0';
-    		PM10_DATA[1]=(DATA_PM10/10)%10+'0';
-    		PM10_DATA[2]=DATA_PM10%10+'0';
-    		PM10_DATA[3]='u';
-    		PM10_DATA[4]='g';
-    		PM10_DATA[5]='/';
-    		PM10_DATA[6]='m';
-    		PM10_DATA[7]=3+'0';
-    		PM10_DATA[8]='\0';
-    		*/
-    	//LCD_CLS();
-    	LCD_P8x16Str(0, 3, "PM2.5");
-    	LCD_P8x16Str(0, 6, PM25_Buf);
-   		// LCD_P8x16Str(64,0,"PM10");
-   		// LCD_P8x16Str(64,4,PM10_DATA);
+    	uint16 PM25_val=(data_cmd.data_core.PM25[0]
+					+data_cmd.data_core.PM25[1]<<8)/10;
+
+		if(PM25_val != GetPM25Val())
+		{
+			SetPM25Val(PM25_val);
+			Show_PM25();
+			PM25_Threshold_Handler();
+		}
   	} 
 }
 #endif
@@ -556,4 +536,40 @@ void Show_company(void)
 		// LCD_P16x16Ch(i*16,4,i+16);
 		// LCD_P16x16Ch(i*16,6,i+24);
 	} 
+}
+
+void Show_PM25(void)
+{
+	uint8 PM25_Buf[9];
+	//uint8 PM10_DATA[9];
+	//uint16 DATA_PM10;
+
+	uint16 PM25_val = GetPM25Val();
+	
+	PM25_Buf[0]=PM25_val/100+'0';
+	PM25_Buf[1]=(PM25_val/10)%10+'0';
+	PM25_Buf[2]=PM25_val%10+'0';
+	PM25_Buf[3]='u';
+	PM25_Buf[4]='g';
+	PM25_Buf[5]='/';
+	PM25_Buf[6]='m';
+	PM25_Buf[7]=3+'0';
+	PM25_Buf[8]='\0';
+	//注意小端模式
+	/* DATA_PM10=(data_cmd.data_core.PM10[0]+data_cmd.data_core.PM10[1]*256)/10;
+   	PM10_DATA[0]=DATA_PM10/100+'0';
+	PM10_DATA[1]=(DATA_PM10/10)%10+'0';
+	PM10_DATA[2]=DATA_PM10%10+'0';
+	PM10_DATA[3]='u';
+	PM10_DATA[4]='g';
+	PM10_DATA[5]='/';
+	PM10_DATA[6]='m';
+	PM10_DATA[7]=3+'0';
+	PM10_DATA[8]='\0';
+	*/
+	//LCD_CLS();
+	LCD_P8x16Str(0, 3, "PM2.5");
+	LCD_P8x16Str(0, 6, PM25_Buf);
+	// LCD_P8x16Str(64,0,"PM10");
+	// LCD_P8x16Str(64,4,PM10_DATA);
 }
