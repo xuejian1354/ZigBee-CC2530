@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-15
+Date:2015-06-16
 **************************************************************************************************/
 
 
@@ -110,6 +110,11 @@ extern "C"
 #define ZB_INFO_PAN_ID                    6
 #define ZB_INFO_EXT_PAN_ID                7
 
+#if (DEVICE_TYPE_ID==0xF0)
+#define AIRCONTROL_PM25_THRESMODE_UNABLE	0
+#define AIRCONTROL_PM25_THRESMODE_UP		1
+#define AIRCONTROL_PM25_THRESMODE_DOWN		2
+#endif
 
 /*********************************************************************
  * TYPEDEFS
@@ -117,6 +122,9 @@ extern "C"
 //type structure of UART receive handler
 typedef void(*UART_TxHandler)(uint8[], uint8);
 
+#if (DEVICE_TYPE_ID==0xF0)
+typedef int8(*PM25_Threshold_CallBack)(void);
+#endif
 
 /*********************************************************************
  * FUNCTIONS
@@ -127,6 +135,10 @@ extern void HalStatesInit(devStates_t status);
 
 #if (DEVICE_TYPE_ID==0xF0)
 extern void SetPM25Val(uint16 val);
+extern uint16 GetPM25Val(void);
+extern void SetPM25ThresCallBack(uint8 mode, 
+				uint16 threshold, PM25_Threshold_CallBack func);
+extern void PM25_Threshold_Handler(void);
 #endif
 
 /*

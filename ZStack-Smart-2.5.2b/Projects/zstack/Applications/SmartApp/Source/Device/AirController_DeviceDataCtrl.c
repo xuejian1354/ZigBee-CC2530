@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-15
+Date:2015-06-16
 **************************************************************************************************/
 
 /*********************************************************************
@@ -45,11 +45,11 @@ typedef enum
 
 typedef struct AirController_Opt
 {
-	uint8 PM25_thresmode;	//0, up; 1, down;
+	uint8 PM25_thresmode;	//0, unable; 1, up; 2, down;
+	uint8 PM25_threstrigger;
 	uint16 PM25_threshold;
 	uint16 PM25_val;
 }AirController_Opt_t;
-
 
 /*********************************************************************
  * CONSTANTS
@@ -73,19 +73,100 @@ extern uint8 optDataLen;
  * LOCAL VARIABLES
  */
 static AirController_Opt_t AirControlOpt;
+static PM25_Threshold_CallBack mPM25_Threshold_CallBack;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
+static int8 AirControl_PM25_Threshold_CallBack(void);
 static AirController_Method_t get_AirControl_Method_from_str(int8 *str);
-//static int8 set_AirControl_Method_to_str(AirController_Method_t am, int8 *str);
+
 /*********************************************************************
  * PUBLIC FUNCTIONS
  */
 
+/*********************************************************************
+ * FUNCTIONS
+ */
 void SetPM25Val(uint16 val)
 {
 	AirControlOpt.PM25_val = val;
+}
+
+uint16 GetPM25Val(void)
+{
+	return AirControlOpt.PM25_val;
+}
+
+void SetPM25ThresCallBack(uint8 mode, uint16 threshold, PM25_Threshold_CallBack func)
+{
+	switch(mode)
+	{
+	case AIRCONTROL_PM25_THRESMODE_UP:
+	case AIRCONTROL_PM25_THRESMODE_DOWN: 
+		AirControlOpt.PM25_thresmode = mode;
+		AirControlOpt.PM25_threshold = threshold;
+		break;
+		
+	default: 
+		AirControlOpt.PM25_thresmode = AIRCONTROL_PM25_THRESMODE_UNABLE;
+		AirControlOpt.PM25_threshold = 0;
+		break;
+	}
+	
+	if(func != NULL)
+	{
+		mPM25_Threshold_CallBack = func;
+	}
+	else
+	{
+		mPM25_Threshold_CallBack = AirControl_PM25_Threshold_CallBack;
+	}
+}
+
+void PM25_Threshold_Handler(void)
+{
+	if(AirControlOpt.PM25_thresmode == AIRCONTROL_PM25_THRESMODE_UNABLE)
+	{
+		return;
+	}
+
+	if(AirControlOpt.PM25_thresmode == AIRCONTROL_PM25_THRESMODE_UP)
+	{
+		if(AirControlOpt.PM25_val >= AirControlOpt.PM25_threshold)
+		{
+			if(AirControlOpt.PM25_threstrigger != 1
+				&& mPM25_Threshold_CallBack() >= 0)
+			{
+				AirControlOpt.PM25_threstrigger = 1;
+			}
+		}
+		else
+		{
+			AirControlOpt.PM25_threstrigger = 0;
+		}
+	}
+	else if(AirControlOpt.PM25_thresmode == AIRCONTROL_PM25_THRESMODE_DOWN)
+	{
+		if(AirControlOpt.PM25_val <= AirControlOpt.PM25_threshold)
+		{
+			if(AirControlOpt.PM25_threstrigger != 1
+				&& mPM25_Threshold_CallBack() >= 0)
+			{
+				AirControlOpt.PM25_threstrigger = 1;
+			}
+		}
+		else
+		{
+			AirControlOpt.PM25_threstrigger = 0;
+		}
+	}
+}
+
+
+int8 AirControl_PM25_Threshold_CallBack(void)
+{
+	return 0;
 }
 
 AirController_Method_t get_AirControl_Method_from_str(int8 *str)
@@ -127,55 +208,11 @@ AirController_Method_t get_AirControl_Method_from_str(int8 *str)
 	return AIRCONTROL_NONE;
 }
 
-/*
-int8 set_AirControl_Method_to_str(AirController_Method_t am, int8 *str)
-{
-	if(str == NULL)
-	{
-		return -1;
-	}
-	
-	switch(am)
-	{
-	case AIRCONTROL_IR_SEND: 
-		osal_memcpy(str, AIRCONTROLLER_IR_SEND_MED, 3);
-		break;
-		
-	case AIRCONTROL_IR_LEARN: 
-		osal_memcpy(str, AIRCONTROLLER_IR_LEARN_MED, 3);
-		break;
-		
-	case AIRCONTROL_PM25_READVAL: 
-		osal_memcpy(str, AIRCONTROLLER_PM25_READVAL_MED, 3);
-		break;
-		
-	case AIRCONTROL_PM25_READMODE: 
-		osal_memcpy(str, AIRCONTROLLER_PM25_READMODE_MED, 3);
-		break;
-		
-	case AIRCONTROL_PM25_READHOLD: 
-		osal_memcpy(str, AIRCONTROLLER_PM25_READHOLD_MED, 3);
-		break;
-		
-	case AIRCONTROL_PM25_SETMODE: 
-		osal_memcpy(str, AIRCONTROLLER_PM25_SETMODE_MED, 3);
-		break;
-		
-	case AIRCONTROL_PM25_SETHOLD: 
-		osal_memcpy(str, AIRCONTROLLER_PM25_SETHOLD_MED, 3);
-		break;
-
-	default: return -1;
-	}
-
-	return 0;
-}
-*/
-
 
 void HalDeviceInit (void)
 {
 	memset(&AirControlOpt, 0, sizeof(AirController_Opt_t));
+	mPM25_Threshold_CallBack = AirControl_PM25_Threshold_CallBack;
 }
 
 void HalStatesInit(devStates_t status)
