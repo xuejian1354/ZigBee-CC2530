@@ -818,7 +818,18 @@ void Update_Refresh(uint8 *data, uint8 length)
 
 	if(!SSAFrame_Package(HEAD_UR, &mFrame, &fBuf, &fLen))
 	{
-		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+		if(nwkAddr == COORDINATOR_ADDR)
+		{
+#ifndef HAL_UART01_BOTH
+			HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
+#else
+			HalUARTWrite(SERIAL_COM_PORT1, fBuf, fLen);
+#endif
+		}
+		else
+		{
+			CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+		}
 	}
 }
 #endif
