@@ -117,7 +117,7 @@ extern "C"
 #define OLC1_BV           BV(6)
 #define OLC1_SBIT         P1_6
 #define OLC1_DDR          P1DIR
-#define OLC1_POLARITY     ACTIVE_LOW
+#define OLC1_POLARITY     ACTIVE_HIGH
 
 #define HAL_TURN_OFF_OLC1()       st( OLC1_SBIT = OLC1_POLARITY (0); )
 #define HAL_TURN_ON_OLC1()        st( OLC1_SBIT = OLC1_POLARITY (1); )
