@@ -218,6 +218,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 	incode_2_to_16(mFrame.panid, (uint8 *)&_NIB.nwkPanId, 2);
 	uint16 channel = _NIB.nwkLogicalChannel;
 	incode_2_to_16(mFrame.channel, (uint8 *)&channel, 2);
+	DataCmd_Ctrl(AIRCONTROLLER_GET_DATA_MED, 3);
 	mFrame.data = buf;
     CommonDevice_GetData(mFrame.data, &mFrame.data_len);
 	memcpy(mFrame.tail, f_tail, 4);

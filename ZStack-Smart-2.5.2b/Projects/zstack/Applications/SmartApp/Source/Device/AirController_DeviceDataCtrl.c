@@ -20,14 +20,6 @@ Date:2015-06-16
 /*********************************************************************
  * MACROS
  */
-#define AIRCONTROLLER_IR_SEND_MED			"SEM"
-#define AIRCONTROLLER_IR_LEARN_MED			"LEA"
-#define AIRCONTROLLER_PM25_READVAL_MED		"REV"
-#define AIRCONTROLLER_PM25_READMODE_MED		"REM"
-#define AIRCONTROLLER_PM25_READHOLD_MED		"REH"
-#define AIRCONTROLLER_PM25_SETMODE_MED		"WRM"
-#define AIRCONTROLLER_PM25_SETHOLD_MED		"WRH"
-
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86
 
@@ -40,6 +32,7 @@ typedef enum
 	AIRCONTROL_PM25_READHOLD,
 	AIRCONTROL_PM25_SETMODE,
 	AIRCONTROL_PM25_SETHOLD,
+	AIRCONTROL_GET_DATA,
 	AIRCONTROL_NONE,
 }AirController_Method_t;
 
@@ -204,6 +197,10 @@ AirController_Method_t get_AirControl_Method_from_str(int8 *str)
 	{
 		return AIRCONTROL_PM25_SETHOLD;
 	}
+	else if(osal_memcmp(AIRCONTROLLER_GET_DATA_MED, str, 3))
+	{
+		return AIRCONTROL_GET_DATA;
+	}
 
 	return AIRCONTROL_NONE;
 }
@@ -332,6 +329,33 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 		{
 			return -1;
 		}
+		break;
+
+	case AIRCONTROL_GET_DATA:
+		if(optDataLen < 13)
+		{
+			osal_mem_free(optData);
+			optData = osal_mem_alloc(13);
+		}
+		optDataLen = 13;
+		osal_memcpy(optData, AIRCONTROLLER_GET_DATA_MED, 3);
+		
+		switch(AirControlOpt.PM25_thresmode)
+		{
+		case AIRCONTROL_PM25_THRESMODE_UP:	
+			osal_memcpy(optData+3, "01", 2);
+			break;
+
+		case AIRCONTROL_PM25_THRESMODE_DOWN:
+			osal_memcpy(optData+3, "02", 2);
+			break;
+
+		default:
+			osal_memcpy(optData+3, "00", 2);
+			break;
+		}
+		incode_2_to_16(optData+5, (uint8 *)&AirControlOpt.PM25_threshold, 2);
+		incode_2_to_16(optData+9, (uint8 *)&AirControlOpt.PM25_val, 2);
 		break;
 
 	default: return -1;
