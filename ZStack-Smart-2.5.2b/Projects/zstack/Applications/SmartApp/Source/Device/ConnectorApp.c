@@ -182,7 +182,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 	incode_2_to_16(mFrame.panid, (uint8 *)&_NIB.nwkPanId, 2);
 	uint16 channel = _NIB.nwkLogicalChannel;
 	incode_2_to_16(mFrame.channel, (uint8 *)&channel, 2);
-        mFrame.data = NULL;
+    mFrame.data = NULL;
 	mFrame.data_len = 0;
 	memcpy(mFrame.tail, f_tail, 4);
 
