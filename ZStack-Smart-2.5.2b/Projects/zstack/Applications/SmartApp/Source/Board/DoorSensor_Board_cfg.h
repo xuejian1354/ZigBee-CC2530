@@ -34,6 +34,7 @@ extern "C"
 
 #define KEY_PUSH_PORT_0_BUTTON		/* 自定义映射按键IO  */
 #define HAL_KEY_INT_METHOD		/*按键触发方式为中断(默认为查询)*/
+#define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
 
 
 /*********************************************************************

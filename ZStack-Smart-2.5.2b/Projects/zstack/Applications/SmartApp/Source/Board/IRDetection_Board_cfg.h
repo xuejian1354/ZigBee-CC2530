@@ -37,6 +37,7 @@ extern "C"
 
 #define HAL_KEY_COMBINE_INT_METHOD	/*中断下 按键组合功能 */
 #define HAL_KEY_MATCH_ID	/*按键匹配ID */
+#define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
 
 
 /*********************************************************************
