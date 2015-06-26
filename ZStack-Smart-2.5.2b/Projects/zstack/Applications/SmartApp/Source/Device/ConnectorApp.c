@@ -7,13 +7,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-04-16
-**************************************************************************************************/
-
-/**************************************************************************************************
-Edit by Sam_Chen
-Date:2015-04-10
+Modify by Sam_Chen
+Date:2014-06-26
 **************************************************************************************************/
 
 
@@ -81,6 +76,7 @@ extern uint8 EXT_ADDR_G[16];
 extern const uint8 f_tail[4];
 
 extern bool isPermitJoining;
+extern uint8 isFirstState;
 
 /*********************************************************************
  * LOCAL VARIABLES
@@ -207,8 +203,11 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
-	
-	ConnectorApp_HeartBeatEvent();
+
+	if(isFirstState)
+	{
+		ConnectorApp_HeartBeatEvent();
+	}
 #endif
   }
 }

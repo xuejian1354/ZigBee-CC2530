@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-15
+Date:2015-06-26
 **************************************************************************************************/
 
 
@@ -74,6 +74,7 @@ extern "C"
 #define HEARTBERAT_EVT			0x0001		//heart beat event by user defined
 #define CMD_PEROID_EVT			0x0002		//cmd period control event
 #define PERMIT_JOIN_EVT			0x0004
+#define POWERSETTING_COUNT_EVT	0x0008
 #define DOORSENSOR_ISR_EVT		0x0010
 #define DOORSENSOR_DETECT_EVT	0x0020
 #define IRDETECT_ISR_EVT		0x0010
@@ -96,6 +97,8 @@ extern "C"
 
 #define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
 #endif
+
+#define POWERSETTING_TIMEOUT	3000
 
 #define PERMIT_JOIN_FORBID	0
 #define PERMIT_JOIN_ALWAYS	0xFF
