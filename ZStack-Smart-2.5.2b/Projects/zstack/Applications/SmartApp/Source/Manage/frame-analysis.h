@@ -54,7 +54,8 @@ extern "C"
 #define FR_APP_ALARM			"11"
 #define FR_APP_IR_DETECTION		"12"
 #define FR_APP_DOOR_SENSOR		"13"
-#define FR_APP_SMOG			"14"
+#define FR_APP_ENVDETECTION		"14"
+#define FR_APP_SMOG			"15"
 #define FR_APP_IR_RELAY			"21"
 
 #if(DEVICE_TYPE_ID==0)
