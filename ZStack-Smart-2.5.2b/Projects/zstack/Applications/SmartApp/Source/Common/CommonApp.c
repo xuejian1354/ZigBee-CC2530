@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-26
+Date:2015-06-27
 **************************************************************************************************/
 
 
@@ -319,7 +319,6 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
 		  CommonApp_PowerOnFactorySetting(CommonApp_NwkState);
 #endif
 		  CommonApp_ProcessZDOStates( CommonApp_NwkState );
-
 		  isFirstState = 0;
           break;
 
