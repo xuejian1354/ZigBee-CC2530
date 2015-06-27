@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-16
+Date:2015-06-27
 **************************************************************************************************/
 
 
@@ -91,6 +91,8 @@ extern uint8 EXT_ADDR_G[16];
 extern const uint8 f_tail[4];
 
 extern bool isPermitJoining;
+
+extern uint8 isFirstState;
 
 /*********************************************************************
  * LOCAL VARIABLES
@@ -257,9 +259,12 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 #endif
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
-	
-	AirControllerApp_HeartBeatEvent();
-	HalStatesInit(status);
+
+	if(isFirstState)
+	{
+		AirControllerApp_HeartBeatEvent();
+		HalStatesInit(status);
+	}
 #endif
   }
 }

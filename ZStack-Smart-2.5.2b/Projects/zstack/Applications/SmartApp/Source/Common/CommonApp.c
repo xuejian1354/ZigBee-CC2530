@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-15
+Date:2015-06-27
 **************************************************************************************************/
 
 
@@ -99,6 +99,8 @@ ZLongAddr_t macAddr;
 uint8 SHORT_ADDR_G[4] = "";
 
 uint8 EXT_ADDR_G[16] = "";
+
+uint8 isFirstState = 1;
 
 #if(DEVICE_TYPE_ID!=0)
 /* operations data */
@@ -309,6 +311,7 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
 		  HalLedSet(HAL_LED_3, HAL_LED_MODE_BLINK);
 		  CommonApp_NwkState = (devStates_t)(MSGpkt->hdr.status);
 		  CommonApp_ProcessZDOStates( CommonApp_NwkState );
+		  isFirstState = 0;
           break;
 
         default:
