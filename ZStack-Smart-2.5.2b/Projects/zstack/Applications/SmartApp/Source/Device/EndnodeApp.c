@@ -75,7 +75,6 @@ extern uint8 EXT_ADDR_G[16];
 extern const uint8 f_tail[4];
 
 extern bool isPermitJoining;
-extern uint8 isFirstState;
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
@@ -274,11 +273,8 @@ void CommonApp_ProcessZDOStates(devStates_t status)
       CommonApp_SendTheMessage(0x0000, fBuf, fLen);
     }
 
-	if(isFirstState)
-	{
-      EndNodeApp_HeartBeatEvent();
-      HalStatesInit(status);
-	}
+	EndNodeApp_HeartBeatEvent();
+	HalStatesInit(status);
   }
 }
 
