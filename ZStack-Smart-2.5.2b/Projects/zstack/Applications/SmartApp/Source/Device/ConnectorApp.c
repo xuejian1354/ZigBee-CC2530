@@ -76,7 +76,6 @@ extern uint8 EXT_ADDR_G[16];
 extern const uint8 f_tail[4];
 
 extern bool isPermitJoining;
-extern uint8 isFirstState;
 
 /*********************************************************************
  * LOCAL VARIABLES
@@ -204,10 +203,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
 
-	if(isFirstState)
-	{
-		ConnectorApp_HeartBeatEvent();
-	}
+	ConnectorApp_HeartBeatEvent();
 #endif
   }
 }
