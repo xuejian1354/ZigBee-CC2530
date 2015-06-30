@@ -38,8 +38,13 @@ extern "C"
 #define HAL_KEY_COMBINE_INT_METHOD	/*中断下 按键组合功能 */
 #define HAL_KEY_MATCH_ID	/*按键匹配ID */
 //#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
-#define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
+//#define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
 
+#ifndef HAL_UART_BR_9600
+#define HAL_UART_BR_9600   0x00
+#endif
+
+#define SERIAL_COM_BAUD  HAL_UART_BR_9600
 
 /*********************************************************************
  * INCLUDES

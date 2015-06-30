@@ -22,9 +22,9 @@ Date:2015-06-10
 /*********************************************************************
  * MACROS
  */
-#define LCD_SCL P0_5       //SCLK  时钟 D0（SCLK）
-#define LCD_SDA P0_6       //SDA   D1（MOSI） 数据
-#define LCD_RST P0_7       //_RES  hardware reset   复位 
+#define LCD_SCL P1_5       //SCLK  时钟 D0（SCLK）
+#define LCD_SDA P1_6       //SDA   D1（MOSI） 数据
+#define LCD_RST P1_7       //_RES  hardware reset   复位 
 #define LCD_DC  P0_0        //A0  H/L 命令数据选通端，H：数据，L:命令
 
 #define XLevelL        0x00

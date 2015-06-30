@@ -224,6 +224,8 @@ extern "C"
 #define ZCD_NV_DevMacTable                  0x0402
 #define ZCD_NV_NWK_HOLD_STARTUP				0x0411	//self authentication method
 #define ZCD_NV_POWER_SETTING_COUNT			0x0412	//self authentication method
+#define ZCD_NV_AIRCONTROLLER_MODE			0x0413
+#define ZCD_NV_AIRCONTROLLER_HOLD			0x0414
 
 // ZCD_NV_STARTUP_OPTION values
 //   These are bit weighted - you can OR these together.

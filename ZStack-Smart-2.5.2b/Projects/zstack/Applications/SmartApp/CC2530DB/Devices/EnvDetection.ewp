@@ -2208,6 +2208,12 @@
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.h</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\OLCD.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\OLCD.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.c</name>
       </file>
       <file>
