@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-30
+Date:2015-07-01
 **************************************************************************************************/
 
 
@@ -34,6 +34,8 @@ Date:2015-06-30
 extern uint8 *optData;
 extern uint8 optDataLen;
 
+extern devStates_t CommonApp_NwkState;
+
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
@@ -53,6 +55,8 @@ static PM25_Threshold_CallBack mPM25_Threshold_CallBack = NULL;
  */
 static int8 EnvDetection_PM25_Threshold_CallBack(void);
 static AirController_Method_t get_EnvDetection_Method_from_str(int8 *str);
+static void EnvDetection_UpDataCmdCB( void *params, uint16 *duration, uint8 *count);
+static void EnvDetection_SetGetData(void);
 static void EnvDetection_TxHandler(uint8 txBuf[], uint8 txLen);
 static void Show_logo(void);
 static void Show_val(uint16 val);
@@ -242,27 +246,11 @@ void HalDeviceInit (void)
 		SetPM25ThresCallBack(AIRCONTROL_PM25_THRESMODE_UP, 300, 
 							EnvDetection_PM25_Threshold_CallBack);
 
-		if (ZSUCCESS == osal_nv_item_init( ZCD_NV_AIRCONTROLLER_MODE, 
-	          				sizeof(EnvDetectionOpt.PM25_thresmode),  
-	          				&EnvDetectionOpt.PM25_thresmode))
-	    {
-	      osal_nv_write(ZCD_NV_AIRCONTROLLER_MODE, 
-		  				0, 
-		  				sizeof(EnvDetectionOpt.PM25_thresmode),  
-		  				&EnvDetectionOpt.PM25_thresmode);
-	    }
-
-		if (ZSUCCESS == osal_nv_item_init( ZCD_NV_AIRCONTROLLER_HOLD, 
-	          				sizeof(EnvDetectionOpt.PM25_threshold),  
-	          				&EnvDetectionOpt.PM25_threshold))
-	    {
-	      osal_nv_write(ZCD_NV_AIRCONTROLLER_HOLD, 
-		  				0, 
-		  				sizeof(EnvDetectionOpt.PM25_threshold),  
-		  				&EnvDetectionOpt.PM25_threshold);
-	    }
+		SetThresHold(AIRCONTROL_PM25_THRESMODE_UP, 300);
 		break;
 	}
+
+	EnvDetection_SetGetData();
 
   	LCD_Init();
   	LCD_Fill(0xff);
@@ -270,9 +258,73 @@ void HalDeviceInit (void)
   	Show_logo();
 }
 
+void SetThresHold(uint8 mode, uint16 hold)
+{
+	EnvDetectionOpt.PM25_thresmode = mode;
+	EnvDetectionOpt.PM25_threshold = hold;
+	
+	if (ZSUCCESS == osal_nv_item_init( ZCD_NV_AIRCONTROLLER_MODE, 
+          				sizeof(EnvDetectionOpt.PM25_thresmode),  
+          				&EnvDetectionOpt.PM25_thresmode))
+    {
+      osal_nv_write(ZCD_NV_AIRCONTROLLER_MODE, 
+	  				0, 
+	  				sizeof(EnvDetectionOpt.PM25_thresmode),  
+	  				&EnvDetectionOpt.PM25_thresmode);
+    }
+
+	if (ZSUCCESS == osal_nv_item_init( ZCD_NV_AIRCONTROLLER_HOLD, 
+          				sizeof(EnvDetectionOpt.PM25_threshold),  
+          				&EnvDetectionOpt.PM25_threshold))
+    {
+      osal_nv_write(ZCD_NV_AIRCONTROLLER_HOLD, 
+	  				0, 
+	  				sizeof(EnvDetectionOpt.PM25_threshold),  
+	  				&EnvDetectionOpt.PM25_threshold);
+    }
+}
+
 void HalStatesInit(devStates_t status)
 {
+  CommonApp_SetUserEvent(AIRCONTROLLER_QUERY_EVT, EnvDetection_UpDataCmdCB, 
+  		AIRCONTROLLER_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
+}
 
+void EnvDetection_UpDataCmdCB( void *params, uint16 *duration, uint8 *count)
+{
+  if( CommonApp_NwkState == DEV_ROUTER || CommonApp_NwkState == DEV_END_DEVICE)
+  {
+  	EnvDetection_SetGetData();
+	Update_Refresh(optData, optDataLen);
+  }
+}
+
+void EnvDetection_SetGetData(void)
+{
+	if(optData != NULL)
+	{
+		osal_mem_free(optData);
+	}
+	optData = osal_mem_alloc(13);
+	optDataLen = 13;
+	osal_memcpy(optData, AIRCONTROLLER_GET_DATA_MED, 3);
+	
+	switch(EnvDetectionOpt.PM25_thresmode)
+	{
+	case AIRCONTROL_PM25_THRESMODE_UP:	
+		osal_memcpy(optData+3, "01", 2);
+		break;
+
+	case AIRCONTROL_PM25_THRESMODE_DOWN:
+		osal_memcpy(optData+3, "02", 2);
+		break;
+
+	default:
+		osal_memcpy(optData+3, "03", 2);
+		break;
+	}
+	incode_2_to_16(optData+5, (uint8 *)&EnvDetectionOpt.PM25_threshold, 2);
+	incode_2_to_16(optData+9, (uint8 *)&EnvDetectionOpt.PM25_val, 2);
 }
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)
@@ -323,17 +375,31 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 		if(dataLen >= 5)
 		{
 			EnvDetectionOpt.PM25_thresmode = atox((uint8 *)(data+3), 2);
-			optData[3] = 'O';
-			optData[4] = 'K';
-			optDataLen = 5;
-
-			Show_hold(EnvDetectionOpt.PM25_thresmode, EnvDetectionOpt.PM25_threshold);
 			uint8 mode = EnvDetectionOpt.PM25_thresmode;
 			if (ZSUCCESS == osal_nv_item_init( 
                   ZCD_NV_AIRCONTROLLER_MODE, sizeof(mode),  &mode))
 	        {
 	          osal_nv_write(ZCD_NV_AIRCONTROLLER_MODE, 0, sizeof(mode),  &mode);
 	        }
+			
+			if(dataLen >= 9)
+			{
+				EnvDetectionOpt.PM25_threshold = 0;
+			  	incode_16_to_2(&EnvDetectionOpt.PM25_threshold, 
+												(uint8 *)(data+5), 4);
+				uint16 hold = EnvDetectionOpt.PM25_threshold;
+				if (ZSUCCESS == osal_nv_item_init( 
+	                  ZCD_NV_AIRCONTROLLER_HOLD, sizeof(hold),  &hold))
+		        {
+		          osal_nv_write(ZCD_NV_AIRCONTROLLER_HOLD, 0, sizeof(hold),  &hold);
+		        }
+			}
+
+			Show_hold(EnvDetectionOpt.PM25_thresmode, EnvDetectionOpt.PM25_threshold);
+
+			optData[3] = 'O';
+			optData[4] = 'K';
+			optDataLen = 5;
 		}
 		else
 		{
@@ -346,9 +412,6 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 		{
 			uint16 hold = 0;
 			incode_16_to_2(&hold, (uint8 *)(data+3), 4);
-			optData[3] = 'O';
-			optData[4] = 'K';
-			optDataLen = 5;
 
 			EnvDetectionOpt.PM25_threshold = hold;
 			Show_hold(EnvDetectionOpt.PM25_thresmode, EnvDetectionOpt.PM25_threshold);			
@@ -357,6 +420,10 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 	        {
 	          osal_nv_write(ZCD_NV_AIRCONTROLLER_HOLD, 0, sizeof(hold),  &hold);
 	        }
+			
+			optData[3] = 'O';
+			optData[4] = 'K';
+			optDataLen = 5;
 		}
 		else
 		{
@@ -441,7 +508,7 @@ void Show_logo(void)
 void Show_val(uint16 val)
 {   
 	char val_buf[16] = {0};
-	sprintf(val_buf, "PM2.5  %dug/m3  ", val);
+	sprintf(val_buf, "PM2.5  %dug/m3 ", val);
 	LCD_P8x16Str(0, 3, (uint8 *)val_buf);
 }
 

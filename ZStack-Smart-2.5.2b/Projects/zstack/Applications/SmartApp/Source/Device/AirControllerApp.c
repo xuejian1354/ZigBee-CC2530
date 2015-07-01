@@ -381,13 +381,13 @@ void AirControllerApp_HeartBeatEvent(void)
 #ifdef HAL_UART01_BOTH
 void AirControllerDetect_TxHandler(uint8 txBuf[], uint8 txLen)
 {
-	DATA_CMD_T data_cmd;
+    DATA_CMD_T data_cmd;
    	
-	osal_memcpy(data_cmd.data_buf, txBuf, txLen);
-    if(data_cmd.data_core.Head==0xAA)
+    osal_memcpy(&data_cmd, txBuf, txLen);
+    if(data_cmd.Head==0xAA)
   	{
-    	uint16 PM25_val=(data_cmd.data_core.PM25[0]
-					+data_cmd.data_core.PM25[1]<<8)/10;
+    	uint16 PM25_val=(data_cmd.PM25[0]
+					+data_cmd.PM25[1]<<8)/10;
 
 		if(PM25_val != GetPM25Val())
 		{

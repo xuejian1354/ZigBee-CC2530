@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-30
+Date:2015-07-01
 **************************************************************************************************/
 
 
@@ -80,6 +80,7 @@ extern "C"
 #define IRDETECT_ISR_EVT		0x0010
 #define IRDETECT_DETECT_EVT		0x0020
 #define IRDETECT_QUERY_EVT		0x0040
+#define AIRCONTROLLER_QUERY_EVT	0x0080
 
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86
@@ -91,6 +92,7 @@ extern "C"
 #define DOORSENSOR_TIMEOUT  	5000
 #define IRDETECT_TIMEOUT		10000
 #define IRDETECT_QUERY_TIMEOUT	500
+#define AIRCONTROLLER_TIMEOUT	5000
 
 #define PERMIT_JOIN_TIMEOUT	30		//30 Seconds, <=255s
 #else
@@ -187,6 +189,7 @@ extern uint16 GetPM25Val(void);
 extern void SetPM25ThresCallBack(uint8 mode, 
 				uint16 threshold, PM25_Threshold_CallBack func);
 extern void PM25_Threshold_Handler(void);
+extern void SetThresHold(uint8 mode, uint16 hold);
 #endif
 
 /*
