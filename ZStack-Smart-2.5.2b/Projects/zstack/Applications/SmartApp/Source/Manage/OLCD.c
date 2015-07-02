@@ -453,8 +453,13 @@ void LCD_Init(void)
     P0SEL &= ~0x01; //让P0.0为普通IO口，
     P0DIR |= 0x01; //让P0.0为为输出
 
-    P1SEL &= ~0xE0; //让 P1.5 P1.6 P1.7为普通IO口
+#if (DEVICE_TYPE_ID==0xF0)
+    P0SEL &= ~0xE0; //让 P0.5 P0.6 P0.7为普通IO口
+    P0DIR |= 0xE0; //把 P0.5 P0.6 0.7设置为输出
+#else
+	P1SEL &= ~0xE0; //让 P1.5 P1.6 P1.7为普通IO口
     P1DIR |= 0xE0; //把 P1.5 P1.6 1.7设置为输出
+#endif
     
     LCD_SCL=1;
     LCD_RST=0;
