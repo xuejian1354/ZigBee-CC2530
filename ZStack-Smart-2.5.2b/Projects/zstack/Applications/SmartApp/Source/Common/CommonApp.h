@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-16
+Date:2015-07-02
 **************************************************************************************************/
 
 
@@ -74,11 +74,16 @@ extern "C"
 #define HEARTBERAT_EVT			0x0001		//heart beat event by user defined
 #define CMD_PEROID_EVT			0x0002		//cmd period control event
 #define PERMIT_JOIN_EVT			0x0004
+#define POWERSETTING_COUNT_EVT	0x0008
 #define DOORSENSOR_ISR_EVT		0x0010
 #define DOORSENSOR_DETECT_EVT	0x0020
 #define IRDETECT_ISR_EVT		0x0010
 #define IRDETECT_DETECT_EVT		0x0020
 #define IRDETECT_QUERY_EVT		0x0040
+#define AIRCONTROLLER_QUERY_EVT	0x0080
+
+#define IRRELAY_LEARN_CMD	0x88
+#define IRRELAY_SEND_CMD	0x86
 
 //event peroid
 #ifndef POWER_SAVING
@@ -87,6 +92,7 @@ extern "C"
 #define DOORSENSOR_TIMEOUT  	5000
 #define IRDETECT_TIMEOUT		10000
 #define IRDETECT_QUERY_TIMEOUT	500
+#define AIRCONTROLLER_TIMEOUT	5000
 
 #define PERMIT_JOIN_TIMEOUT	30		//30 Seconds, <=255s
 #else
@@ -96,6 +102,8 @@ extern "C"
 
 #define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
 #endif
+
+#define POWERSETTING_TIMEOUT	3000
 
 #define PERMIT_JOIN_FORBID	0
 #define PERMIT_JOIN_ALWAYS	0xFF
@@ -110,7 +118,7 @@ extern "C"
 #define ZB_INFO_PAN_ID                    6
 #define ZB_INFO_EXT_PAN_ID                7
 
-#if (DEVICE_TYPE_ID==0xF0)
+#if (DEVICE_TYPE_ID==0xF0 || DEVICE_TYPE_ID==14)
 #define AIRCONTROLLER_IR_SEND_MED			"SEN"
 #define AIRCONTROLLER_IR_LEARN_MED			"LEA"
 #define AIRCONTROLLER_PM25_READVAL_MED		"REV"
@@ -119,19 +127,54 @@ extern "C"
 #define AIRCONTROLLER_PM25_SETMODE_MED		"WRM"
 #define AIRCONTROLLER_PM25_SETHOLD_MED		"WRH"
 #define AIRCONTROLLER_GET_DATA_MED			"GDT"
+#define AIRCONTROLLER_OVER_THRESHOLD_MED	"OTD"
 
-#define AIRCONTROL_PM25_THRESMODE_UNABLE	0
 #define AIRCONTROL_PM25_THRESMODE_UP		1
 #define AIRCONTROL_PM25_THRESMODE_DOWN		2
+#define AIRCONTROL_PM25_THRESMODE_UNABLE	3
+
+#define AIRCONTROL_PM25_DEFAULT_TRESHOLD	115
 #endif
 
 /*********************************************************************
  * TYPEDEFS
  */
+typedef struct DATA_CMD
+{
+   uint8 Head; //52 
+   uint8 CMD;//80
+   uint8 PM25[2]; //
+   uint8 PM10[2]; //
+   uint8 data[2];//±£Áô
+   uint8 Check_sum;//
+   uint8 Tail;//53
+}DATA_CMD_T;
+
 //type structure of UART receive handler
 typedef void(*UART_TxHandler)(uint8[], uint8);
 
-#if (DEVICE_TYPE_ID==0xF0)
+#if (DEVICE_TYPE_ID==0xF0 || DEVICE_TYPE_ID==14)
+typedef enum
+{
+	AIRCONTROL_IR_SEND,
+	AIRCONTROL_IR_LEARN,
+	AIRCONTROL_PM25_READVAL,
+	AIRCONTROL_PM25_READMODE,
+	AIRCONTROL_PM25_READHOLD,
+	AIRCONTROL_PM25_SETMODE,
+	AIRCONTROL_PM25_SETHOLD,
+	AIRCONTROL_GET_DATA,
+	AIRCONTROL_NONE,
+}AirController_Method_t;
+
+typedef struct AirController_Opt
+{
+	uint8 PM25_thresmode;	//0, unable; 1, up; 2, down;
+	uint8 PM25_threstrigger;
+	uint16 PM25_threshold;
+	uint16 PM25_val;
+}AirController_Opt_t;
+
 typedef int8(*PM25_Threshold_CallBack)(void);
 #endif
 
@@ -142,12 +185,13 @@ typedef int8(*PM25_Threshold_CallBack)(void);
 extern void HalStatesInit(devStates_t status);
 #endif
 
-#if (DEVICE_TYPE_ID==0xF0)
+#if (DEVICE_TYPE_ID==0xF0 || DEVICE_TYPE_ID==14)
 extern void SetPM25Val(uint16 val);
 extern uint16 GetPM25Val(void);
 extern void SetPM25ThresCallBack(uint8 mode, 
 				uint16 threshold, PM25_Threshold_CallBack func);
 extern void PM25_Threshold_Handler(void);
+extern void SetThresHold(uint8 mode, uint16 hold);
 #endif
 
 /*

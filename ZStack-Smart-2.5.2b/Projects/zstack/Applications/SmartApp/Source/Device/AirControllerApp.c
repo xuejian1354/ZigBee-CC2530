@@ -45,20 +45,6 @@ Date:2015-06-27
 /*********************************************************************
  * TYPEDEFS
  */
-typedef union DATA_CMD
-{
-   uint8 data_buf[10];
-   struct cn_data_t
-   {
-       uint8 Head; //52 
-       uint8 CMD;//80
-       uint8 PM25[2]; //
-       uint8 PM10[2]; //
-       uint8 data[2];//±£¡Ù
-       uint8 Check_sum;//
-       uint8 Tail;//53
-   }data_core;
-}DATA_CMD_T;
 
 /*********************************************************************
  * GLOBAL VARIABLES
@@ -395,13 +381,13 @@ void AirControllerApp_HeartBeatEvent(void)
 #ifdef HAL_UART01_BOTH
 void AirControllerDetect_TxHandler(uint8 txBuf[], uint8 txLen)
 {
-	DATA_CMD_T data_cmd;
+    DATA_CMD_T data_cmd;
    	
-	osal_memcpy(data_cmd.data_buf, txBuf, txLen);
-    if(data_cmd.data_core.Head==0xAA)
+    osal_memcpy(&data_cmd, txBuf, txLen);
+    if(data_cmd.Head==0xAA)
   	{
-    	uint16 PM25_val=(data_cmd.data_core.PM25[0]
-					+data_cmd.data_core.PM25[1]<<8)/10;
+    	uint16 PM25_val=(data_cmd.PM25[0]
+					+data_cmd.PM25[1]<<8)/10;
 
 		if(PM25_val != GetPM25Val())
 		{

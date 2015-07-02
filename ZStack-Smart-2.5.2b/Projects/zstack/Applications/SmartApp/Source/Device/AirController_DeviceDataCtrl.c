@@ -20,29 +20,6 @@ Date:2015-06-16
 /*********************************************************************
  * MACROS
  */
-#define IRRELAY_LEARN_CMD	0x88
-#define IRRELAY_SEND_CMD	0x86
-
-typedef enum
-{
-	AIRCONTROL_IR_SEND,
-	AIRCONTROL_IR_LEARN,
-	AIRCONTROL_PM25_READVAL,
-	AIRCONTROL_PM25_READMODE,
-	AIRCONTROL_PM25_READHOLD,
-	AIRCONTROL_PM25_SETMODE,
-	AIRCONTROL_PM25_SETHOLD,
-	AIRCONTROL_GET_DATA,
-	AIRCONTROL_NONE,
-}AirController_Method_t;
-
-typedef struct AirController_Opt
-{
-	uint8 PM25_thresmode;	//0, unable; 1, up; 2, down;
-	uint8 PM25_threstrigger;
-	uint16 PM25_threshold;
-	uint16 PM25_val;
-}AirController_Opt_t;
 
 /*********************************************************************
  * CONSTANTS

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-27
+Date:2015-07-01
 **************************************************************************************************/
 
 
@@ -116,6 +116,11 @@ extern const uint8 f_tail[4];
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
+#if defined(POWERON_FACTORY_SETTING) && !defined(RTR_NWK)
+void CommonApp_PowerOnFactorySetting(devStates_t status);
+void CommonApp_PowerSettingCountCB( void *params, 
+										uint16 *duration, uint8 *count);
+#endif
 static void CommonApp_ProcessZDOMsgs( zdoIncomingMsg_t *inMsg );
 static void CommonApp_afDatacfm(afDataConfirm_t *data);
 static void CommonApp_HandleKeys( byte shift, uint16 keys );
@@ -298,7 +303,7 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
 
         case AF_INCOMING_MSG_CMD:
 #ifndef POWER_SAVING
-#if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13)
+#if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13) || (DEVICE_TYPE_ID==14)
 		  HalLedSet( HAL_LED_1,  HAL_LED_MODE_BLINK);
 #else
 		  HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
@@ -310,6 +315,9 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
         case ZDO_STATE_CHANGE:
 		  HalLedSet(HAL_LED_3, HAL_LED_MODE_BLINK);
 		  CommonApp_NwkState = (devStates_t)(MSGpkt->hdr.status);
+#if defined(POWERON_FACTORY_SETTING) && !defined(RTR_NWK)
+		  CommonApp_PowerOnFactorySetting(CommonApp_NwkState);
+#endif
 		  CommonApp_ProcessZDOStates( CommonApp_NwkState );
 		  isFirstState = 0;
           break;
@@ -536,6 +544,118 @@ void Data1_TxHandler(uint8 txBuf[], uint8 txLen)
   HalUARTWrite(SERIAL_COM_PORT0, txBuf, txLen);
 }
 #endif
+#endif
+
+#if defined(POWERON_FACTORY_SETTING) && !defined(RTR_NWK)
+#define POWERSETTING_COUNT	3
+static uint8 hasConn = 0;
+static uint8 isNotTimeOut = 1;
+static uint8 isPowerSetCount = 0;
+static uint8 powerSetCount = 0;
+/*********************************************************************
+ * @fn      CommonApp_PowerOnFactorySetting
+ *
+ * @brief   reset to factory setting by power on off
+ *
+ * @param   network status
+ *
+ * @return  none
+ */
+void CommonApp_PowerOnFactorySetting(devStates_t status)
+{
+  if(isFirstState)
+  {
+	if ( osal_nv_item_init( ZCD_NV_POWER_SETTING_COUNT,
+                              sizeof(powerSetCount),
+                              &powerSetCount ) == ZSUCCESS )
+	{
+		osal_nv_read( ZCD_NV_POWER_SETTING_COUNT,
+		            	0,
+		                sizeof( powerSetCount ),
+		                &powerSetCount);
+	}
+
+	CommonApp_SetUserEvent(POWERSETTING_COUNT_EVT, CommonApp_PowerSettingCountCB, 
+  		POWERSETTING_TIMEOUT, TIMER_ONE_EXECUTION, NULL);
+  }
+	
+  if(status == DEV_ZB_COORD || status == DEV_ROUTER 
+  		|| status == DEV_END_DEVICE)
+  {
+	hasConn = 1;
+	
+	if(powerSetCount != 0)
+	{
+		powerSetCount = 0;
+		if ( osal_nv_item_init( ZCD_NV_POWER_SETTING_COUNT,
+                              sizeof(powerSetCount),
+                              &powerSetCount ) == ZSUCCESS )
+		{
+		    osal_nv_write( ZCD_NV_POWER_SETTING_COUNT,
+		                  0,
+		                  sizeof( powerSetCount ),
+		                  &powerSetCount);
+		}
+	}
+
+	return;
+  }
+  
+  if ((zgReadStartupOptions()&ZCD_STARTOPT_DEFAULT_NETWORK_STATE)
+  		|| hasConn || isNotTimeOut)
+  {
+    return;
+  }
+
+  if(!isPowerSetCount)
+  {
+  	isPowerSetCount = 1;
+  	powerSetCount++;
+  	if ( osal_nv_item_init( ZCD_NV_POWER_SETTING_COUNT,
+                            sizeof(powerSetCount),
+                            &powerSetCount ) == ZSUCCESS )
+  	{
+	  osal_nv_write( ZCD_NV_POWER_SETTING_COUNT,
+		             0,
+		             sizeof( powerSetCount ),
+		             &powerSetCount);
+  	}
+
+	if(powerSetCount <= POWERSETTING_COUNT)
+  	{
+	  return;
+  	}
+
+#if defined(HOLD_INIT_AUTHENTICATION)
+    if(devState != DEV_HOLD)
+    {
+      HalLedBlink ( HAL_LED_4, 0, 50, 100 );
+      devStates_t tStates;
+      if (ZSUCCESS == osal_nv_item_init( 
+                          ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
+      {
+        tStates = DEV_HOLD;
+        osal_nv_write(ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates);
+      }
+
+      zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);
+      WatchDogEnable( WDTIMX );
+    }
+#endif
+  }
+}
+
+void CommonApp_PowerSettingCountCB( void *params, 
+										uint16 *duration, uint8 *count)
+{
+	if(CommonApp_NwkState != DEV_ZB_COORD && CommonApp_NwkState != DEV_ROUTER 
+  		|| CommonApp_NwkState != DEV_END_DEVICE)
+	{
+		HalLedBlink ( HAL_LED_2, 2, 50, 100 );
+	}
+	
+	isNotTimeOut = 0;
+}
 #endif
 
 

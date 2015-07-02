@@ -453,12 +453,17 @@ void LCD_Init(void)
     P0SEL &= ~0x01; //让P0.0为普通IO口，
     P0DIR |= 0x01; //让P0.0为为输出
 
+#if (DEVICE_TYPE_ID==0xF0)
     P0SEL &= ~0xE0; //让 P0.5 P0.6 P0.7为普通IO口
     P0DIR |= 0xE0; //把 P0.5 P0.6 0.7设置为输出
+#else
+	P1SEL &= ~0xE0; //让 P1.5 P1.6 P1.7为普通IO口
+    P1DIR |= 0xE0; //把 P1.5 P1.6 1.7设置为输出
+#endif
     
     LCD_SCL=1;
     LCD_RST=0;
-    LCD_DLY_ms(50);
+    LCD_DLY_ms(30);
     LCD_RST=1;      //从上电到下面开始初始化要有足够的时间，即等待RC复位完毕   
     LCD_WrCmd(0xae);//--turn off oled panel
     LCD_WrCmd(0x00);//---set low column address
