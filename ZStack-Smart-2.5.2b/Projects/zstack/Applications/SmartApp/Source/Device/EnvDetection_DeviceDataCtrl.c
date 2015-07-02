@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-01
+Date:2015-07-02
 **************************************************************************************************/
 
 
@@ -243,10 +243,10 @@ void HalDeviceInit (void)
 		break;
 		
 	default: 
-		SetPM25ThresCallBack(AIRCONTROL_PM25_THRESMODE_UP, 300, 
+		SetPM25ThresCallBack(AIRCONTROL_PM25_THRESMODE_UP, AIRCONTROL_PM25_DEFAULT_TRESHOLD, 
 							EnvDetection_PM25_Threshold_CallBack);
 
-		SetThresHold(AIRCONTROL_PM25_THRESMODE_UP, 300);
+		SetThresHold(AIRCONTROL_PM25_THRESMODE_UP, AIRCONTROL_PM25_DEFAULT_TRESHOLD);
 		break;
 	}
 

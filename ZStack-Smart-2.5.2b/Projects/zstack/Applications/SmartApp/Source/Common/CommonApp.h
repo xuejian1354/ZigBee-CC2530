@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-01
+Date:2015-07-02
 **************************************************************************************************/
 
 
@@ -132,6 +132,8 @@ extern "C"
 #define AIRCONTROL_PM25_THRESMODE_UP		1
 #define AIRCONTROL_PM25_THRESMODE_DOWN		2
 #define AIRCONTROL_PM25_THRESMODE_UNABLE	3
+
+#define AIRCONTROL_PM25_DEFAULT_TRESHOLD	115
 #endif
 
 /*********************************************************************

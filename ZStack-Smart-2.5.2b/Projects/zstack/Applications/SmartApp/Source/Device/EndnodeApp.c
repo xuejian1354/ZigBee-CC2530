@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-01
+Date:2015-07-02
 **************************************************************************************************/
 
 /*********************************************************************
@@ -293,7 +293,7 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
       	devStates_t tStates;
 
 #if (DEVICE_TYPE_ID==14) || (DEVICE_TYPE_ID==0xF0)
-		SetThresHold(AIRCONTROL_PM25_THRESMODE_UP, 300);
+		SetThresHold(AIRCONTROL_PM25_THRESMODE_UP, AIRCONTROL_PM25_DEFAULT_TRESHOLD);
 #endif
 		
       	if (ZSUCCESS == osal_nv_item_init( 
