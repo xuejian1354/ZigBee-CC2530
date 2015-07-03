@@ -463,7 +463,7 @@ void LCD_Init(void)
     
     LCD_SCL=1;
     LCD_RST=0;
-    LCD_DLY_ms(30);
+    LCD_DLY_ms(50);
     LCD_RST=1;      //从上电到下面开始初始化要有足够的时间，即等待RC复位完毕   
     LCD_WrCmd(0xae);//--turn off oled panel
     LCD_WrCmd(0x00);//---set low column address
