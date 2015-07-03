@@ -996,13 +996,13 @@ uint8 osal_init_system( void )
   // Initialize the Power Management System
   osal_pwrmgr_init();
 
+  // Initialize the system tasks.
+  osalInitTasks();
+
 #if(DEVICE_TYPE_ID!=0)
   // Initialze end device hardware
   HalDeviceInit();
 #endif
-
-  // Initialize the system tasks.
-  osalInitTasks();
 
   // Setup efficient search for the first free block of heap.
   osal_mem_kick();

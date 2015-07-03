@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-26
+Date:2015-07-02
 **************************************************************************************************/
 
 /*********************************************************************
@@ -291,12 +291,16 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
       {
       	HalLedBlink ( HAL_LED_4, 0, 50, 100 );
       	devStates_t tStates;
+
+#if (DEVICE_TYPE_ID==14) || (DEVICE_TYPE_ID==0xF0)
+		SetThresHold(AIRCONTROL_PM25_THRESMODE_UP, AIRCONTROL_PM25_DEFAULT_TRESHOLD);
+#endif
+		
       	if (ZSUCCESS == osal_nv_item_init( 
                                         ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
       	{
           tStates = DEV_HOLD;
-          osal_nv_write(
-                      ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates);
+          osal_nv_write(ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates);
       	}
 
       	zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-26
+Date:2015-07-01
 **************************************************************************************************/
 
 
@@ -303,7 +303,7 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
 
         case AF_INCOMING_MSG_CMD:
 #ifndef POWER_SAVING
-#if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13)
+#if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13) || (DEVICE_TYPE_ID==14)
 		  HalLedSet( HAL_LED_1,  HAL_LED_MODE_BLINK);
 #else
 		  HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
@@ -319,7 +319,6 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
 		  CommonApp_PowerOnFactorySetting(CommonApp_NwkState);
 #endif
 		  CommonApp_ProcessZDOStates( CommonApp_NwkState );
-
 		  isFirstState = 0;
           break;
 
@@ -942,7 +941,18 @@ void Update_Refresh(uint8 *data, uint8 length)
 
 	if(!SSAFrame_Package(HEAD_UR, &mFrame, &fBuf, &fLen))
 	{
-		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+		if(nwkAddr == COORDINATOR_ADDR)
+		{
+#ifndef HAL_UART01_BOTH
+			HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
+#else
+			HalUARTWrite(SERIAL_COM_PORT1, fBuf, fLen);
+#endif
+		}
+		else
+		{
+			CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+		}
 	}
 }
 #endif
@@ -980,7 +990,7 @@ void CommonApp_PermitJoiningLedIndicate(
 	{
 	case HAL_LED_MODE_ON:
 		isPermitJoining = TRUE;
-#if defined(HAL_MT7620_GPIO_MAP)  || (DEVICE_TYPE_ID==13)
+#if (defined(HAL_MT7620_GPIO_MAP) && !(DEVICE_TYPE_ID==0xF0))  || (DEVICE_TYPE_ID==13)
 		HalLedSet( HAL_LED_2,  mode);
 #else
 		HalLedSet( HAL_LED_1,  mode);
@@ -989,7 +999,7 @@ void CommonApp_PermitJoiningLedIndicate(
 
 	case HAL_LED_MODE_OFF:
 		isPermitJoining = FALSE;
-#if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13)
+#if (defined(HAL_MT7620_GPIO_MAP) && !(DEVICE_TYPE_ID==0xF0))  || (DEVICE_TYPE_ID==13)
 		HalLedSet( HAL_LED_2,  mode);
 #else
 		HalLedSet( HAL_LED_1,  mode);
