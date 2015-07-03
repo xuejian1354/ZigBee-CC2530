@@ -2156,7 +2156,7 @@ void ZDO_NetworkFormationConfirmCB( ZStatus_t Status )
 
   if ( Status == ZSUCCESS )
   {
-#if !defined(HAL_MT7620_GPIO_MAP)  || !(DEVICE_TYPE_ID==13) || !(DEVICE_TYPE_ID==14)
+#if !defined(HAL_MT7620_GPIO_MAP)  && (!(DEVICE_TYPE_ID==13) || !(DEVICE_TYPE_ID==14))
     // LED on shows Coordinator started
     HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
     // LED off forgets HOLD_AUTO_START

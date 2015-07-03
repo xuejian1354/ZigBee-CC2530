@@ -990,7 +990,7 @@ void CommonApp_PermitJoiningLedIndicate(
 	{
 	case HAL_LED_MODE_ON:
 		isPermitJoining = TRUE;
-#if defined(HAL_MT7620_GPIO_MAP)  || (DEVICE_TYPE_ID==13)
+#if (defined(HAL_MT7620_GPIO_MAP) && !(DEVICE_TYPE_ID==0xF0))  || (DEVICE_TYPE_ID==13)
 		HalLedSet( HAL_LED_2,  mode);
 #else
 		HalLedSet( HAL_LED_1,  mode);
@@ -999,7 +999,7 @@ void CommonApp_PermitJoiningLedIndicate(
 
 	case HAL_LED_MODE_OFF:
 		isPermitJoining = FALSE;
-#if defined(HAL_MT7620_GPIO_MAP) || (DEVICE_TYPE_ID==13)
+#if (defined(HAL_MT7620_GPIO_MAP) && !(DEVICE_TYPE_ID==0xF0))  || (DEVICE_TYPE_ID==13)
 		HalLedSet( HAL_LED_2,  mode);
 #else
 		HalLedSet( HAL_LED_1,  mode);
