@@ -53,6 +53,7 @@ extern "C"
  */
 
 #include <limits.h>
+#include <string.h>
 
 #include "comdef.h"
 #include "OSAL_Memory.h"

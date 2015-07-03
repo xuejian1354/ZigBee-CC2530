@@ -65,6 +65,11 @@ extern "C"
 #define HAL_PWRMGR_CONSERVE_EVENT           0x0001
 #endif
 
+//#ifdef KEY_PUSH_PORT_0_BUTTON
+#define HAL_KEY_COUNT_EVENT   0x0100
+#define HAL_LONG_KEY_EVENT	  0x0200
+//#endif
+
 #define HAL_PWRMGR_CONSERVE_DELAY           10
 #define PERIOD_RSSI_RESET_TIMEOUT           10
 
@@ -94,6 +99,13 @@ extern void Hal_ProcessPoll (void);
  * Initialize HW
  */
 extern void HalDriverInit (void);
+
+/*
+ * Initialize End Device HW
+ */
+#if(DEVICE_TYPE_ID!=0)
+extern void HalDeviceInit (void);
+#endif
 
 #ifdef __cplusplus
 }

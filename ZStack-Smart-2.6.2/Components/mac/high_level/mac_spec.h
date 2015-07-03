@@ -231,13 +231,13 @@
 #define MAC_SPEC_ED_MAX                 0xFF
 
 /* Threshold above receiver sensitivity for minimum energy detect in dBm (see 6.9.7) */
-#define MAC_SPEC_ED_MIN_DBM_ABOVE_RECEIVER_SENSITIVITY    10
+#define MAC_SPEC_ED_MIN_DBM_ABOVE_RECEIVER_SENSITIVITY    -8
 
 
 /* ----- values specific to 2450 MHz PHY ----- */
 
 /* minimum receiver sensitivity in dBm (see 6.5.3.3) */
-#define MAC_SPEC_MIN_RECEIVER_SENSITIVITY   -85
+#define MAC_SPEC_MIN_RECEIVER_SENSITIVITY   -95
 
 /* Length of preamble field in symbols */
 #define MAC_SPEC_PREAMBLE_FIELD_LENGTH      8

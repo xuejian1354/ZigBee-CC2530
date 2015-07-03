@@ -538,6 +538,25 @@ uint8 zgInit( void )
   // Initialize the items table
   zgInitItems( setDefault );
 
+#if defined(HOLD_INIT_AUTHENTICATION)
+#if !defined(ZDO_COORDINATOR)
+  devStates_t tStates;
+  if (ZSUCCESS == osal_nv_item_init( 
+  	ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
+  {
+  	//读取设置成功后的启动方式
+    if (ZSUCCESS == osal_nv_read( 
+  	  ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates) 
+  	  && tStates == DEV_INIT )
+    {
+		devState = tStates;
+	}
+  }
+#else
+  devState = DEV_INIT;
+#endif
+#endif
+
 #ifndef NONWK
   if ( ZG_SECURE_ENABLED )
   {

@@ -131,10 +131,17 @@
 #define UTXxIE                     UTX0IE
 #define UTXxIF                     UTX0IF
 #else
+#if defined(HAL_UART_DMA_ALT1)
+#define PxOUT                      P0
+#define PxIN                       P0
+#define PxDIR                      P0DIR
+#define PxSEL                      P0SEL
+#else
 #define PxOUT                      P1
 #define PxIN                       P1
 #define PxDIR                      P1DIR
 #define PxSEL                      P1SEL
+#endif
 #define UxCSR                      U1CSR
 #define UxUCR                      U1UCR
 #define UxDBUF                     U1DBUF
@@ -152,10 +159,17 @@
 #define HAL_UART_Px_RTS            0x20         // Peripheral I/O Select for RTS.
 #define HAL_UART_Px_CTS            0x10         // Peripheral I/O Select for CTS.
 #else
+#if defined(HAL_UART_DMA_ALT1)
+#define HAL_UART_PERCFG_BIT        0x02
+#define HAL_UART_Px_RTS            0x08
+#define HAL_UART_Px_CTS            0x04
+#define HAL_UART_Px_RX_TX          0x30
+#else
 #define HAL_UART_PERCFG_BIT        0x02         // USART1 on P1, Alt-2; so set this bit.
 #define HAL_UART_Px_RTS            0x20         // Peripheral I/O Select for RTS.
 #define HAL_UART_Px_CTS            0x10         // Peripheral I/O Select for CTS.
 #define HAL_UART_Px_RX_TX          0xC0         // Peripheral I/O Select for Rx/Tx.
+#endif
 #endif
 
 // The timeout tick is at 32-kHz, so multiply msecs by 33.
@@ -325,7 +339,7 @@ static void HalUARTInitDMA(void)
   P2DIR &= ~P2DIR_PRIPO;
   P2DIR |= HAL_UART_PRIPO;
 
-#if (HAL_UART_DMA == 1)
+#if (HAL_UART_DMA == 1) || defined(HAL_UART_DMA_ALT1)
   PERCFG &= ~HAL_UART_PERCFG_BIT;    // Set UART0 I/O to Alt. 1 location on P0.
 #else
   PERCFG |= HAL_UART_PERCFG_BIT;     // Set UART1 I/O to Alt. 2 location on P1.
@@ -465,11 +479,13 @@ static void HalUARTOpenDMA(halUARTCfg_t *config)
   if (config->flowControl)
   {
     UxUCR = UCR_FLOW | UCR_STOP;
+#ifndef HAL_UART_DMA_DISABLE_RTCT
     PxSEL |= HAL_UART_Px_CTS;
     // DMA Rx is always on (self-resetting). So flow must be controlled by the S/W polling the Rx
     // buffer level. Start by allowing flow.
     PxOUT &= ~HAL_UART_Px_RTS;
     PxDIR |=  HAL_UART_Px_RTS;
+#endif
   }
   else
   {
@@ -519,7 +535,9 @@ static uint16 HalUARTReadDMA(uint8 *buf, uint16 len)
     }
 #endif
   }
+#ifndef HAL_UART_DMA_DISABLE_RTCT
   PxOUT &= ~HAL_UART_Px_RTS;  // Re-enable the flow on any read.
+#endif
 
   return cnt;
 }
@@ -641,7 +659,9 @@ static void HalUARTPollDMA(void)
   else if (cnt >= HAL_UART_DMA_HIGH)
   {
     evt = HAL_UART_RX_ABOUT_FULL;
+#ifndef HAL_UART_DMA_DISABLE_RTCT
     PxOUT |= HAL_UART_Px_RTS;  // Disable Rx flow.
+#endif
   }
   else if (cnt && !dmaCfg.rxTick)
   {
@@ -753,9 +773,11 @@ static uint16 HalUARTRxAvailDMA(void)
  *****************************************************************************/
 static void HalUARTSuspendDMA( void )
 {
+#ifndef HAL_UART_DMA_DISABLE_RTCT
   PxOUT |= HAL_UART_Px_RTS;  // Disable Rx flow.
-  UxCSR &= ~CSR_RE;
   P0IEN |=  HAL_UART_Px_CTS;  // Enable the CTS ISR.
+#endif
+  UxCSR &= ~CSR_RE;
 }
 
 /******************************************************************************
@@ -769,10 +791,12 @@ static void HalUARTSuspendDMA( void )
  *****************************************************************************/
 static void HalUARTResumeDMA( void )
 {
+#ifndef HAL_UART_DMA_DISABLE_RTCT
   P0IEN &= ~HAL_UART_Px_CTS;  // Disable the CTS ISR.
+  PxOUT &= ~HAL_UART_Px_RTS;  // Re-enable Rx flow.
+#endif
   UxUCR |= UCR_FLUSH;
   UxCSR |= CSR_RE;
-  PxOUT &= ~HAL_UART_Px_RTS;  // Re-enable Rx flow.
 }
 
 /******************************************************************************

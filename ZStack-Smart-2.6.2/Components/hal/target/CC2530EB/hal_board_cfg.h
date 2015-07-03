@@ -58,11 +58,18 @@
  *                        Note that only one of them can be defined
  * ------------------------------------------------------------------------------------------------
  */
-#define xHAL_PA_LNA
+#if defined(POWER_AMPLIFIER_POSITION_1) && defined(POWER_AMPLIFIER_POSITION_2)
+#error "power amplifier position can not be mapped!"
+#endif
+
+#define XHAL_PA_LNA
 #define xHAL_PA_LNA_CC2590
 #define xHAL_PA_LNA_SE2431L
 #define xHAL_PA_LNA_CC2592
 
+#if defined(RTR_NWK) && (defined(POWER_AMPLIFIER_POSITION_1) || defined(POWER_AMPLIFIER_POSITION_2))
+#define HAL_PA_LNA
+#endif
 
 /* ------------------------------------------------------------------------------------------------
  *                                       Board Indentifier
@@ -115,6 +122,7 @@
 
 #define HAL_LED_BLINK_DELAY()   st( { volatile uint32 i; for (i=0; i<0x5800; i++) { }; } )
 
+#if defined (HAL_GPIO_DEFAULT) && !defined (HAL_GPIO_FEATURE)
 /* 1 - Green */
 #define LED1_BV           BV(0)
 #define LED1_SBIT         P1_0
@@ -153,6 +161,7 @@
   #define PUSH1_POLARITY    ACTIVE_LOW
 #else
   #error Unknown Board Indentifier
+#endif
 #endif
 
 /* Joystick Center Press */
@@ -292,7 +301,11 @@ extern void MAC_RfFrontendSetup(void);
   /* Turn on cache prefetch mode */                              \
   PREFETCH_ENABLE();                                             \
                                                                  \
+  /* set direction for GPIO outputs  */                          		\
+  HAL_TURN_OFF_LED1();                                           \
   LED1_DDR |= LED1_BV;                                           \
+  HAL_TURN_OFF_LED2();                                           \
+  LED2_DDR |= LED2_BV;                                           \
                                                                  \
   /* Set PA/LNA HGM control P0_7 */                              \
   P0DIR |= BV(7);                                                \
@@ -342,6 +355,7 @@ extern void MAC_RfFrontendSetup(void);
 /* ----------- Debounce ---------- */
 #define HAL_DEBOUNCE(expr)    { int i; for (i=0; i<500; i++) { if (!(expr)) i = 0; } }
 
+#if defined (HAL_GPIO_DEFAULT) && !defined (HAL_GPIO_FEATURE)
 /* ----------- Push Buttons ---------- */
 #define HAL_PUSH_BUTTON1()        (PUSH1_POLARITY (PUSH1_SBIT))
 #define HAL_PUSH_BUTTON2()        (PUSH2_POLARITY (PUSH2_SBIT))
@@ -418,6 +432,7 @@ extern void MAC_RfFrontendSetup(void);
   #define HAL_STATE_LED3()          HAL_STATE_LED1()
   #define HAL_STATE_LED4()          HAL_STATE_LED1()
 
+#endif
 #endif
 
 /* ----------- XNV ---------- */
@@ -506,9 +521,10 @@ st( \
 
 /* Set to TRUE enable LCD usage, FALSE disable it */
 #ifndef HAL_LCD
-#define HAL_LCD TRUE
+#define HAL_LCD FALSE
 #endif
 
+#if defined (HAL_GPIO_DEFAULT) && !defined (HAL_GPIO_FEATURE)
 /* Set to TRUE enable LED usage, FALSE disable it */
 #ifndef HAL_LED
 #define HAL_LED TRUE
@@ -521,6 +537,7 @@ st( \
 #ifndef HAL_KEY
 #define HAL_KEY TRUE
 #endif
+#endif
 
 /* Set to TRUE enable UART usage, FALSE disable it */
 #ifndef HAL_UART
@@ -532,6 +549,8 @@ st( \
 #endif
 
 #if HAL_UART
+#ifndef HAL_UART01_BOTH
+
 #ifndef HAL_UART_DMA
 #if HAL_DMA
 #if (defined ZAPP_P2) || (defined ZTOOL_P2)
@@ -563,6 +582,15 @@ st( \
 #define HAL_UART_PRIPO             0x00
 #else
 #define HAL_UART_PRIPO             0x40
+#endif
+
+#else
+// Used priority USART1 over USART0
+#define HAL_UART_PRIPO             0x00
+//#define HAL_UART_PRIPO             0x40
+
+#define HAL_UART_DMA  2
+#define HAL_UART_ISR  1
 #endif
 
 #else

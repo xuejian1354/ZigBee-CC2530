@@ -238,7 +238,7 @@ typedef struct
 {
   osal_event_hdr_t hdr;
   uint8 state; // shift
-  uint8 keys;  // keys
+  uint16 keys;  // keys
 } keyChange_t;
 
 /*********************************************************************
@@ -266,7 +266,7 @@ typedef struct
   /*
    * Send "Key Pressed" message to application
    */
-  extern uint8 OnBoard_SendKeys( uint8 keys, uint8 shift );
+  extern uint8 OnBoard_SendKeys( uint16 keys, uint8 shift );
 
 /* LCD Emulation/Control Functions */
   /*
@@ -307,7 +307,7 @@ typedef struct
   /*
    * Callback routine to handle keys
    */
-  extern void OnBoard_KeyCallback ( uint8 keys, uint8 state );
+  extern void OnBoard_KeyCallback ( uint16 keys, uint8 state );
 
   /*
    * Board specific random number generator

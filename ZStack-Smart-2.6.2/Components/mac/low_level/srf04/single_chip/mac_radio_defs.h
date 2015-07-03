@@ -171,7 +171,7 @@
 #define MAC_RADIO_TX_POWER_INVALID              0xFF
 
 #define MAC_RADIO_RECEIVER_SENSITIVITY_DBM      -97 /* dBm */
-#define MAC_RADIO_RECEIVER_SATURATION_DBM       10  /* dBm */
+#define MAC_RADIO_RECEIVER_SATURATION_DBM       -4  /* dBm */
 
 /* Reduce RX power consumption current to 20mA at the cost of some sensitivity
  * Note: This feature can be applied to CC2530 and CC2533 only.
@@ -204,9 +204,9 @@
     defined MAC_RUNTIME_SE2431L ||  defined MAC_RUNTIME_CC2592 || \
     defined HAL_PA_LNA || defined HAL_PA_LNA_CC2590 || \
     defined HAL_PA_LNA_SE2431L || defined HAL_PA_LNA_CC2592
-# define MAC_RADIO_RSSI_LNA_OFFSET(x)            st(  x += macRadioDefsRssiAdj[macRadioDefsRefTableId&0x0F]; )
+#define MAC_RADIO_RSSI_LNA_OFFSET(x)            st(  x += macRadioDefsRssiAdj[macRadioDefsRefTableId&0x0F]; )
 #else
-# define MAC_RADIO_RSSI_LNA_OFFSET(x)
+#define MAC_RADIO_RSSI_LNA_OFFSET(x)
 #endif
       
 
@@ -497,7 +497,7 @@ MAC_INTERNAL_API void macRadioTurnOffPower(void);
  *  In this case, the value passed to the set power function will be written directly to TXCTRLL.
  *  Characterized values for this register can be found in the datasheet in the "power settings" table.
  */
-//#define HAL_MAC_USE_REGISTER_POWER_VALUES
+#define HAL_MAC_USE_REGISTER_POWER_VALUES
 
 
 /**************************************************************************************************

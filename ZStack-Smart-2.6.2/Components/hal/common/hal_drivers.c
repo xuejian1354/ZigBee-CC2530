@@ -232,6 +232,22 @@ uint16 Hal_ProcessEvent( uint8 task_id, uint16 events )
     return events ^ HAL_KEY_EVENT;
   }
 
+#ifdef HAL_KEY_COMBINE_INT_METHOD
+  if (events & HAL_KEY_COUNT_EVENT)
+  {
+  	HalKeyCountPoll();
+	return events ^ HAL_KEY_COUNT_EVENT;
+  }
+
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
+  if (events & HAL_LONG_KEY_EVENT)
+  {
+  	HalLongKeyListener();
+	return events ^ HAL_LONG_KEY_EVENT;
+  }
+#endif
+#endif
+
 #if defined POWER_SAVING
   if ( events & HAL_SLEEP_TIMER_EVENT )
   {
@@ -292,6 +308,13 @@ void Hal_ProcessPoll ()
  
 }
 
+#if !defined(DEVICE_TYPE_ID) && defined(SSA_ENDNODE)
+void HalDeviceInit(void)
+{}
+
+void HalStatesInit(devStates_t status)
+{}
+#endif
 /**************************************************************************************************
 **************************************************************************************************/
 

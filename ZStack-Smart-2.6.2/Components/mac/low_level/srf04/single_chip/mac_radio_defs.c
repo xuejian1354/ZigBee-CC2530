@@ -567,11 +567,17 @@ MAC_INTERNAL_API void macRadioTurnOnPower(void)
     {   
       /* P1_1 -> PAEN */
       RFC_OBS_CTRL0 = RFC_OBS_CTRL_PA_PD_INV;
+#ifdef POWER_AMPLIFIER_POSITION_2
+      OBSSEL2       = OBSSEL_OBS_CTRL0;
+#else
       OBSSEL1       = OBSSEL_OBS_CTRL0;
+#endif
       
       /* P1_4 -> EN (LNA control) */
       RFC_OBS_CTRL1 = RFC_OBS_CTRL_LNAMIX_PD_INV;
+#ifndef POWER_AMPLIFIER_POSITION_2
       OBSSEL4       = OBSSEL_OBS_CTRL1;
+#endif
     }
     
     /* For any RX, change CCA settings for CC2591 compression workaround.

@@ -135,7 +135,7 @@ void InitBoard( uint8 level )
   else  // !OB_COLD
   {
     /* Initialize Key stuff */
-    #if defined (ISR_KEYINTERRUPT)
+    #if defined (ISR_KEYINTERRUPT) || defined(HAL_KEY_INT_METHOD)
     HalKeyConfig(HAL_KEY_INTERRUPT_ENABLE , OnBoard_KeyCallback);
     #else
     HalKeyConfig(HAL_KEY_INTERRUPT_DISABLE, OnBoard_KeyCallback);
@@ -211,7 +211,7 @@ uint8 RegisterForKeys( uint8 task_id )
  *
  * @return  status
  *********************************************************************/
-uint8 OnBoard_SendKeys( uint8 keys, uint8 state )
+uint8 OnBoard_SendKeys( uint16 keys, uint8 state )
 {
   keyChange_t *msgPtr;
 
@@ -243,7 +243,7 @@ uint8 OnBoard_SendKeys( uint8 keys, uint8 state )
  *
  * @return  void
  *********************************************************************/
-void OnBoard_KeyCallback ( uint8 keys, uint8 state )
+void OnBoard_KeyCallback ( uint16 keys, uint8 state )
 {
   uint8 shift;
   (void)state;

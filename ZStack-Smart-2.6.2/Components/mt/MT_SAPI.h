@@ -46,7 +46,6 @@
  */
 #include "ZComDef.h"
 #include "MT.h"
-#include "sapi.h"
 
 #include "OnBoard.h"
 

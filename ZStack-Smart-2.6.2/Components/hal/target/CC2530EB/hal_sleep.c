@@ -58,7 +58,7 @@
 #include "mac_mcu.h"
 
 #ifndef ZG_BUILD_ENDDEVICE_TYPE
-# define ZG_BUILD_ENDDEVICE_TYPE FALSE
+#define ZG_BUILD_ENDDEVICE_TYPE FALSE
 #endif
 
 #if ZG_BUILD_ENDDEVICE_TYPE && defined (NWK_AUTO_POLL)

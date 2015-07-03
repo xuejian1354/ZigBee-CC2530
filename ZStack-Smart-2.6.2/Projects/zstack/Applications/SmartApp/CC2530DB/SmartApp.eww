@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<workspace>
+  <project>
+    <path>$WS_DIR$\Devices\Connector.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\DemoBase.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\AirController.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\LightSwitchOne.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\LightSwitchTwo.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\LightSwitchThree.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\LightSwitchFour.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\Alarm.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\IRDetection.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\DoorSensor.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\EnvDetection.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\DustSensor.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\IRRelay.ewp</path>
+  </project>
+  <batchBuild/>
+</workspace>
+
+

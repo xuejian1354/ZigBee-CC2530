@@ -248,6 +248,10 @@ uint8 nwkStatus;
 endPointDesc_t *ZDApp_AutoFindMode_epDesc = (endPointDesc_t *)NULL;
 uint8 ZDApp_LeaveCtrl;
 
+#if defined(HOLD_INIT_AUTHENTICATION)
+#define HOLD_AUTO_START
+#endif
+
 #if defined( HOLD_AUTO_START )
   devStates_t devState = DEV_HOLD;
 #else
@@ -470,6 +474,24 @@ UINT16 ZDApp_event_loop( uint8 task_id, UINT16 events )
 
   if ( events & ZDO_STATE_CHANGE_EVT )
   {
+#if defined(HOLD_INIT_AUTHENTICATION) && !defined(ZDO_COORDINATOR)
+  	if ( devState == DEV_END_DEVICE ||
+  		 devState == DEV_ROUTER)
+  	{
+		devStates_t tStates;
+		
+		if (ZSUCCESS == osal_nv_read( 
+  	  		  ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates) 
+  	  		  && tStates != DEV_INIT )
+		{
+			//配置成功后, 设置为默认化自启
+			tStates = DEV_INIT;
+			osal_nv_write( ZCD_NV_NWK_HOLD_STARTUP, 
+					0, sizeof(tStates),  &tStates);
+		}
+  	}
+#endif
+
     ZDO_UpdateNwkStatus( devState );
 
     // At start up, do one MTO route discovery if the device is a concentrator
@@ -2319,11 +2341,13 @@ void ZDO_NetworkFormationConfirmCB( ZStatus_t Status )
 
   if ( Status == ZSUCCESS )
   {
+#if !defined(HAL_MT7620_GPIO_MAP)  && (!(DEVICE_TYPE_ID==13) || !(DEVICE_TYPE_ID==14))
     // LED on shows Coordinator started
     HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
 
     // LED off forgets HOLD_AUTO_START
     HalLedSet (HAL_LED_4, HAL_LED_MODE_OFF);
+#endif
 
 #if defined ( ZBIT )
     SIM_SetColor(0xd0ffd0);

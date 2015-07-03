@@ -186,7 +186,7 @@ uint8 HalLedSet (uint8 leds, uint8 mode)
   }
 
 #elif (HAL_LED == TRUE)
-  LedOnOff(leds, mode);
+  HalLedOnOff(leds, mode);
 #else
   // HAL LED is disabled, suppress unused argument warnings
   (void) leds;

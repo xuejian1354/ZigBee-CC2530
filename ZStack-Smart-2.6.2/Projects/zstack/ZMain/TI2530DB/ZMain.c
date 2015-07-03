@@ -84,6 +84,11 @@ int main( void )
   // Initialization for board related stuff such as LEDs
   HAL_BOARD_INIT();
 
+#ifdef POWER_AMPLIFIER_POSITION_2
+  P2DIR |= 0x01;
+  P2_0 = 1;
+#endif
+
   // Make sure supply voltage is high enough to run
   zmain_vdd_check();
 
@@ -98,6 +103,9 @@ int main( void )
 
   // Initialize the MAC
   ZMacInit();
+
+  uint8 value = 0xD5;
+  MAC_MlmeSetReq(MAC_PHY_TRANSMIT_POWER_SIGNED, &value);
 
   // Determine the extended address
   zmain_ext_addr();

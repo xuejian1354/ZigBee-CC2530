@@ -66,14 +66,14 @@ extern "C"
 #define HAL_KEY_STATE_NORMAL          0x00
 #define HAL_KEY_STATE_SHIFT           0x01
 
-#define HAL_KEY_SW_1 0x01  // Joystick up
-#define HAL_KEY_SW_2 0x02  // Joystick right
-#define HAL_KEY_SW_5 0x04  // Joystick center
-#define HAL_KEY_SW_4 0x08  // Joystick left
-#define HAL_KEY_SW_3 0x10  // Joystick down
+#define HAL_KEY_SW_1 0x0001  // Joystick up
+#define HAL_KEY_SW_2 0x0002  // Joystick right
+#define HAL_KEY_SW_5 0x0004  // Joystick center
+#define HAL_KEY_SW_4 0x0008  // Joystick left
+#define HAL_KEY_SW_3 0x0010  // Joystick down
 
-#define HAL_KEY_SW_6 0x20  // Button S1 if available
-#define HAL_KEY_SW_7 0x40  // Button S2 if available
+#define HAL_KEY_SW_6 0x0020  // Button S1 if available
+#define HAL_KEY_SW_7 0x0040  // Button S2 if available
 
 /* Joystick */
 #define HAL_KEY_UP     0x01  // Joystick up
@@ -89,10 +89,28 @@ extern "C"
 #define HAL_KEY_BUTTON_UP      0x40  // Button up
 #define HAL_KEY_BUTTON_DOWN    0x80  // Button down
 
+#define HAL_KEY_PORT_1_SWITCH_1 0x0100 
+#define HAL_KEY_PORT_1_SWITCH_2 0x0200
+#define HAL_KEY_PORT_1_SWITCH_3 0x0400
+#define HAL_KEY_PORT_1_SWITCH_4 0x0800
+#define HAL_KEY_PORT_1_SWITCH_5 0x1000
+#define HAL_KEY_PORT_1_SWITCH_6 0x2000
+#define HAL_KEY_PORT_1_SWITCH_7 0x4000
+#define HAL_KEY_PORT_1_SWITCH_8 0x8000
+#define HAL_KEY_PORT_1_SWITCHS	0xFF00	//switch 1.  ~  switch 8.
+
+#define HAL_KEY_MATCH_ID_SIZE	32
+
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+#define HAL_KEY_SHORT_PUSH	1
+#define HAL_KEY_LONG_PUSH	2
+#define HAL_KEY_LONG_LONG_PUSH	3
+#endif
+
 /**************************************************************************************************
  * TYPEDEFS
  **************************************************************************************************/
-typedef void (*halKeyCBack_t) (uint8 keys, uint8 state);
+typedef void (*halKeyCBack_t) (uint16 keys, uint8 state);
 
 /**************************************************************************************************
  *                                             GLOBAL VARIABLES
@@ -132,6 +150,24 @@ extern uint8 HalKeyExitSleep ( void );
  * This is for internal used by hal_driver
  */
 extern void HalKeyPoll ( void );
+
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+extern uint8 HalKeyGetEdge(uint8 port);
+extern uint32 HalKeyEdgeChanged(uint8 port);
+#endif
+#ifdef HAL_KEY_COMBINE_INT_METHOD
+extern void HalKeyCountPoll ( void );
+#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
+extern void HalLongKeyListener( void );
+#endif
+#ifdef HAL_KEY_MATCH_ID
+extern uint8 *get_keys_id(void);
+#endif
+#ifdef HAL_KEY_LONG_SHORT_DISTINGUISH
+uint8 *get_keys_push(void);
+#endif
+#endif
+extern uint8 halGetKeyCount( void );
 
 /*
  * This is for internal used by hal_sleep

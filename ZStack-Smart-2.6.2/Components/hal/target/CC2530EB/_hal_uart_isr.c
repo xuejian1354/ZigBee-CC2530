@@ -118,9 +118,15 @@
 #define UTXxIE                     UTX0IE
 #define UTXxIF                     UTX0IF
 #else
+#if defined(HAL_UART_ISR_ALT1)
+#define PxOUT                      P0
+#define PxDIR                      P0DIR
+#define PxSEL                      P0SEL
+#else
 #define PxOUT                      P1
 #define PxDIR                      P1DIR
 #define PxSEL                      P1SEL
+#endif
 #define UxCSR                      U1CSR
 #define UxUCR                      U1UCR
 #define UxDBUF                     U1DBUF
@@ -138,10 +144,17 @@
 #define HAL_UART_Px_RTS            0x20         // Peripheral I/O Select for RTS.
 #define HAL_UART_Px_CTS            0x10         // Peripheral I/O Select for CTS.
 #else
+#if defined(HAL_UART_ISR_ALT1)
+#define HAL_UART_PERCFG_BIT        0x02
+#define HAL_UART_Px_RTS            0x08
+#define HAL_UART_Px_CTS            0x04
+#define HAL_UART_Px_RX_TX          0x30
+#else
 #define HAL_UART_PERCFG_BIT        0x02         // USART1 on P1, Alt-2; so set this bit.
 #define HAL_UART_Px_RTS            0x20         // Peripheral I/O Select for RTS.
 #define HAL_UART_Px_CTS            0x10         // Peripheral I/O Select for CTS.
 #define HAL_UART_Px_RX_TX          0xC0         // Peripheral I/O Select for Rx/Tx.
+#endif
 #endif
 
 // The timeout tick is at 32-kHz, so multiply msecs by 33.
@@ -240,7 +253,7 @@ static void HalUARTInitISR(void)
   P2DIR &= ~P2DIR_PRIPO;
   P2DIR |= HAL_UART_PRIPO;
 
-#if (HAL_UART_ISR == 1)
+#if (HAL_UART_ISR == 1) || defined(HAL_UART_ISR_ALT1)
   PERCFG &= ~HAL_UART_PERCFG_BIT;    // Set UART0 I/O location to P0.
 #else
   PERCFG |= HAL_UART_PERCFG_BIT;     // Set UART1 I/O location to P1.
