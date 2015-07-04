@@ -1,0 +1,7 @@
+ZStack-Smart-2.6.2/_iss/
+ZStack-Smart-2.6.2/Projects/zstack/Applications/GenericApp/
+ZStack-Smart-2.6.2/Projects/zstack/Applications/SimpleApp/
+ZStack-Smart-2.6.2/Projects/zstack/Applications/SmartApp/CC2530DB/bin
+ZStack-Smart-2.6.2/Projects/zstack/Applications/SmartApp/CC2530DB/settings
+ZStack-Smart-2.6.2/Projects/zstack/Applications/SmartApp/CC2530DB/Devices/settings
+*.dep
