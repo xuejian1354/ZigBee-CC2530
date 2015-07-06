@@ -171,7 +171,11 @@
 #define MAC_RADIO_TX_POWER_INVALID              0xFF
 
 #define MAC_RADIO_RECEIVER_SENSITIVITY_DBM      -97 /* dBm */
+#ifdef SIGNAL_AMPLIFIER_SETTING
 #define MAC_RADIO_RECEIVER_SATURATION_DBM       -4  /* dBm */
+#else
+#define MAC_RADIO_RECEIVER_SATURATION_DBM       10  /* dBm */
+#endif
 
 /* Reduce RX power consumption current to 20mA at the cost of some sensitivity
  * Note: This feature can be applied to CC2530 and CC2533 only.
@@ -497,7 +501,9 @@ MAC_INTERNAL_API void macRadioTurnOffPower(void);
  *  In this case, the value passed to the set power function will be written directly to TXCTRLL.
  *  Characterized values for this register can be found in the datasheet in the "power settings" table.
  */
+#ifdef SIGNAL_AMPLIFIER_SETTING 
 #define HAL_MAC_USE_REGISTER_POWER_VALUES
+#endif
 
 
 /**************************************************************************************************

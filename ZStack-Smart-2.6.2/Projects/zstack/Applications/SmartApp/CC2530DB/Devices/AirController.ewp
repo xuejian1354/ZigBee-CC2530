@@ -280,6 +280,7 @@
           <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xF0</state>
+          <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>POWER_AMPLIFIER_POSITION_1</state>
           <state>xNWK_AUTO_POLL</state>
           <state>HAL_UART01_BOTH</state>
