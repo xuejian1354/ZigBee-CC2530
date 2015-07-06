@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-02
+Date:2015-07-06
 **************************************************************************************************/
 
 
@@ -53,18 +53,6 @@ extern "C"
 
 #define COORDINATOR_ADDR		0x0000
 #define BROADCAST_ADDR		0xFFFF
-
-//USER
-#define TIMER_LOWER_LIMIT	99	//lower limit of user event's timer count
-#define TIMER_NO_LIMIT	0	//set the timer event immediately
-
-#define TIMER_CLEAR_EXECUTION	0x00	//clear timer event from list
-#define TIMER_ONE_EXECUTION		0x01	//set the timer event once
-#define TIMER_LOOP_EXECUTION	0x7F	//set the timer event always
-
-#define TIMER_EVENT_RESIDENTS	0x80	//set the timer event and resident always
-
-#define FRAME_DATA_LENGTH   64		//frame data length by serial port
 
 /*********************************************************************
  * MACROS
@@ -149,9 +137,6 @@ typedef struct DATA_CMD
    uint8 Check_sum;//
    uint8 Tail;//53
 }DATA_CMD_T;
-
-//type structure of UART receive handler
-typedef void(*UART_TxHandler)(uint8[], uint8);
 
 #if (DEVICE_TYPE_ID==0xF0 || DEVICE_TYPE_ID==14)
 typedef enum
@@ -240,23 +225,9 @@ ZStatus_t CommonApp_PermitJoiningRequest( byte PermitDuration );
  */
 extern void CommonApp_GetDeviceInfo ( uint8 param, void *pValue );
 
-
-/*
- * Task Set User Defined Events for the Common Application
- */
-extern int8 CommonApp_SetUserEvent(uint16 event, 
-	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype);
-
-/*
- * Task Update User Defined Events for the Common Application
- */
-extern int8 CommonApp_UpdateUserEvent(uint16 event, 
-	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype);
-
-/*
- *Task Update UART Receive Handler for the Common Application
- */
-extern void CommonApp_SetUARTTxHandler(int port, UART_TxHandler txHandler);
+#ifdef SSA_CONNECTOR
+extern void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen);
+#endif
 
 /*********************************************************************
 *********************************************************************/

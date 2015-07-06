@@ -3313,6 +3313,20 @@
       <file>
         <name>$PROJ_DIR$\..\..\Source\Common\OSAL_CommonApp.c</name>
       </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.c</name>
+        <excluded>
+          <configuration>ZR</configuration>
+          <configuration>ZD</configuration>
+        </excluded>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.h</name>
+        <excluded>
+          <configuration>ZR</configuration>
+          <configuration>ZD</configuration>
+        </excluded>
+      </file>
     </group>
     <group>
       <name>Device</name>
