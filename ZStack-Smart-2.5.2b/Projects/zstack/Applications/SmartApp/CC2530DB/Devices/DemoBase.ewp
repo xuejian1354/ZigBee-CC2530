@@ -267,6 +267,7 @@
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
+          <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xPOWER_AMPLIFIER_POSITION_1</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
@@ -1340,6 +1341,7 @@
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
+          <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
@@ -2412,6 +2414,7 @@
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
+          <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>

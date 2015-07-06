@@ -109,8 +109,10 @@ int main( void )
   // Initialize the MAC
   ZMacInit();
 
+#ifdef SIGNAL_AMPLIFIER_SETTING
   uint8 value = 0xD5;
   MAC_MlmeSetReq(MAC_PHY_TRANSMIT_POWER, &value);
+#endif
 
   // Determine the extended address
   zmain_ext_addr();
