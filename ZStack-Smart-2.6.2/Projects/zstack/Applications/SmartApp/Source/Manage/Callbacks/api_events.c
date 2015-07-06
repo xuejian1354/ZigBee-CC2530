@@ -53,13 +53,13 @@ static ssaUserEvent_t *userevent_map[USER_EVENT_MAP_SIZE] = {NULL};
  */
 
 #ifdef EVENT_MAP_ID
-extern uint8 event_to_id(uint16 event);
+static uint8 event_to_id(uint16 event);
 #endif
-extern int8 Add_User_Event(ssaUserEvent_t *ssaUserEvent);
-extern ssaUserEvent_t *Query_User_Event(uint16 event);
-extern int8 Del_User_Event(uint16 event);
+static int8 Add_User_Event(ssaUserEvent_t *ssaUserEvent);
+static ssaUserEvent_t *Query_User_Event(uint16 event);
+static int8 Del_User_Event(uint16 event);
 
-extern void set_app_event(ssaUserEvent_t *ssaUserEvent);
+static void set_app_event(ssaUserEvent_t *ssaUserEvent);
 
 /*********************************************************************
  * PUBLIC FUNCTIONS

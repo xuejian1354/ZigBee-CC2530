@@ -1134,6 +1134,12 @@
       <file>
         <name>$PROJ_DIR$\..\..\Source\Common\OSAL_CommonApp.c</name>
       </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.h</name>
+      </file>
     </group>
     <group>
       <name>Manage</name>
