@@ -36,6 +36,7 @@ Date:2015-05-20
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
+extern byte CommonApp_TaskID;
 extern devStates_t CommonApp_NwkState;
 
 extern uint8 *optData;
@@ -76,10 +77,10 @@ void HalDeviceInit (void)
 
 void HalStatesInit(devStates_t status)
 {
-  CommonApp_SetUserEvent(IRDETECT_DETECT_EVT, CommonApp_IRDetectStatusCB, 
+  set_user_event(CommonApp_TaskID, IRDETECT_DETECT_EVT, CommonApp_IRDetectStatusCB, 
   	IRDETECT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, (void *)TRIGGER_MODE_QUERY);
 
-  CommonApp_SetUserEvent(IRDETECT_QUERY_EVT, CommonApp_IRDetectQueryShowCB, 
+  set_user_event(CommonApp_TaskID, IRDETECT_QUERY_EVT, CommonApp_IRDetectQueryShowCB, 
   	IRDETECT_QUERY_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 }
 
@@ -142,7 +143,7 @@ HAL_ISR_FUNCTION( halKeyPort1Isr, P1INT_VECTOR )
   {
     IDC_PXIFG &= ~IDC_BV;
 	
-	CommonApp_UpdateUserEvent(IRDETECT_ISR_EVT, CommonApp_IRDetectStatusCB, 
+	update_user_event(CommonApp_TaskID, IRDETECT_ISR_EVT, CommonApp_IRDetectStatusCB, 
   		HAL_IDC_DEBOUNCE_VALUE, TIMER_ONE_EXECUTION|TIMER_EVENT_RESIDENTS, (void *)TRIGGER_MODE_ISR);
   }
 

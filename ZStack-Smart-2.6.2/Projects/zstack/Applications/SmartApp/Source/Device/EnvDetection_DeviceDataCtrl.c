@@ -31,10 +31,11 @@ Date:2015-07-02
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
+extern byte CommonApp_TaskID;
+extern devStates_t CommonApp_NwkState;
+
 extern uint8 *optData;
 extern uint8 optDataLen;
-
-extern devStates_t CommonApp_NwkState;
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
@@ -200,7 +201,7 @@ int8 EnvDetection_PM25_Threshold_CallBack(void)
 
 void HalDeviceInit (void)
 {
-	CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, EnvDetection_TxHandler);
+	SerialTx_Handler(SERIAL_COM_PORT, EnvDetection_TxHandler);
 	
 	memset(&EnvDetectionOpt, 0, sizeof(AirController_Opt_t));
 	if (ZSUCCESS == osal_nv_item_init( 
@@ -287,7 +288,7 @@ void SetThresHold(uint8 mode, uint16 hold)
 
 void HalStatesInit(devStates_t status)
 {
-  CommonApp_SetUserEvent(AIRCONTROLLER_QUERY_EVT, EnvDetection_UpDataCmdCB, 
+  set_user_event(CommonApp_TaskID, AIRCONTROLLER_QUERY_EVT, EnvDetection_UpDataCmdCB, 
   		AIRCONTROLLER_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 }
 

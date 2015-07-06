@@ -90,7 +90,6 @@ static uint16 fLen;		//buffer data length
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen);
 #ifndef ZDO_COORDINATOR
 static void ConnectorApp_HeartBeatEvent(void);
 #endif
@@ -121,7 +120,10 @@ static void ConnectorApp_HeartBeatEvent(void);
 void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
+  
+#if(HAL_UART==TRUE) && !defined(TRANSCONN_BOARD_GATEWAY)
+  SerialTx_Handler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
+#endif
 }
 
 
@@ -331,7 +333,7 @@ void ConnectorApp_HeartBeatEvent(void)
 {
 	CommonApp_HeartBeatCB(NULL, NULL, NULL);
 	
-	CommonApp_SetUserEvent(HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
+	set_user_event(CommonApp_TaskID, HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
   		HEARTBEAT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 }
 #endif

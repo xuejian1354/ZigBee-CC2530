@@ -32,6 +32,9 @@
 #endif
 
 #include "CommonApp.h"
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+#include "TransconnApp.h"
+#endif
 
 /*********************************************************************
  * GLOBAL VARIABLES
@@ -53,7 +56,10 @@ const pTaskEventHandlerFn tasksArr[] = {
 #if defined ( ZIGBEE_FREQ_AGILITY ) || defined ( ZIGBEE_PANID_CONFLICT )
   ZDNwkMgr_event_loop,
 #endif
-  CommonApp_ProcessEvent
+  CommonApp_ProcessEvent,
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+  TransconnApp_ProcessEvent,
+#endif
 };
 
 const uint8 tasksCnt = sizeof( tasksArr ) / sizeof( tasksArr[0] );
@@ -94,6 +100,10 @@ void osalInitTasks( void )
   ZDNwkMgr_Init( taskID++ );
 #endif
   CommonApp_Init( taskID );
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+  taskID++;
+  TransconnApp_Init( taskID );
+#endif
 }
 
 /*********************************************************************

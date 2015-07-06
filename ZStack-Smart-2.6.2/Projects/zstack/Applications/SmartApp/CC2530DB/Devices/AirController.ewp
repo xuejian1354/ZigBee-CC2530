@@ -1116,6 +1116,12 @@
       <file>
         <name>$PROJ_DIR$\..\..\Source\Device\AirControllerApp.c</name>
       </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.h</name>
+      </file>
     </group>
     <group>
       <name>Common</name>
