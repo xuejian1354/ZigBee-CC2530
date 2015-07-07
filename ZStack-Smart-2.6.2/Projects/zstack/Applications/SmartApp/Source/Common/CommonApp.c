@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-01
+Date:2015-07-06
 **************************************************************************************************/
 
 
@@ -397,7 +397,11 @@ void CommonApp_PowerSettingCountCB( void *params,
 	if(CommonApp_NwkState != DEV_ZB_COORD && CommonApp_NwkState != DEV_ROUTER 
   		|| CommonApp_NwkState != DEV_END_DEVICE)
 	{
+#if !(DEVICE_TYPE_ID==12)
 		HalLedBlink ( HAL_LED_2, 2, 50, 100 );
+#else
+		HalLedBlink ( HAL_LED_4, 2, 50, 100 );
+#endif
 	}
 	
 	isNotTimeOut = 0;
