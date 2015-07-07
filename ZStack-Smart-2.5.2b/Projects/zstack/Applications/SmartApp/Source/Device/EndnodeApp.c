@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-02
+Date:2015-07-06
 **************************************************************************************************/
 
 /*********************************************************************
@@ -198,15 +198,15 @@ void Data_Analysis(uint8 *data, uint16 length)
     }
     else if(!memcmp(mdeFrame->cmd, FR_CMD_PEROID_EXCUTE, 4))
     {
-      CommonApp_SetUserEvent(CMD_PEROID_EVT, CommonApp_CmdPeroidCB, 
-                             CMD_PEROID_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
+      set_user_event(CommonApp_TaskID, CMD_PEROID_EVT, CommonApp_CmdPeroidCB, 
+	  	CMD_PEROID_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 			
       Update_Refresh(mdeFrame->data, mdeFrame->data_len);
     }
     else if(!memcmp(mdeFrame->cmd, FR_CMD_PEROID_STOP, 4))
     {
-      CommonApp_UpdateUserEvent(CMD_PEROID_EVT, 
-                                NULL, TIMER_NO_LIMIT, TIMER_CLEAR_EXECUTION, NULL);
+      update_user_event(CommonApp_TaskID, CMD_PEROID_EVT, 
+	  	NULL, TIMER_NO_LIMIT, TIMER_CLEAR_EXECUTION, NULL);
 			
       Update_Refresh(mdeFrame->data, mdeFrame->data_len);
     }
@@ -400,7 +400,7 @@ void EndNodeApp_HeartBeatEvent(void)
 {
   CommonApp_HeartBeatCB(NULL, NULL, NULL);
 
-  CommonApp_SetUserEvent(HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
+  set_user_event(CommonApp_TaskID, HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
   		HEARTBEAT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 }
 

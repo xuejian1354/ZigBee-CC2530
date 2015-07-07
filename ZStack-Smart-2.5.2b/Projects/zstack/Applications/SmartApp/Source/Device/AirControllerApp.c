@@ -90,7 +90,6 @@ static uint16 fLen;		//buffer data length
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen);
 #ifndef ZDO_COORDINATOR
 static void AirControllerApp_HeartBeatEvent(void);
 #endif
@@ -121,8 +120,13 @@ static void AirControllerApp_HeartBeatEvent(void);
 void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
+#ifdef HAL_UART01_BOTH
   /*UART1: Comm*/
-  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT1, AirControllerApp_TxHandler);
+  SerialTx_Handler(SERIAL_COM_PORT1, ConnectorApp_TxHandler);
+#else
+  /*UART: Comm*/
+  SerialTx_Handler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
+#endif
 }
 
 
@@ -354,7 +358,7 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 }
 #endif
 
-void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen)
+void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
 	uint8 buf[FRAME_DATA_SIZE] = {0};
 	uint8 len = 0;
@@ -422,7 +426,7 @@ void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen)
 		  incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
 		  if(nwkAddr == Send_shortAddr)
 		  {
-	        CommonApp_SetUserEvent(CMD_PEROID_EVT, CommonApp_CmdPeroidCB, 
+	        set_user_event(CommonApp_TaskID, CMD_PEROID_EVT, CommonApp_CmdPeroidCB, 
 	        	CMD_PEROID_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 				
 	        Update_Refresh(txBuf+10, txLen-FR_DE_DATA_FIX_LEN);
@@ -439,7 +443,7 @@ void AirControllerApp_TxHandler(uint8 txBuf[], uint8 txLen)
 		  incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
 		  if(nwkAddr == Send_shortAddr)
 		  {
-	        CommonApp_UpdateUserEvent(CMD_PEROID_EVT, 
+	        update_user_event(CommonApp_TaskID, CMD_PEROID_EVT, 
 	        	NULL, TIMER_NO_LIMIT, TIMER_CLEAR_EXECUTION, NULL);
 				
 	        Update_Refresh(txBuf+10, txLen-FR_DE_DATA_FIX_LEN);
@@ -471,7 +475,7 @@ void AirControllerApp_HeartBeatEvent(void)
 {
 	CommonApp_HeartBeatCB(NULL, NULL, NULL);
 	
-	CommonApp_SetUserEvent(HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
+	set_user_event(CommonApp_TaskID, HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
   		HEARTBEAT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 }
 #endif

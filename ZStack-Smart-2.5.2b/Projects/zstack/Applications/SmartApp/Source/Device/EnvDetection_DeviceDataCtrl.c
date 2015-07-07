@@ -31,10 +31,11 @@ Date:2015-07-02
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
+extern byte CommonApp_TaskID;
+extern devStates_t CommonApp_NwkState;
+
 extern uint8 *optData;
 extern uint8 optDataLen;
-
-extern devStates_t CommonApp_NwkState;
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
@@ -61,6 +62,7 @@ static void EnvDetection_TxHandler(uint8 txBuf[], uint8 txLen);
 static void Show_logo(void);
 static void Show_val(uint16 val);
 static void Show_hold(uint8 mode, uint16 hold);
+static void mSprintf(char *dst, char *src1, uint16 src2);
 
 /*********************************************************************
  * PUBLIC FUNCTIONS
@@ -199,7 +201,7 @@ int8 EnvDetection_PM25_Threshold_CallBack(void)
 
 void HalDeviceInit (void)
 {
-	CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, EnvDetection_TxHandler);
+	SerialTx_Handler(SERIAL_COM_PORT, EnvDetection_TxHandler);
 	
 	memset(&EnvDetectionOpt, 0, sizeof(AirController_Opt_t));
 	if (ZSUCCESS == osal_nv_item_init( 
@@ -286,7 +288,7 @@ void SetThresHold(uint8 mode, uint16 hold)
 
 void HalStatesInit(devStates_t status)
 {
-  CommonApp_SetUserEvent(AIRCONTROLLER_QUERY_EVT, EnvDetection_UpDataCmdCB, 
+  set_user_event(CommonApp_TaskID, AIRCONTROLLER_QUERY_EVT, EnvDetection_UpDataCmdCB, 
   		AIRCONTROLLER_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 }
 
@@ -518,17 +520,45 @@ void Show_hold(uint8 mode, uint16 hold)
 	switch(mode)
 	{
 	case AIRCONTROL_PM25_THRESMODE_UNABLE:
-		sprintf(buf, "M:%-10s", "Off");
+		sprintf(buf, "M:%s", "Off          ");
 		break;
 
 	case AIRCONTROL_PM25_THRESMODE_UP:
-		sprintf(buf, "M:%-4s H:%-3d", "Up", hold);
+		mSprintf(buf, "Up", hold);
 		break;
 
 	case AIRCONTROL_PM25_THRESMODE_DOWN:
-		sprintf(buf, "M:%-4s H:%-3d", "Down", hold);
+		mSprintf(buf, "Down", hold);
 		break;
 	}
 
 	LCD_P8x16Str(0, 5, (uint8 *)buf);
 }
+
+void mSprintf(char *dst, char *src1, uint16 src2)
+{
+	//sprintf(buf, "M:%-4s H:%-3d", src1, src2);
+	uint8 src1Len = strlen(src1);
+	switch(src1Len)
+	{
+	case 0:
+		sprintf(dst, "M:     H:%d", src2);
+		break;
+
+	case 1:
+		sprintf(dst, "M:%s    H:%d", src1, src2);
+		break;
+
+	case 2:
+		sprintf(dst, "M:%s   H:%d", src1, src2);
+		break;
+
+	case 3:
+		sprintf(dst, "M:%s  H:%d", src1, src2);
+		break;
+
+	default:
+		sprintf(dst, "M:%s H:%d", src1, src2);
+		break;
+	}
+} 

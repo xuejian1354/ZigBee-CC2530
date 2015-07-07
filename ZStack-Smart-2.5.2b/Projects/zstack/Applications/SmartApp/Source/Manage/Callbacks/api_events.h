@@ -7,13 +7,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-04-29
-**************************************************************************************************/
-
-/**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-04-29
+Date:2015-07-06
 **************************************************************************************************/
 
 #ifndef API_EVENTS_H
@@ -37,6 +32,14 @@ extern "C"
 #define EVENT_MAP_ID		//get event address easily from event map
 #define USER_EVENT_MAP_SIZE		16	//the map addr size of user event
 
+#define TIMER_LOWER_LIMIT	99	//lower limit of user event's timer count
+#define TIMER_NO_LIMIT	0	//set the timer event immediately
+
+#define TIMER_CLEAR_EXECUTION	0x00	//clear timer event from list
+#define TIMER_ONE_EXECUTION		0x01	//set the timer event once
+#define TIMER_LOOP_EXECUTION	0x7F	//set the timer event always
+
+#define TIMER_EVENT_RESIDENTS	0x80	//set the timer event and resident always
 
 /*********************************************************************
  * MACROS
@@ -54,8 +57,7 @@ typedef void (*ssa_ProcessUserTaskCB_t)( void *, uint16 *, uint8 * );
 //type structure of user event
 typedef struct ssaUserEvent
 {
-  struct ssaUserEvent *next;		//point to next structure in list
-
+  uint8 task_id;
 #ifdef EVENT_MAP_ID
   uint8 map_id;		//mapped id for the array of ssa_ProcessUserTaskCB_t 's address
 #endif
@@ -73,21 +75,31 @@ typedef struct ssaUserEvent
   } count;		//excute count
   
   void *ptype;	//point to data of user defined
-  
   ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB;	//handle callbacks of this event
+  struct ssaUserEvent *next;		//point to next structure in list
 } ssaUserEvent_t;
 
 
 /*********************************************************************
  * FUNCTIONS
  */
-#ifdef EVENT_MAP_ID
-extern uint8 event_to_id(uint16 event);
-#endif
-extern int8 Add_User_Event(ssaUserEvent_t *ssaUserEvent);
-extern ssaUserEvent_t *Query_User_Event(uint16 event);
-extern int8 Del_User_Event(uint16 event);
 
+/*
+ * Task Set User Defined Events for Application
+ */
+extern int8 set_user_event(uint8 task_id, uint16 event, 
+	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype);
+
+/*
+ * Task Update User Defined Events for Application
+ */
+extern int8 update_user_event(uint8 task_id, uint16 event, 
+	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype);
+
+/*
+* Task event processor.
+ */
+extern uint16 process_event(uint8 task_id, uint16 events);
 
 /*********************************************************************
 *********************************************************************/

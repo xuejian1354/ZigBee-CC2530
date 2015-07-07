@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-04-25
+Date:2015-07-06
 **************************************************************************************************/
 
 #ifndef SERIAL_COM_H
@@ -76,6 +76,11 @@ extern "C"
 
 #define SERIAL_COM_RSP_CNT  4
 
+#define FRAME_DATA_LENGTH   64		//frame data length by serial port
+
+//type structure of UART receive handler
+typedef void(*UART_TxHandler)(uint8[], uint8);
+
 /*********************************************************************
  * MACROS
  */
@@ -83,7 +88,16 @@ extern "C"
 /*********************************************************************
  * FUNCTIONS
  */
-extern void Serial_Init(halUARTCBack_t callBackFunc);
+#ifndef HAL_UART01_BOTH
+extern void Serial_Init(UART_TxHandler txHandler);
+extern void Data_TxHandler(uint8 txBuf[], uint8 txLen);
+#else
+extern void Serial_Init(UART_TxHandler tx0Handler, UART_TxHandler tx1Handler);
+extern void Data0_TxHandler(uint8 txBuf[], uint8 txLen);
+extern void Data1_TxHandler(uint8 txBuf[], uint8 txLen);
+#endif
+
+extern void SerialTx_Handler(int port, UART_TxHandler txHandler);
 
 /*********************************************************************
 *********************************************************************/

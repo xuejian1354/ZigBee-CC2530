@@ -36,6 +36,7 @@ Date:2015-05-12
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
+extern byte CommonApp_TaskID;
 extern devStates_t CommonApp_NwkState;
 
 extern uint8 *optData;
@@ -80,7 +81,7 @@ void HalDeviceInit (void)
 
 void HalStatesInit(devStates_t status)
 {
-  CommonApp_SetUserEvent(DOORSENSOR_DETECT_EVT, CommonApp_DetectStatusCB, 
+  set_user_event(CommonApp_TaskID, DOORSENSOR_DETECT_EVT, CommonApp_DetectStatusCB, 
   	DOORSENSOR_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, (void *)TRIGGER_MODE_QUERY);
 }
 
@@ -139,8 +140,8 @@ HAL_ISR_FUNCTION( halKeyPort1Isr, P1INT_VECTOR )
   {
     DIC_PXIFG &= ~DIC_BV;
 	
-	CommonApp_UpdateUserEvent(DOORSENSOR_ISR_EVT, CommonApp_DetectStatusCB, 
-  		HAL_DIC_DEBOUNCE_VALUE, TIMER_ONE_EXECUTION|TIMER_EVENT_RESIDENTS, (void *)TRIGGER_MODE_ISR);
+    update_user_event(CommonApp_TaskID, DOORSENSOR_ISR_EVT, CommonApp_DetectStatusCB, 
+                      HAL_DIC_DEBOUNCE_VALUE, TIMER_ONE_EXECUTION|TIMER_EVENT_RESIDENTS, (void *)TRIGGER_MODE_ISR);
   }
 
   /*
