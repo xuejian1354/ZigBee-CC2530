@@ -400,7 +400,7 @@ void EndNodeApp_HeartBeatEvent(void)
 {
   CommonApp_HeartBeatCB(NULL, NULL, NULL);
 
-  set_user_event(CMD_PEROID_EVT, HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
+  set_user_event(CommonApp_TaskID, HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
   		HEARTBEAT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 }
 
