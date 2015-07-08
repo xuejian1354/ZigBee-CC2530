@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-06
+Date:2015-07-08
 **************************************************************************************************/
 
 
@@ -50,6 +50,12 @@ extern "C"
 #define TRANSCONNAPP_MAX_INCLUSTERS     1
 #define TRANSCONNAPP_MAX_OUTCLUSTERS    1
 
+#define TIMER_UPLOAD_EVENT      0x0001
+#define ZDEVICE_WATCH_EVENT     0x0002
+#define CLIENT_STAND_EVENT      0x0004
+#define RP_CHECK_EVENT          0x0008
+#define CLIENT_WATCH_EVENT      0x0010
+
 /*********************************************************************
  * TYPEDEFS
  */
@@ -71,6 +77,7 @@ extern UINT16 TransconnApp_ProcessEvent( byte task_id, UINT16 events );
 /*********************************************************************
  * IMPLEMENTS
  */
+extern void TransconnApp_GetCommonDataSend(uint8 *buf, uint16 len);
 
 /*********************************************************************
 *********************************************************************/

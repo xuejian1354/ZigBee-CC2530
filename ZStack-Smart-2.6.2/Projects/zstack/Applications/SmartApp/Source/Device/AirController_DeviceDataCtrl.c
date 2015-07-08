@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-02
+Date:2015-07-08
 **************************************************************************************************/
 
 /*********************************************************************
@@ -367,11 +367,8 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 			ctrlData[0] = IRRELAY_SEND_CMD;
 			ctrlData[1] = atox((uint8 *)(data+3), 2);
 			ctrlData[4] = ctrlData[0] ^ ctrlData[1];
-#ifndef HAL_UART01_BOTH
-			HalUARTWrite(SERIAL_COM_PORT, ctrlData, 5);
-#else
 			HalUARTWrite(SERIAL_COM_PORT0, ctrlData, 5);
-#endif
+			
 			optData[3] = 'O';
 			optData[4] = 'K';
 			optDataLen = 5;
@@ -388,11 +385,8 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 			ctrlData[0] = IRRELAY_LEARN_CMD;
 			ctrlData[1] = atox((uint8 *)(data+3), 2);
 			ctrlData[4] = ctrlData[0] ^ ctrlData[1];
-#ifndef HAL_UART01_BOTH
-			HalUARTWrite(SERIAL_COM_PORT, ctrlData, 5);
-#else
 			HalUARTWrite(SERIAL_COM_PORT0, ctrlData, 5);
-#endif
+			
 			optData[3] = 'O';
 			optData[4] = 'K';
 			optDataLen = 5;

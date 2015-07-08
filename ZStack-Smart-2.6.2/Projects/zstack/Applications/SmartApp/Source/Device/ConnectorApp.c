@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-06
+Date:2015-07-08
 **************************************************************************************************/
 
 
@@ -25,6 +25,10 @@ Date:2015-07-06
 #include "OnBoard.h"
 
 #include "CommonApp.h"
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+#include "TransconnApp.h"
+#include "mevent.h"
+#endif
 
 /* HAL */
 #include "hal_lcd.h"
@@ -59,6 +63,9 @@ extern const SimpleDescriptionFormat_t CommonApp_SimpleDesc;
 extern endPointDesc_t CommonApp_epDesc;
 
 extern byte CommonApp_TaskID;
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+extern byte TransconnApp_TaskID;
+#endif
 extern devStates_t CommonApp_NwkState;
 extern byte CommonApp_TransID;
 
@@ -144,7 +151,7 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
   switch ( pkt->clusterId )
   {
     case COMMONAPP_CLUSTERID:
-      HalUARTWrite(SERIAL_COM_PORT, pkt->cmd.Data, pkt->cmd.DataLength);
+      CommonApp_GetDevDataSend(pkt->cmd.Data, pkt->cmd.DataLength);
       break; 
   }
 }
@@ -185,7 +192,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UC, &mFrame, &fBuf, &fLen))
 	{
-		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
+		CommonApp_GetDevDataSend(fBuf, fLen);
 	}
 #else
 	UO_t mFrame;
@@ -201,11 +208,21 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
 	{
-		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
+		CommonApp_GetDevDataSend(fBuf, fLen);
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
 
 	ConnectorApp_HeartBeatEvent();
+#endif
+
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+    ConnectorApp_TxHandler("D:/BR/0000:O\r\n", 14);
+
+	set_user_event(TransconnApp_TaskID, TIMER_UPLOAD_EVENT, 
+		upload_event, 10000, TIMER_LOOP_EXECUTION | TIMER_EVENT_RESIDENTS, NULL);
+
+	set_user_event(TransconnApp_TaskID, CLIENT_STAND_EVENT, 
+		stand_event, 11000, TIMER_LOOP_EXECUTION | TIMER_EVENT_RESIDENTS, NULL);
 #endif
   }
 }

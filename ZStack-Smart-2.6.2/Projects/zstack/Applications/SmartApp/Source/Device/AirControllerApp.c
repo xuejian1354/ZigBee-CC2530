@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-27
+Date:2015-07-08
 **************************************************************************************************/
 
 
@@ -147,11 +147,7 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
   switch ( pkt->clusterId )
   {
     case COMMONAPP_CLUSTERID:
-#ifndef HAL_UART01_BOTH
-      HalUARTWrite(SERIAL_COM_PORT, pkt->cmd.Data, pkt->cmd.DataLength);
-#else
-	  HalUARTWrite(SERIAL_COM_PORT1, pkt->cmd.Data, pkt->cmd.DataLength);
-#endif
+		CommonApp_GetDevDataSend(pkt->cmd.Data, pkt->cmd.DataLength);
       break; 
   }
 }
@@ -195,11 +191,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UC, &mFrame, &fBuf, &fLen))
 	{
-#ifndef HAL_UART01_BOTH
-		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
-#else
-		HalUARTWrite(SERIAL_COM_PORT1, fBuf, fLen);
-#endif
+		CommonApp_GetDevDataSend(fBuf, fLen);
 	}
 #else
 	UO_t mFrame;
@@ -220,11 +212,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
 	{
-#ifndef HAL_UART01_BOTH
-		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
-#else
-		HalUARTWrite(SERIAL_COM_PORT1, fBuf, fLen);
-#endif
+		CommonApp_GetDevDataSend(fBuf, fLen);
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
 

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-06
+Date:2015-07-08
 **************************************************************************************************/
 
 
@@ -16,6 +16,8 @@ Date:2015-07-06
  * INCLUDES
  */
 #include "TransconnApp.h"
+#include "globals.h"
+#include "protocol.h"
 
 #include "OSAL.h"
 #include "OSAL_Nv.h"
@@ -127,6 +129,8 @@ void TransconnApp_Init( uint8 task_id )
     TransconnApp_epDesc.simpleDesc
               = (SimpleDescriptionFormat_t *)&TransconnApp_SimpleDesc;
     TransconnApp_epDesc.latencyReq = noLatencyReqs;
+
+    mach_init();
 }
 
 
@@ -151,6 +155,19 @@ uint16 TransconnApp_ProcessEvent(uint8 task_id, uint16 events)
 #if(HAL_UART==TRUE) && defined(TRANSCONN_BOARD_GATEWAY)
 void TransconnApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
-	ConnectorApp_TxHandler(txBuf, txLen);
+	struct sockaddr_in client_addr = {0};
+	
+	frhandler_arg_t *frarg = 
+		get_frhandler_arg_alloc(SERIAL_COM_PORT, &client_addr, txBuf, txLen);
+	analysis_capps_frame(frarg);
+	//ConnectorApp_TxHandler(txBuf, txLen);
 }
 #endif
+
+void TransconnApp_GetCommonDataSend(uint8 *buf, uint16 len)
+{
+	frhandler_arg_t *frarg = 
+		get_frhandler_arg_alloc(SERIAL_COM_PORT, NULL, buf, len);
+
+	analysis_zdev_frame(frarg);
+}

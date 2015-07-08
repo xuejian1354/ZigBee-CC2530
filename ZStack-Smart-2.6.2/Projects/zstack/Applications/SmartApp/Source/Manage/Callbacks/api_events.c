@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-07-06
+Date:2014-07-08
 **************************************************************************************************/
 
 
@@ -251,6 +251,7 @@ void set_app_event(ssaUserEvent_t *ssaUserEvent)
   {
     if(ssaUserEvent->duration > TIMER_LOWER_LIMIT)
     {
+	  osal_stop_timerEx(ssaUserEvent->task_id, ssaUserEvent->event);
 	  osal_start_timerEx(ssaUserEvent->task_id, 
 	  		ssaUserEvent->event, ssaUserEvent->duration);
     }

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-15
+Date:2015-07-08
 **************************************************************************************************/
 
 
@@ -106,8 +106,8 @@ extern "C"
 /*********************************************************************
  * MACROS
  */
-#define FRAME_DATA_SIZE		64
-#define FRAME_BUFFER_SIZE 	128
+#define FRAME_DATA_SIZE		128
+#define FRAME_BUFFER_SIZE 	256
 #define MAX_OPTDATA_SIZE	FRAME_DATA_SIZE
 
 /*********************************************************************
@@ -122,6 +122,7 @@ typedef enum
 	HEAD_UH,
 	HEAD_UR,
 	HEAD_DE,
+	HEAD_NONE,
 }frHeadType_t;
 
 
