@@ -16,33 +16,19 @@
 #include "globals.h"
 #include "mevent.h"
 #include "protocol.h"
+#include "mincode.h"
 
-#ifdef TRANSCONN_BOARD_GATEWAY
-static int tcp_port = TRANS_TCP_PORT;
-static int udp_port = TRANS_UDP_REMOTE_PORT;
+#include "AF.h"
+#include "NLMEDE.h"
 
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
 
-int get_tcp_port(void)
-{
-    return tcp_port;
-}
+extern nwkIB_t _NIB;
+extern uint8 EXT_ADDR_G[16];
 
-int get_udp_port(void)
-{
-    return udp_port;
-}
+uint8 _client_no[8] = {0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF};
 
-void set_tcp_port(int port)
-{
-	tcp_port = port;
-}
-
-void set_udp_port(int port)
-{
-	udp_port = port;
-}
-
-int mach_init(void)
+void mach_init(void)
 {
 	gw_info_t *p_gw_info = get_gateway_info();
 
@@ -51,14 +37,17 @@ int mach_init(void)
 	p_gw_info->zpanid = 0;
 	p_gw_info->zchannel = 0;
 	p_gw_info->ip_len = 0;
-	p_gw_info->zgw_opt = NULL;
 	p_gw_info->p_dev = NULL;
 	p_gw_info->next = NULL;
+}
 
-	cli_list_t *p_cli_list = get_client_list();
-	p_cli_list->p_cli = NULL;
-	p_cli_list->max_num = 0;
+void mach_load(void)
+{
+	gw_info_t *p_gw_info = get_gateway_info();
 
-	return 0;
+	incode_ctoxs(p_gw_info->gw_no, EXT_ADDR_G, 16);
+	p_gw_info->zapp_type = FRAPP_CONNECTOR;
+	p_gw_info->zpanid = _NIB.nwkPanId;
+	p_gw_info->zchannel = _NIB.nwkLogicalChannel;;
 }
 #endif

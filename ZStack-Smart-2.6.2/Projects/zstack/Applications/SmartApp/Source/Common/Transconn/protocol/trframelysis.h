@@ -66,6 +66,8 @@
 #define TR_BUFFER_SIZE 	528
 #define TR_TAIL ":O\r\n"
 
+#define CLIENT_NO		"1234567890ABCDEF"
+
 typedef enum
 {
 	TRHEAD_PI,
@@ -142,7 +144,7 @@ typedef struct
 	tr_info_type_t tr_info;
 	uint16 data_len;
 	uint8 *data;
-}gp_t, rp_t, gd_t, rd_t, dc_t, ub_t;
+}dc_t, ub_t;
 
 
 typedef struct

@@ -355,7 +355,7 @@ void MT_TransportSend(uint8 *pBuf)
 
   /* Send to UART */
 #ifdef MT_UART_DEFAULT_PORT
-  HalUARTWrite(MT_UART_DEFAULT_PORT, msgPtr, dataLen + SPI_0DATA_MSG_LEN);
+  //HalUARTWrite(MT_UART_DEFAULT_PORT, msgPtr, dataLen + SPI_0DATA_MSG_LEN);
 #endif
 
   /* Deallocate */

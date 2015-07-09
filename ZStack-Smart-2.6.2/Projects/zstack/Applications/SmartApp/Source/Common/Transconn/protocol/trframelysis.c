@@ -20,7 +20,7 @@
 #include "OSAL.h"
 #include <string.h>
 
-#ifdef TRANSCONN_BOARD_GATEWAY
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
 tr_head_type_t get_trhead_from_str(char *head)
 {
 	if(!strncmp(TR_HEAD_PI, head, 3))
@@ -30,22 +30,6 @@ tr_head_type_t get_trhead_from_str(char *head)
 	else if(!strncmp(TR_HEAD_BI, head, 3))
 	{
 		return TRHEAD_BI;
-	}
-	else if(!strncmp(TR_HEAD_GP, head, 3))
-	{
-		return TRHEAD_GP;
-	}
-	else if(!strncmp(TR_HEAD_RP, head, 3))
-	{
-		return TRHEAD_RP;
-	}
-	else if(!strncmp(TR_HEAD_GD, head, 2))
-	{
-		return TRHEAD_GD;
-	}
-	else if(!strncmp(TR_HEAD_RD, head, 3))
-	{
-		return TRHEAD_RD;
 	}
 	else if(!strncmp(TR_HEAD_DC, head, 3))
 	{
@@ -263,20 +247,9 @@ void *get_trframe_alloc(tr_head_type_t head_type, uint8 buffer[], int length)
 			incode_ctoxs(pi->sn, buffer+3, 16);
 			pi->trans_type = get_trtrans_from_ch(buffer[19]);
 			pi->fr_type = get_trframe_from_ch(buffer[20]);
-			
-			if(length-TR_PI_DATA_FIX_LEN > 0)
-			{
-				pi->data_len = length-TR_PI_DATA_FIX_LEN;
-				uint8 *data_buffer = osal_mem_alloc(pi->data_len);
-				memset(data_buffer, 0, pi->data_len);
-				memcpy(data_buffer, buffer+21, pi->data_len);
-				pi->data = data_buffer;
-			}
-			else
-			{
-				pi->data_len = 0;
-				pi->data = NULL;
-			}
+
+			pi->data_len = 0;
+			pi->data = NULL;
 
 			return (void *)pi;
 		}
@@ -291,134 +264,11 @@ void *get_trframe_alloc(tr_head_type_t head_type, uint8 buffer[], int length)
 			incode_ctoxs(bi->sn, buffer+3, 16);
 			bi->trans_type = get_trtrans_from_ch(buffer[19]);
 			bi->fr_type = get_trframe_from_ch(buffer[20]);
-			
-			if(length-TR_BI_DATA_FIX_LEN > 0)
-			{
-				bi->data_len = length-TR_BI_DATA_FIX_LEN;
-				uint8 *data_buffer = osal_mem_alloc(bi->data_len);
-				memset(data_buffer, 0, bi->data_len);
-				memcpy(data_buffer, buffer+21, bi->data_len);
-				bi->data = data_buffer;
-			}
-			else
-			{
-				bi->data_len = 0;
-				bi->data = NULL;
-			}
+
+			bi->data_len = 0;
+			bi->data = NULL;
 
 			return (void *)bi;
-		}
-		else { goto  tr_analysis_err;}
-		
-	case TRHEAD_GP:
-		if(length>=TR_GP_DATA_FIX_LEN && !memcmp(buffer, TR_HEAD_GP, 3)
-			&& !memcmp(buffer+length-4, TR_TAIL, 4))
-		{
-			gp_t *gp = osal_mem_alloc(sizeof(gp_t));
-			memset(gp, 0, sizeof(gp_t));
-			incode_ctoxs(gp->zidentify_no, buffer+3, 16);
-			incode_ctoxs(gp->cidentify_no, buffer+19, 16);
-			gp->trans_type = get_trtrans_from_ch(buffer[35]);
-			gp->tr_info = get_trinfo_from_ch(buffer[36]);
-			if(length-TR_GP_DATA_FIX_LEN > 0)
-			{
-				gp->data_len = length-TR_GP_DATA_FIX_LEN;
-				uint8 *data_buffer = osal_mem_alloc(gp->data_len);
-				memset(data_buffer, 0, gp->data_len);
-				memcpy(data_buffer, buffer+37, gp->data_len);
-				gp->data = data_buffer;
-			}
-			else
-			{
-				gp->data_len = 0;
-				gp->data = NULL;
-			}
-
-			return (void *)gp;
-		}
-		else { goto  tr_analysis_err;}
-		
-	case TRHEAD_RP:
-		if(length>=TR_RP_DATA_FIX_LEN && !memcmp(buffer, TR_HEAD_RP, 3)
-			&& !memcmp(buffer+length-4, TR_TAIL, 4))
-		{
-			rp_t *rp = osal_mem_alloc(sizeof(rp_t));
-			memset(rp, 0, sizeof(rp_t));
-			incode_ctoxs(rp->zidentify_no, buffer+3, 16);
-			incode_ctoxs(rp->cidentify_no, buffer+19, 16);
-			rp->trans_type = get_trtrans_from_ch(buffer[35]);
-			rp->tr_info = get_trinfo_from_ch(buffer[36]);
-			if(length-TR_RP_DATA_FIX_LEN > 0)
-			{
-				rp->data_len = length-TR_RP_DATA_FIX_LEN;
-				uint8 *data_buffer = osal_mem_alloc(rp->data_len);
-				memset(data_buffer, 0, rp->data_len);
-				memcpy(data_buffer, buffer+37, rp->data_len);
-				rp->data = data_buffer;
-			}
-			else
-			{
-				rp->data_len = 0;
-				rp->data = NULL;
-			}
-
-			return (void *)rp;
-		}
-		else { goto  tr_analysis_err;}
-		
-	case TRHEAD_GD:
-		if(length>=TR_GD_DATA_FIX_LEN && !memcmp(buffer, TR_HEAD_GD, 3)
-			&& !memcmp(buffer+length-4, TR_TAIL, 4))
-		{
-			gd_t *gd = osal_mem_alloc(sizeof(gd_t));
-			memset(gd, 0, sizeof(gd_t));
-			incode_ctoxs(gd->zidentify_no, buffer+3, 16);
-			incode_ctoxs(gd->cidentify_no, buffer+19, 16);
-			gd->trans_type = get_trtrans_from_ch(buffer[35]);
-			gd->tr_info = get_trinfo_from_ch(buffer[36]);
-			if(length-TR_GD_DATA_FIX_LEN > 0)
-			{
-				gd->data_len = length-TR_GD_DATA_FIX_LEN;
-				uint8 *data_buffer = osal_mem_alloc(gd->data_len);
-				memset(data_buffer, 0, gd->data_len);
-				memcpy(data_buffer, buffer+37, gd->data_len);
-				gd->data = data_buffer;
-			}
-			else
-			{
-				gd->data_len = 0;
-				gd->data = NULL;
-			}
-
-			return (void *)gd;
-		}
-		else { goto  tr_analysis_err;}
-		
-	case TRHEAD_RD:
-		if(length>=TR_RD_DATA_FIX_LEN && !memcmp(buffer, TR_HEAD_RD, 3)
-			&& !memcmp(buffer+length-4, TR_TAIL, 4))
-		{
-			rd_t *rd = osal_mem_alloc(sizeof(rd_t));
-			memset(rd, 0, sizeof(rd_t));
-			incode_ctoxs(rd->zidentify_no, buffer+3, 16);
-			incode_ctoxs(rd->cidentify_no, buffer+19, 16);
-			rd->trans_type = get_trtrans_from_ch(buffer[35]);
-			rd->tr_info = get_trinfo_from_ch(buffer[36]);
-			if(length-TR_RD_DATA_FIX_LEN > 0)
-			{
-				rd->data_len = length-TR_RD_DATA_FIX_LEN;
-				uint8 *data_buffer = osal_mem_alloc(rd->data_len);
-				memset(data_buffer, 0, rd->data_len);
-				memcpy(data_buffer, buffer+37, rd->data_len);
-				rd->data = data_buffer;
-			}
-			else
-			{
-				rd->data_len = 0;
-				rd->data = NULL;
-			}
-
-			return (void *)rd;
 		}
 		else { goto  tr_analysis_err;}
 		
@@ -498,27 +348,7 @@ void get_trframe_free(tr_head_type_t head_type, void *p)
 		osal_mem_free(((bi_t *)p)->data);
 		osal_mem_free(p);
 		break;
-		
-	case TRHEAD_GP:
-		osal_mem_free(((gp_t *)p)->data);
-		osal_mem_free(p);
-		break;
-		
-	case TRHEAD_RP:
-		osal_mem_free(((rp_t *)p)->data);
-		osal_mem_free(p);
-		break;
-		
-	case TRHEAD_GD:
-		osal_mem_free(((gd_t *)p)->data);
-		osal_mem_free(p);
-		break;
-		
-	case TRHEAD_RD:
-		osal_mem_free(((rd_t *)p)->data);
-		osal_mem_free(p);
-		break;
-		
+                
 	case TRHEAD_DC:
 		osal_mem_free(((dc_t *)p)->data);
 		osal_mem_free(p);
@@ -536,8 +366,8 @@ void get_trframe_free(tr_head_type_t head_type, void *p)
 
 tr_buffer_t *get_trbuffer_alloc(tr_head_type_t type, void *frame)
 {
-	pi_t *p_pi; bi_t *p_bi; gp_t *p_gp; rp_t *p_rp;
-	gd_t *p_gd; rd_t *p_rd; dc_t *p_dc; ub_t *p_ub;
+	pi_t *p_pi; bi_t *p_bi;
+        dc_t *p_dc; ub_t *p_ub;
 	
 	tr_buffer_t *frame_buffer;
         int buffer_len;
@@ -552,7 +382,7 @@ tr_buffer_t *get_trbuffer_alloc(tr_head_type_t type, void *frame)
 		frame_buffer = osal_mem_alloc(sizeof(tr_buffer_t));
 		memset(frame_buffer, 0, sizeof(tr_buffer_t));
 		frame_buffer->size = TR_PI_DATA_FIX_LEN+p_pi->data_len;
-                buffer_len = frame_buffer->size;
+        buffer_len = frame_buffer->size;
 		if(buffer_len > TR_BUFFER_SIZE)
 		{
 			osal_mem_free(frame_buffer);
@@ -589,102 +419,6 @@ tr_buffer_t *get_trbuffer_alloc(tr_head_type_t type, void *frame)
 		frame_buffer->data[19] = get_trtrans_to_ch(p_bi->trans_type);
 		frame_buffer->data[20] = get_trframe_to_ch(p_bi->fr_type);
 		memcpy(frame_buffer->data+21, p_bi->data, p_bi->data_len);
-		memcpy(frame_buffer->data+frame_buffer->size-4, TR_TAIL, 4);
-
-		return frame_buffer;
-		
-	case TRHEAD_GP:
-		p_gp = (gp_t *)frame;
-		frame_buffer = osal_mem_alloc(sizeof(tr_buffer_t));
-		memset(frame_buffer, 0, sizeof(tr_buffer_t));
-		frame_buffer->size = TR_GP_DATA_FIX_LEN+p_gp->data_len;
-		buffer_len = frame_buffer->size;
-		if(buffer_len > TR_BUFFER_SIZE)
-		{
-			osal_mem_free(frame_buffer);
-			goto tr_package_err;
-		}
-		frame_buffer->data = osal_mem_alloc(frame_buffer->size);
-		memset(frame_buffer->data, 0, frame_buffer->size);
-		
-		memcpy(frame_buffer->data, TR_HEAD_GP, 3);
-		incode_xtocs(frame_buffer->data+3, p_gp->zidentify_no, 8);
-		incode_xtocs(frame_buffer->data+19, p_gp->cidentify_no, 8);
-		frame_buffer->data[35] = get_trtrans_to_ch(p_gp->trans_type);
-		frame_buffer->data[36] = get_trinfo_to_ch(p_gp->tr_info);
-		memcpy(frame_buffer->data+37, p_gp->data, p_gp->data_len);
-		memcpy(frame_buffer->data+frame_buffer->size-4, TR_TAIL, 4);
-
-		return frame_buffer;
-		
-	case TRHEAD_RP:
-		p_rp = (rp_t *)frame;
-		frame_buffer = osal_mem_alloc(sizeof(tr_buffer_t));
-		memset(frame_buffer, 0, sizeof(tr_buffer_t));
-		frame_buffer->size = TR_RP_DATA_FIX_LEN+p_rp->data_len;
-		buffer_len = frame_buffer->size;
-		if(buffer_len > TR_BUFFER_SIZE)
-		{
-			osal_mem_free(frame_buffer);
-			goto tr_package_err;
-		}
-		frame_buffer->data = osal_mem_alloc(frame_buffer->size);
-		memset(frame_buffer->data, 0, frame_buffer->size);
-		
-		memcpy(frame_buffer->data, TR_HEAD_RP, 3);
-		incode_xtocs(frame_buffer->data+3, p_rp->zidentify_no, 8);
-		incode_xtocs(frame_buffer->data+19, p_rp->cidentify_no, 8);
-		frame_buffer->data[35] = get_trtrans_to_ch(p_rp->trans_type);
-		frame_buffer->data[36] = get_trinfo_to_ch(p_rp->tr_info);
-		memcpy(frame_buffer->data+37, p_rp->data, p_rp->data_len);
-		memcpy(frame_buffer->data+frame_buffer->size-4, TR_TAIL, 4);
-
-		return frame_buffer;
-		
-	case TRHEAD_GD:
-		p_gd = (gd_t *)frame;
-		frame_buffer = osal_mem_alloc(sizeof(tr_buffer_t));
-		memset(frame_buffer, 0, sizeof(tr_buffer_t));
-		frame_buffer->size = TR_GD_DATA_FIX_LEN+p_gd->data_len;
-		buffer_len = frame_buffer->size;
-		if(buffer_len > TR_BUFFER_SIZE)
-		{
-			osal_mem_free(frame_buffer);
-			goto tr_package_err;
-		}
-		frame_buffer->data = osal_mem_alloc(frame_buffer->size);
-		memset(frame_buffer->data, 0, sizeof(frame_buffer->size));
-		
-		memcpy(frame_buffer->data, TR_HEAD_GD, 3);
-		incode_xtocs(frame_buffer->data+3, p_gd->zidentify_no, 8);
-		incode_xtocs(frame_buffer->data+19, p_gd->cidentify_no, 8);
-		frame_buffer->data[35] = get_trtrans_to_ch(p_gd->trans_type);
-		frame_buffer->data[36] = get_trinfo_to_ch(p_gd->tr_info);
-		memcpy(frame_buffer->data+37, p_gd->data, p_gd->data_len);
-		memcpy(frame_buffer->data+frame_buffer->size-4, TR_TAIL, 4);
-
-		return frame_buffer;
-		
-	case TRHEAD_RD:
-		p_rd = (rd_t *)frame;
-		frame_buffer = osal_mem_alloc(sizeof(tr_buffer_t));
-		memset(frame_buffer, 0, sizeof(tr_buffer_t));
-		frame_buffer->size = TR_RD_DATA_FIX_LEN+p_rd->data_len;
-		buffer_len = frame_buffer->size;
-		if(buffer_len > TR_BUFFER_SIZE)
-		{
-			osal_mem_free(frame_buffer);
-			goto tr_package_err;
-		}
-		frame_buffer->data = osal_mem_alloc(frame_buffer->size);
-		memset(frame_buffer->data, 0, frame_buffer->size);
-		
-		memcpy(frame_buffer->data, TR_HEAD_RD, 3);
-		incode_xtocs(frame_buffer->data+3, p_rd->zidentify_no, 8);
-		incode_xtocs(frame_buffer->data+19, p_rd->cidentify_no, 8);
-		frame_buffer->data[35] = get_trtrans_to_ch(p_rd->trans_type);
-		frame_buffer->data[36] = get_trinfo_to_ch(p_rd->tr_info);
-		memcpy(frame_buffer->data+37, p_rd->data, p_rd->data_len);
 		memcpy(frame_buffer->data+frame_buffer->size-4, TR_TAIL, 4);
 
 		return frame_buffer;

@@ -30,7 +30,7 @@
 #define SERVER_CLI_LIST_MAX_NUM		128
 #define GATEWAY_CLI_LIST_MAX_NUM	24
 
-#define ZDEVICE_MAX_NUM		128
+#define ZDEVICE_MAX_NUM		16
 
 //max connection size of tcp
 #define TRANS_TCP_CONN_MAX_SIZE		1024
@@ -59,12 +59,6 @@
 #define TRANS_UDP_SELF_PORT	11578
 #define TRANS_UDP_REMOTE_PORT	11578
 
-/*
-Old version not ed_type on gateway frame
-This macro just support that
-*/
-#define LACK_EDTYPE_SUPPORT
-
 //transport layer listening connection max number
 #define TRANS_THREAD_MAX_NUM	5
 
@@ -75,7 +69,7 @@ This macro just support that
 
 #define GET_SERVER_IP(ipaddr)								\
 st(															\
-	sprintf(ipaddr, "%s:%d", SERVER_HOST_IP, get_udp_port());	\
+	sprintf(ipaddr, "%s:%d", SERVER_HOST_IP, TRANS_UDP_PORT);	\
 )
 
 typedef uint8 zidentify_no_t[8];
@@ -87,11 +81,7 @@ struct sockaddr_in
   int sin_port;
 };
 
-extern int get_tcp_port(void);
-extern int get_udp_port(void);
-extern void set_tcp_port(int port);
-extern void set_udp_port(int port);
-
-extern int mach_init(void);
+extern void mach_init(void);
+extern void mach_load(void);
 
 #endif	//__GLOBALS_H__

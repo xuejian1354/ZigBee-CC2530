@@ -2214,12 +2214,6 @@
         <group>
           <name>protocol</name>
           <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\devopt.c</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\devopt.h</name>
-          </file>
-          <file>
             <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\framelysis.c</name>
           </file>
           <file>

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-08
+Date:2015-07-09
 **************************************************************************************************/
 
 
@@ -19,10 +19,13 @@ Date:2015-07-08
 #include "globals.h"
 #include "protocol.h"
 
+#include "AF.h"
 #include "OSAL.h"
 #include "OSAL_Nv.h"
 #include "OnBoard.h"
 
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+#include "mevent.h"
 /*********************************************************************
  * MACROS
  */
@@ -86,9 +89,7 @@ byte TransconnApp_TaskID;   // Task ID for internal task/event processing
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-#if(HAL_UART==TRUE) && defined(TRANSCONN_BOARD_GATEWAY)
 static void TransconnApp_TxHandler(uint8 txBuf[], uint8 txLen);
-#endif
 
 /*********************************************************************
  * LOCAL VARIABLES
@@ -113,7 +114,7 @@ void TransconnApp_Init( uint8 task_id )
 {
     TransconnApp_TaskID = task_id;
 
-#if(HAL_UART==TRUE) && defined(TRANSCONN_BOARD_GATEWAY)
+#if(HAL_UART==TRUE)
 #ifndef HAL_UART01_BOTH
 	Serial_Init(Data_TxHandler);
 	SerialTx_Handler(SERIAL_COM_PORT, TransconnApp_TxHandler);
@@ -135,6 +136,24 @@ void TransconnApp_Init( uint8 task_id )
 
 
 /*********************************************************************
+ * @fn      TransconnApp_ProcessZDOStates
+ *
+ * @brief   Process when network change
+ *
+ * @param   network status
+ *
+ * @return  none
+ */
+void TransconnApp_ProcessZDOStates(devStates_t status)
+{
+  mach_load();
+
+  set_user_event(TransconnApp_TaskID, TIMER_UPLOAD_EVENT, 
+	upload_event, 10000, TIMER_LOOP_EXECUTION | TIMER_EVENT_RESIDENTS, NULL);
+}
+
+
+/*********************************************************************
  * @fn      TransconnrApp_ProcessEvent
  *
  * @brief   Transconn Application Task event processor.  This function
@@ -152,22 +171,22 @@ uint16 TransconnApp_ProcessEvent(uint8 task_id, uint16 events)
 	return process_event(task_id, events);
 }
 
-#if(HAL_UART==TRUE) && defined(TRANSCONN_BOARD_GATEWAY)
 void TransconnApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
-	struct sockaddr_in client_addr = {0};
-	
-	frhandler_arg_t *frarg = 
-		get_frhandler_arg_alloc(SERIAL_COM_PORT, &client_addr, txBuf, txLen);
+	frhandler_arg_t *frarg = get_frhandler_arg_alloc(txBuf, txLen);
 	analysis_capps_frame(frarg);
+	get_frhandler_arg_free(frarg);
+	
 	//ConnectorApp_TxHandler(txBuf, txLen);
 }
-#endif
 
 void TransconnApp_GetCommonDataSend(uint8 *buf, uint16 len)
 {
 	frhandler_arg_t *frarg = 
-		get_frhandler_arg_alloc(SERIAL_COM_PORT, NULL, buf, len);
+		get_frhandler_arg_alloc(buf, len);
 
 	analysis_zdev_frame(frarg);
+
+	//HalUARTWrite(SERIAL_COM_PORT, buf, len);
 }
+#endif

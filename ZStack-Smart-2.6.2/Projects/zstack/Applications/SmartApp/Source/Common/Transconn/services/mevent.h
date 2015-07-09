@@ -22,10 +22,7 @@
 #include <stdio.h>
  
 extern void upload_event( void *params, uint16 *duration, uint8 *count);
-extern void stand_event( void *params, uint16 *duration, uint8 *count);
 
 extern void set_zdev_check(uint16 net_addr);
-extern void set_cli_check(cli_info_t *p_cli);
-extern void set_rp_check(cli_info_t *p_cli);
  
 #endif  //__MEVENT_H__

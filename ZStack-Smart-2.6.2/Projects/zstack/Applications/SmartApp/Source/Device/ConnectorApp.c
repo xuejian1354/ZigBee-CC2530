@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-08
+Date:2015-07-09
 **************************************************************************************************/
 
 
@@ -25,9 +25,9 @@ Date:2015-07-08
 #include "OnBoard.h"
 
 #include "CommonApp.h"
+#include "framelysis.h"
 #if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
 #include "TransconnApp.h"
-#include "mevent.h"
 #endif
 
 /* HAL */
@@ -176,7 +176,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
     incode_2_to_16(EXT_ADDR_G, macAddr, 8);
 
 #ifdef ZDO_COORDINATOR
-	UC_t mFrame;
+	uc_t mFrame;
 
 	memcpy(mFrame.head, FR_HEAD_UC, 3);
 	mFrame.type = FR_DEV_COORD;
@@ -216,13 +216,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 #endif
 
 #if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
-    ConnectorApp_TxHandler("D:/BR/0000:O\r\n", 14);
-
-	set_user_event(TransconnApp_TaskID, TIMER_UPLOAD_EVENT, 
-		upload_event, 10000, TIMER_LOOP_EXECUTION | TIMER_EVENT_RESIDENTS, NULL);
-
-	set_user_event(TransconnApp_TaskID, CLIENT_STAND_EVENT, 
-		stand_event, 11000, TIMER_LOOP_EXECUTION | TIMER_EVENT_RESIDENTS, NULL);
+	TransconnApp_ProcessZDOStates(status);
 #endif
   }
 }

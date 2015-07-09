@@ -30,7 +30,7 @@
 #define FR_UR_DATA_FIX_LEN		14		//HR frame fix len
 #define FR_DE_DATA_FIX_LEN		14		//DE frame fix len
 
-#ifdef TRANSCONN_BOARD_GATEWAY
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
 
 frHeadType_t get_frhead_from_str(char *head)
 {
@@ -381,31 +381,59 @@ fr_analysis_err:
 
 void get_frame_free(frHeadType_t htype, void *p)
 {
+	if(p == NULL)
+	{
+		return;
+	}
+	
 	switch(htype)
 	{
 	case HEAD_UC: 
-		osal_mem_free(((uc_t *)p)->data);
+	{
+		uc_t *p_uc = (uc_t *)p;
+		if(p_uc->data != NULL)
+		{
+			osal_mem_free(p_uc->data);
+		}
 		osal_mem_free(p);
-		break;
+	}
+	break;
 		
 	case HEAD_UO: 
-		osal_mem_free(((uo_t *)p)->data);
+	{
+		uo_t *p_uo = (uo_t *)p;
+		if(p_uo->data != NULL)
+		{
+			osal_mem_free(p_uo->data);
+		}
 		osal_mem_free(p);
-		break;
+	}
+	break;
 		
 	case HEAD_UH: 
+	{
 		osal_mem_free(p);
-		break;
+	}
+	break;
 		
 	case HEAD_UR: 
-		osal_mem_free(((ur_t *)p)->data);
+	{
+		ur_t *p_ur = (ur_t *)p;
+		if(p_ur->data != NULL)
+		{
+			osal_mem_free(p_ur->data);
+		}
 		osal_mem_free(p);
-		break;
+	}
+	break;
 	
 	case HEAD_DE: 
-		osal_mem_free(((ur_t *)p)->data);
+	{
+		de_t *p_de = (de_t *)p;
+		osal_mem_free(p_de->data);
 		osal_mem_free(p);
-		break;
+	}
+	break;
 
 	default: break;
 	}
@@ -549,6 +577,5 @@ void get_buffer_free(fr_buffer_t *p)
 	}
 	
 	osal_mem_free(p);
-	p = NULL;
 }
 #endif
