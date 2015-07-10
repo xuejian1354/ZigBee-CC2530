@@ -265,6 +265,7 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=2</state>
           <state>SIGNAL_AMPLIFIER_SETTING</state>

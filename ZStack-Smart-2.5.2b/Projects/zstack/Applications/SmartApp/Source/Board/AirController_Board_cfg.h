@@ -35,8 +35,6 @@ extern "C"
 #define HAL_KEY_MATCH_ID	/*按键匹配ID */
 //#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
 
-//#define TRANSCONN_BOARD_GATEWAY		//板级网关应用转发层功能
-
 /*********************************************************************
  * INCLUDES
  */

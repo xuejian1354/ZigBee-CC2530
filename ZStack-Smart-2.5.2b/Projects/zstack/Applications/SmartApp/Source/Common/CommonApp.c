@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-06
+Date:2015-07-08
 **************************************************************************************************/
 
 
@@ -16,6 +16,9 @@ Date:2015-07-06
  * INCLUDES
  */
 #include "CommonApp.h"
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+#include "TransconnApp.h"
+#endif
 
 #include "OSAL.h"
 #include "OSAL_Nv.h"
@@ -397,7 +400,11 @@ void CommonApp_PowerSettingCountCB( void *params,
 	if(CommonApp_NwkState != DEV_ZB_COORD && CommonApp_NwkState != DEV_ROUTER 
   		|| CommonApp_NwkState != DEV_END_DEVICE)
 	{
+#if !(DEVICE_TYPE_ID==12)
 		HalLedBlink ( HAL_LED_2, 2, 50, 100 );
+#else
+		HalLedBlink ( HAL_LED_4, 2, 50, 100 );
+#endif
 	}
 	
 	isNotTimeOut = 0;
@@ -689,11 +696,7 @@ void Update_Refresh(uint8 *data, uint8 length)
 	{
 		if(nwkAddr == COORDINATOR_ADDR)
 		{
-#ifndef HAL_UART01_BOTH
-			HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
-#else
-			HalUARTWrite(SERIAL_COM_PORT1, fBuf, fLen);
-#endif
+			CommonApp_GetDevDataSend(fBuf, fLen);
 		}
 		else
 		{
@@ -706,8 +709,7 @@ void Update_Refresh(uint8 *data, uint8 length)
 
 void PermitJoin_Refresh(uint8 *data, uint8 length)
 {
-  	uint8 buf[FRAME_BUFFER_SIZE] = {0};
-  
+        uint8 buf[48] = {0};
 	memcpy(buf, FR_HEAD_UJ, 3);
 	memcpy(buf+3, SHORT_ADDR_G, 4);
 
@@ -716,11 +718,7 @@ void PermitJoin_Refresh(uint8 *data, uint8 length)
 	memcpy(buf+7+length, f_tail, 4);
 	
 #ifdef SSA_CONNECTOR
-#ifndef HAL_UART01_BOTH
-	HalUARTWrite(SERIAL_COM_PORT, buf, 11+length);
-#else
-	HalUARTWrite(SERIAL_COM_PORT1, buf, 11+length);
-#endif
+	CommonApp_GetDevDataSend(buf, 11+length);
 #else
 	CommonApp_SendTheMessage(COORDINATOR_ADDR, buf, 11+length);
 #endif
@@ -803,4 +801,17 @@ void CommonApp_SendTheMessage(uint16 dstNwkAddr, uint8 *data, uint8 length)
                        data,
                        &CommonApp_TransID,
                        AF_DISCV_ROUTE, AF_DEFAULT_RADIUS );
+}
+
+void CommonApp_GetDevDataSend(uint8 *buf, uint16 len)
+{
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+	TransconnApp_GetCommonDataSend(buf, len);
+#elif (HAL_UART==TRUE)
+  #ifndef HAL_UART01_BOTH
+	HalUARTWrite(SERIAL_COM_PORT, buf, len);
+  #else
+  	HalUARTWrite(SERIAL_COM_PORT1, buf, len);
+  #endif
+#endif
 }

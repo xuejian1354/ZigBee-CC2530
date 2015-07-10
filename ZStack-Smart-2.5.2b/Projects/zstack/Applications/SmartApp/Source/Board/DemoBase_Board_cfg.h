@@ -35,7 +35,7 @@ extern "C"
 //#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
 #define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
 
-//#define TRANSCONN_BOARD_GATEWAY		//板级网关应用转发层功能
+//#define TRANSCONN_BOARD_GATEWAY		/*板级网关应用转发层功能*/
 
 /*********************************************************************
  * INCLUDES

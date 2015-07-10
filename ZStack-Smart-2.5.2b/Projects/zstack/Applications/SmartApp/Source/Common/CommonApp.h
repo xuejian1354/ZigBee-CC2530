@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-06
+Date:2015-07-08
 **************************************************************************************************/
 
 
@@ -228,6 +228,8 @@ extern void CommonApp_GetDeviceInfo ( uint8 param, void *pValue );
 #ifdef SSA_CONNECTOR
 extern void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen);
 #endif
+
+extern void CommonApp_GetDevDataSend(uint8 *buf, uint16 len);
 
 /*********************************************************************
 *********************************************************************/

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-15
+Date:2015-07-09
 **************************************************************************************************/
 
 
@@ -44,26 +44,35 @@ extern "C"
 #define FR_DEV_ENDDEV	'1'
 
 //应用类型
-#define FR_APP_CONNECTOR		"00"
-#define FR_APP_DEMOBASE			"FE"
+#define FR_APP_CONNECTOR			"00"
+#define FR_APP_DEMOBASE				"FE"
 #define FR_APP_AIRCONTROLLER 		"F0"
 #define FR_APP_LIGHTSWITCH_ONE		"01"
 #define FR_APP_LIGHTSWITCH_TWO		"02"
 #define FR_APP_LIGHTSWITCH_THREE	"03"
 #define FR_APP_LIGHTSWITCH_FOUR		"04"
-#define FR_APP_ALARM			"11"
-#define FR_APP_IR_DETECTION		"12"
-#define FR_APP_DOOR_SENSOR		"13"
-#define FR_APP_ENVDETECTION		"14"
-#define FR_APP_SMOG			"15"
-#define FR_APP_IR_RELAY			"21"
+#define FR_APP_ALARM				"11"
+#define FR_APP_IR_DETECTION			"12"
+#define FR_APP_DOOR_SENSOR			"13"
+#define FR_APP_ENVDETECTION			"14"
+#define FR_APP_SMOG					"15"
+#define FR_APP_IR_RELAY				"21"
+#define FR_APP_HUMITURE_DETECTION	"A1"
+#define FR_APP_SOLENOID_VALVE		"A2"
 
+/*Connector*/
 #if(DEVICE_TYPE_ID==0)
 #define FR_APP_DEV FR_APP_CONNECTOR
+
+/*DemoBase*/
 #elif(DEVICE_TYPE_ID==0xFE)
 #define FR_APP_DEV FR_APP_DEMOBASE
+
+/*AirController*/
 #elif(DEVICE_TYPE_ID==0xF0)
 #define FR_APP_DEV FR_APP_AIRCONTROLLER
+
+/*Smart Home*/
 #elif(DEVICE_TYPE_ID==1)
 #define FR_APP_DEV FR_APP_LIGHTSWITCH_ONE
 #elif(DEVICE_TYPE_ID==2)
@@ -84,6 +93,13 @@ extern "C"
 #define FR_APP_DEV FR_APP_SMOG
 #elif(DEVICE_TYPE_ID==21)
 #define FR_APP_DEV FR_APP_IR_RELAY
+
+/*Smart Farm*/
+#elif(DEVICE_TYPE_ID==0xA1)
+#define FR_APP_DEV FR_APP_HUMITURE_DETECTION
+#elif(DEVICE_TYPE_ID==0xA2)
+#define FR_APP_DEV FR_APP_SOLENOID_VALVE
+
 #else
 #error "undef FR_APP_DEV !!!"
 #endif
@@ -106,8 +122,8 @@ extern "C"
 /*********************************************************************
  * MACROS
  */
-#define FRAME_DATA_SIZE		64
-#define FRAME_BUFFER_SIZE 	128
+#define FRAME_DATA_SIZE		128
+#define FRAME_BUFFER_SIZE 	256
 #define MAX_OPTDATA_SIZE	FRAME_DATA_SIZE
 
 /*********************************************************************
@@ -122,69 +138,69 @@ typedef enum
 	HEAD_UH,
 	HEAD_UR,
 	HEAD_DE,
+	HEAD_NONE,
 }frHeadType_t;
 
-
-//协调器建好网络后主动发送命令
+//Coordinator info frame
 typedef struct
 {
 	uint8 head[3];   //UC:
-	uint8 type;   //表示设备类型，0表示协调器
-	uint8 ed_type[2]; //表示应用类型，00表示协调器
-	uint8 short_addr[4];   //设备短地址
-	uint8 ext_addr[16];  //设备长地址  
-	uint8 panid[4];    //网络PANID号
-	uint8 channel[4]; //网络信道
+	uint8 type;   //net type, 0 support route
+	uint8 ed_type[2]; //app type, 00 coordinator
+	uint8 short_addr[4];   //net address
+	uint8 ext_addr[16];  //mac address
+	uint8 panid[4];    //net panid
+	uint8 channel[4]; //net channel
 	uint8 data_len;
-	uint8 *data; //终端设备初始数据
+	uint8 *data; //data
 	uint8 tail[4];    //:O/r/n
 }UC_t;
 
 
-//设备加入网络后发给协调器
+//Device info frame
 typedef struct
 {
 	uint8 head[3];   //UO:
-	uint8 type;   //表示设备类型
-	uint8 ed_type[2]; //表示应用类型
-	uint8 short_addr[4];   //设备短地址
-	uint8 ext_addr[16];  //设备长地址  
+	uint8 type;   //net type
+	uint8 ed_type[2]; //app type
+	uint8 short_addr[4];   //net address
+	uint8 ext_addr[16];  //mac address
 	uint8 data_len;
-	uint8 *data; //终端设备初始数据
+	uint8 *data; //data
 	uint8 tail[4];    //:O/r/n
 }UO_t; 
 
  
- //设备心跳
+ //Device Heart Beat frame
 typedef struct
 {
 	uint8 head[3];   //UH:
-	uint8 short_addr[4];   //设备短地址
+	uint8 short_addr[4];   //net address
 	uint8 tail[4];    //:O/r/n
 }UH_t;  
  
  
-//设备实时数据返回格式
+//Device returns frame
 typedef struct
 {
 	uint8 head[3];   //UR:
-	uint8 type;   //表示设备类型，0表示协调器
-	uint8 ed_type[2]; //表示应用类型
-	uint8 short_addr[4];   //设备短地址 
+	uint8 type;   //net type
+	uint8 ed_type[2]; //app type
+	uint8 short_addr[4];   //net address
 	uint8 data_len;
-	uint8 *data;    //终端设备初始数据
+	uint8 *data;    //data
 	uint8 tail[4];    //:O/r/n
 }UR_t;  
  
  
-//设备控制命令格式
+//Device control frame
 typedef struct
 {
 	uint8 head[2];   //D:
-	uint8 cmd[4];   //命令字段，解析是什么命令
-	uint8 short_addr[4];   //设备短地址 
+	uint8 cmd[4];   //cmmand
+	uint8 short_addr[4];   //net address
 	uint8 data_len;
-	uint8 *data; //终端设备控制命令
+	uint8 *data; //data
 	uint8 tail[4]; //:O/r/n
  }DE_t; 
 

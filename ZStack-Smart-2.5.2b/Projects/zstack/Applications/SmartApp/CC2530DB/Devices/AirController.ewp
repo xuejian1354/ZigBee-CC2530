@@ -265,6 +265,7 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xF0</state>
           <state>SIGNAL_AMPLIFIER_SETTING</state>
@@ -1101,12 +1102,6 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Common\OSAL_CommonApp.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.h</name>
       </file>
     </group>
     <group>

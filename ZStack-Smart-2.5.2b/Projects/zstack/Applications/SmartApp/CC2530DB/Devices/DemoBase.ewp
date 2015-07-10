@@ -265,6 +265,7 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
           <state>SIGNAL_AMPLIFIER_SETTING</state>
@@ -454,6 +455,8 @@
           <name>CCIncludePath2</name>
           <state>$PROJ_DIR$</state>
           <state>$PROJ_DIR$\..\..\Source\Common</state>
+          <state>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol</state>
+          <state>$PROJ_DIR$\..\..\Source\Common\Transconn\services</state>
           <state>$PROJ_DIR$\..\..\Source\Connector</state>
           <state>$PROJ_DIR$\..\..\Source\\EndNode</state>
           <state>$PROJ_DIR$\..\..\Source\Board</state>
@@ -1339,6 +1342,7 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
           <state>SIGNAL_AMPLIFIER_SETTING</state>
@@ -2412,6 +2416,7 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
           <state>SIGNAL_AMPLIFIER_SETTING</state>
@@ -3226,6 +3231,54 @@
     <name>App</name>
     <group>
       <name>Common</name>
+      <group>
+        <name>Transconn</name>
+        <excluded>
+          <configuration>ZD</configuration>
+        </excluded>
+        <group>
+          <name>protocol</name>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\framelysis.c</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\framelysis.h</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\protocol.c</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\protocol.h</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\trframelysis.c</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\trframelysis.h</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\trrequest.c</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\trrequest.h</name>
+          </file>
+        </group>
+        <group>
+          <name>services</name>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\services\globals.c</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\services\globals.h</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\services\mevent.c</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\services\mevent.h</name>
+          </file>
+        </group>
+      </group>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Common\CommonApp.c</name>
       </file>
@@ -3299,6 +3352,12 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\Source\Manage\incode\incode.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.h</name>
         </file>
       </group>
       <file>
