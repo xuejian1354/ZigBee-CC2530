@@ -18,7 +18,9 @@ Date:2015-07-09
 #include "HeartBeat.h"
 #include "CommonApp.h"
 
+#ifdef TRANSCONN_BOARD_GATEWAY
 #include "framelysis.h"
+#endif
 
 /*********************************************************************
  * MACROS

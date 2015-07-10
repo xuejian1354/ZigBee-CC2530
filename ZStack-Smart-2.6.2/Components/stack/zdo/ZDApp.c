@@ -2590,7 +2590,7 @@ void ZDO_JoinConfirmCB( uint16 PanId, ZStatus_t Status )
       }
     }
 
-#if !(DEVICE_TYPE_ID==12)
+#if (DEVICE_TYPE_ID!=12)
     // LED on shows device joined
     HalLedSet ( HAL_LED_3, HAL_LED_MODE_ON );
 #endif

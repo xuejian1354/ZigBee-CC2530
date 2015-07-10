@@ -16,9 +16,11 @@ Date:2015-07-09
 /*********************************************************************
  * INCLUDES
  */
-#include "frame-analysis.h"
-#include "framelysis.h"
 #include "serial-comm.h"
+#include "frame-analysis.h"
+#ifdef TRANSCONN_BOARD_GATEWAY
+#include "framelysis.h"
+#endif
 
 /*********************************************************************
  * MACROS
