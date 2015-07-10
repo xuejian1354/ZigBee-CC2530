@@ -98,28 +98,28 @@ void dc_handler(dc_t *dc)
 	{
 	case HEAD_UC:
 	{
-		uc_t *uc = (uc_t *)p;
+		UC_t *uc = (UC_t *)p;
 		get_frame_free(HEAD_UC, uc);
 	}
 	break;
 		
 	case HEAD_UO:
 	{
-		uo_t *uo = (uo_t *)p;
+		UO_t *uo = (UO_t *)p;
 		get_frame_free(HEAD_UO, uo);
 	}
 	break;
 		
 	case HEAD_UH:
 	{
-		uh_t *uh = (uh_t *)p;
+		UH_t *uh = (UH_t *)p;
 		get_frame_free(HEAD_UH, uh);
 	}
 	break;
 		
 	case HEAD_UR:
 	{
-		ur_t *ur = (ur_t *)p;
+		UR_t *ur = (UR_t *)p;
 		get_frame_free(HEAD_UR, ur);
 	}
 	break;
@@ -129,7 +129,7 @@ void dc_handler(dc_t *dc)
 		fr_buffer_t *buffer = NULL;
 		gw_info_t *p_mgw = get_gateway_info();
 		dev_info_t *dev_info = NULL;
-		de_t *de = (de_t *)p;
+		DE_t *de = (DE_t *)p;
 		if(memcmp(p_mgw->gw_no, dc->zidentify_no, sizeof(zidentify_no_t)))
 		{
 			dev_info = query_zdevice_info_with_sn(dc->zidentify_no);

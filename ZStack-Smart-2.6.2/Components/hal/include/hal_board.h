@@ -19,5 +19,8 @@
 #include "DustSensor_Board_cfg.h"
 #include "IRRelay_Board_cfg.h"
 
+#include "HumitureDetection_Board_cfg.h"
+#include "SolenoidValve_Board_cfg.h"
+
 
 #include "hal_board_cfg.h"

@@ -234,8 +234,8 @@ void *get_frame_alloc(frHeadType_t htype, uint8 buffer[], int length)
 		if(length>=FR_UC_DATA_FIX_LEN && !memcmp(buffer, FR_HEAD_UC, 3)
 			&& !memcmp(buffer+length-4, FR_TAIL, 4))
 		{
-			uc_t *uc = osal_mem_alloc(sizeof(uc_t));
-			memset(uc, 0, sizeof(uc_t));
+			UC_t *uc = osal_mem_alloc(sizeof(UC_t));
+			memset(uc, 0, sizeof(UC_t));
 			memcpy(uc->head, buffer, 3);
 			uc->type = buffer[3];
 			memcpy(uc->ed_type, buffer+4, 2);
@@ -268,8 +268,8 @@ void *get_frame_alloc(frHeadType_t htype, uint8 buffer[], int length)
 		if(length>=FR_UO_DATA_FIX_LEN && !memcmp(buffer, FR_HEAD_UO, 3)
 			&& !memcmp(buffer+length-4, FR_TAIL, 4))
 		{
-			uo_t *uo = osal_mem_alloc(sizeof(uo_t));
-			memset(uo, 0, sizeof(uo_t));
+			UO_t *uo = osal_mem_alloc(sizeof(UO_t));
+			memset(uo, 0, sizeof(UO_t));
 			memcpy(uo->head, buffer, 3);
 			uo->type = buffer[3];
 			memcpy(uo->ed_type, buffer+4, 2);
@@ -300,8 +300,8 @@ void *get_frame_alloc(frHeadType_t htype, uint8 buffer[], int length)
 		if(length>=FR_UH_DATA_FIX_LEN && !memcmp(buffer, FR_HEAD_UH, 3)
 			&& !memcmp(buffer+7, FR_TAIL, 4))
 		{
-			uh_t *uh = osal_mem_alloc(sizeof(uh_t));
-			memset(uh, 0, sizeof(uh_t));
+			UH_t *uh = osal_mem_alloc(sizeof(UH_t));
+			memset(uh, 0, sizeof(UH_t));
 			memcpy(uh->head, buffer, 3);
 			memcpy(uh->short_addr, buffer+3, 4);
 			memcpy(uh->tail, buffer+7, 4);;
@@ -314,8 +314,8 @@ void *get_frame_alloc(frHeadType_t htype, uint8 buffer[], int length)
 		if(length>=FR_UR_DATA_FIX_LEN && !memcmp(buffer, FR_HEAD_UR, 3)
 			&& !memcmp(buffer+length-4, FR_TAIL, 4))
 		{
-			ur_t *ur = osal_mem_alloc(sizeof(ur_t));
-			memset(ur, 0, sizeof(ur_t));
+			UR_t *ur = osal_mem_alloc(sizeof(UR_t));
+			memset(ur, 0, sizeof(UR_t));
 			memcpy(ur->head, buffer, 3);
 			ur->type = buffer[3];
 			memcpy(ur->ed_type, buffer+4, 2);
@@ -345,8 +345,8 @@ void *get_frame_alloc(frHeadType_t htype, uint8 buffer[], int length)
 		if(length>=FR_DE_DATA_FIX_LEN && !memcmp(buffer, FR_HEAD_DE, 2)
 			&& !memcmp(buffer+length-4, FR_TAIL, 4))
 		{
-			de_t *de = osal_mem_alloc(sizeof(de_t));
-			memset(de, 0, sizeof(de_t));
+			DE_t *de = osal_mem_alloc(sizeof(DE_t));
+			memset(de, 0, sizeof(DE_t));
 			memcpy(de->head, buffer, 2);
 			memcpy(de->cmd, buffer+2, 4);
 			memcpy(de->short_addr, buffer+6, 4);
@@ -390,7 +390,7 @@ void get_frame_free(frHeadType_t htype, void *p)
 	{
 	case HEAD_UC: 
 	{
-		uc_t *p_uc = (uc_t *)p;
+		UC_t *p_uc = (UC_t *)p;
 		if(p_uc->data != NULL)
 		{
 			osal_mem_free(p_uc->data);
@@ -401,7 +401,7 @@ void get_frame_free(frHeadType_t htype, void *p)
 		
 	case HEAD_UO: 
 	{
-		uo_t *p_uo = (uo_t *)p;
+		UO_t *p_uo = (UO_t *)p;
 		if(p_uo->data != NULL)
 		{
 			osal_mem_free(p_uo->data);
@@ -418,7 +418,7 @@ void get_frame_free(frHeadType_t htype, void *p)
 		
 	case HEAD_UR: 
 	{
-		ur_t *p_ur = (ur_t *)p;
+		UR_t *p_ur = (UR_t *)p;
 		if(p_ur->data != NULL)
 		{
 			osal_mem_free(p_ur->data);
@@ -429,7 +429,7 @@ void get_frame_free(frHeadType_t htype, void *p)
 	
 	case HEAD_DE: 
 	{
-		de_t *p_de = (de_t *)p;
+		DE_t *p_de = (DE_t *)p;
 		osal_mem_free(p_de->data);
 		osal_mem_free(p);
 	}
@@ -451,7 +451,7 @@ fr_buffer_t *get_buffer_alloc(frHeadType_t htype, void *frame)
 	{
 	case HEAD_UC: 
 	{
-		uc_t *p_uc = (uc_t *)frame;
+		UC_t *p_uc = (UC_t *)frame;
 		if(p_uc->data_len > FRAME_DATA_SIZE)
 		{
 			goto fr_package_err; 
@@ -477,7 +477,7 @@ fr_buffer_t *get_buffer_alloc(frHeadType_t htype, void *frame)
 		
 	case HEAD_UO: 
 	{
-		uo_t *p_uo = (uo_t *)frame;
+		UO_t *p_uo = (UO_t *)frame;
 		if(p_uo->data_len > FRAME_DATA_SIZE)
 		{
 			goto fr_package_err; 
@@ -501,7 +501,7 @@ fr_buffer_t *get_buffer_alloc(frHeadType_t htype, void *frame)
 		
 	case HEAD_UH: 
 	{
-		uh_t *p_uh = (uh_t *)frame;
+		UH_t *p_uh = (UH_t *)frame;
 		frame_buffer = osal_mem_alloc(sizeof(fr_buffer_t));
 		memset(frame_buffer, 0, sizeof(fr_buffer_t));
 		frame_buffer->size = FR_UH_DATA_FIX_LEN;
@@ -517,7 +517,7 @@ fr_buffer_t *get_buffer_alloc(frHeadType_t htype, void *frame)
 		
 	case HEAD_UR: 
 	{
-		ur_t *p_ur = (ur_t *)frame;
+		UR_t *p_ur = (UR_t *)frame;
 		if(p_ur->data_len > FRAME_DATA_SIZE)
 		{
 			goto fr_package_err; 
@@ -540,7 +540,7 @@ fr_buffer_t *get_buffer_alloc(frHeadType_t htype, void *frame)
 	
 	case HEAD_DE: 
 	{
-		de_t *p_de = (de_t *)frame;
+		DE_t *p_de = (DE_t *)frame;
 		if(p_de->data_len > FRAME_DATA_SIZE)
 		{
 			goto fr_package_err; 

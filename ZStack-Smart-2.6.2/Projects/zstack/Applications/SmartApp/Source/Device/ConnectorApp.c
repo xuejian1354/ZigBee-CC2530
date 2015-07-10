@@ -176,7 +176,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
     incode_2_to_16(EXT_ADDR_G, macAddr, 8);
 
 #ifdef ZDO_COORDINATOR
-	uc_t mFrame;
+	UC_t mFrame;
 
 	memcpy(mFrame.head, FR_HEAD_UC, 3);
 	mFrame.type = FR_DEV_COORD;

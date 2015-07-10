@@ -296,7 +296,7 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 	{
 	case HEAD_UC:
 	{
-		uc_t *uc = (uc_t *)p;
+		UC_t *uc = (UC_t *)p;
 		incode_ctoxs(get_gateway_info()->gw_no, uc->ext_addr, 16);
 		get_gateway_info()->zapp_type = get_frapp_type_from_str((char *)uc->ed_type);
 		incode_ctox16(&(get_gateway_info()->zpanid), uc->panid);
@@ -320,7 +320,7 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 		
 	case HEAD_UO:
 	{
-		uo_t *uo = (uo_t *)p;
+		UO_t *uo = (UO_t *)p;
 		dev_info = osal_mem_alloc(sizeof(dev_info_t));
 		memset(dev_info, 0, sizeof(dev_info_t));
 		incode_ctoxs(dev_info->zidentity_no, uo->ext_addr, 16);
@@ -359,7 +359,7 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 		
 	case HEAD_UH:
 	{
-		uh_t *uh = (uh_t *)p;
+		UH_t *uh = (UH_t *)p;
 		incode_ctox16(&znet_addr, uh->short_addr);
 		dev_info = query_zdevice_info(znet_addr);
 		if(dev_info == NULL)
@@ -381,7 +381,7 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 	case HEAD_UR:
 	{
 		fr_buffer_t *frbuffer = NULL;
-		ur_t *ur = (ur_t *)p;
+		UR_t *ur = (UR_t *)p;
 		incode_ctox16(&znet_addr, ur->short_addr);
 		
 		dev_info = query_zdevice_info(znet_addr);
@@ -418,7 +418,7 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 		
 	case HEAD_DE:
 	{
-		de_t *de = (de_t *)p;
+		DE_t *de = (DE_t *)p;
 		get_frame_free(HEAD_DE, de);
 	}
 	break;
@@ -486,25 +486,25 @@ fr_buffer_t *get_switch_buffer_alloc(frHeadType_t head_type, void *frame)
 	{
 	case HEAD_UC:
 	{
-		frbuffer = get_buffer_alloc(HEAD_UC, (uc_t *)frame);
+		frbuffer = get_buffer_alloc(HEAD_UC, (UC_t *)frame);
 		break;
 	}
 
 	case HEAD_UO:
 	{
-		frbuffer = get_buffer_alloc(HEAD_UO, (uo_t *)frame);
+		frbuffer = get_buffer_alloc(HEAD_UO, (UO_t *)frame);
 		break;
 	}
 
 	case HEAD_UR:
 	{
-		frbuffer = get_buffer_alloc(HEAD_UR, (ur_t *)frame);
+		frbuffer = get_buffer_alloc(HEAD_UR, (UR_t *)frame);
 		break;
 	}
 
 	case HEAD_DE:
 	{
-		frbuffer = get_buffer_alloc(HEAD_DE, (de_t *)frame);
+		frbuffer = get_buffer_alloc(HEAD_DE, (DE_t *)frame);
 		break;
 	}
 

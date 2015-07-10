@@ -20,36 +20,7 @@
 #include "globals.h"
 #include "frame-analysis.h"
 
-//frame head
-#define FR_HEAD_UC	"UC:"	//coord up data
-#define FR_HEAD_UO	"UO:"	//device up data
-#define FR_HEAD_UH	"UH:"	//device heart beat
-#define FR_HEAD_DE	"D:"	//command
-#define FR_HEAD_UR	"UR:"	//command return
-#define FR_HEAD_UJ	"UJ:"	//permit join
-
-
-//net device type
-#define FR_DEV_COORD	'0'
-#define FR_DEV_ROUTER	'0'
-#define FR_DEV_ENDDEV	'1'
-
-//app device type
-#define FR_APP_CONNECTOR			"00"
-#define FR_APP_ENDNODE				"00"
-#define FR_APP_LIGHTSWITCH_ONE		"01"
-#define FR_APP_LIGHTSWITCH_TWO		"02"
-#define FR_APP_LIGHTSWITCH_THREE	"03"
-#define FR_APP_LIGHTSWITCH_FOUR		"04"
-#define FR_APP_ALARM				"11"
-#define FR_APP_IR_DETECTION			"12"
-#define FR_APP_DOOR_SENSOR			"13"
-#define FR_APP_ENVDETECTION			"14"
-#define FR_APP_IR_RELAY				"21"
-#define FR_APP_AIRCONTROLLER		"F0"
-
 #define FR_TAIL ":O\r\n"
-
 
 typedef enum
 {
@@ -73,70 +44,6 @@ typedef enum
 	FRNET_ENDDEV = 1,
 	FRNET_NONE,
 }fr_net_type_t;
-
-//Coordinator info frame
-typedef struct
-{
-	uint8 head[3];   //UC:
-	uint8 type;   //net type, 0 support route
-	uint8 ed_type[2]; //app type, 00 coordinator
-	uint8 short_addr[4];   //net address
-	uint8 ext_addr[16];  //mac address
-	uint8 panid[4];    //net panid
-	uint8 channel[4]; //net channel
-	uint8 data_len;
-	uint8 *data; //data
-	uint8 tail[4];    //:O/r/n
-}uc_t;
-
-
-//Device info frame
-typedef struct
-{
-	uint8 head[3];   //UO:
-	uint8 type;   //net type
-	uint8 ed_type[2]; //app type
-	uint8 short_addr[4];   //net address
-	uint8 ext_addr[16];  //mac address
-	uint8 data_len;
-	uint8 *data; //data
-	uint8 tail[4];    //:O/r/n
-}uo_t; 
-
- 
- //Device Heart Beat frame
-typedef struct
-{
-	uint8 head[3];   //UH:
-	uint8 short_addr[4];   //net address
-	uint8 tail[4];    //:O/r/n
-}uh_t;  
- 
- 
-//Device returns frame
-typedef struct
-{
-	uint8 head[3];   //UR:
-	uint8 type;   //net type
-	uint8 ed_type[2]; //app type
-	uint8 short_addr[4];   //net address
-	uint8 data_len;
-	uint8 *data;    //data
-	uint8 tail[4];    //:O/r/n
-}ur_t;  
- 
- 
-//Device control frame
-typedef struct
-{
-	uint8 head[2];   //D:
-	uint8 cmd[4];   //cmmand
-	uint8 short_addr[4];   //net address
-	uint8 data_len;
-	uint8 *data; //data
-	uint8 tail[4]; //:O/r/n
- }de_t; 
-
 
 typedef struct
 {

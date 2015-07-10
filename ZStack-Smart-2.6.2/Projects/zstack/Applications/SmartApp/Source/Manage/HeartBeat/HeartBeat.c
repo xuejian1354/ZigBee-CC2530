@@ -67,7 +67,7 @@ extern const uint8 f_tail[4];
 
 void CommonApp_HeartBeatCB( void *params, uint16 *duration, uint8 *count)
 {
-	uh_t mFrame;
+	UH_t mFrame;
 	uint8 *fBuf;		//pointer data buffer
 	uint16 fLen;		//buffer data length
 
