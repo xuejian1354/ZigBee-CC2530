@@ -425,8 +425,6 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 		
 	default: break;
 	}
-
-	get_frhandler_arg_free(arg);
 }
 
 void analysis_capps_frame(frhandler_arg_t *arg)

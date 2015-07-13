@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-09
+Date:2015-07-13
 **************************************************************************************************/
 
 
@@ -148,7 +148,7 @@ void TransconnApp_ProcessZDOStates(devStates_t status)
 {
   mach_load();
 
-  set_user_event(TransconnApp_TaskID, TIMER_UPLOAD_EVENT, 
+  update_user_event(TransconnApp_TaskID, TIMER_UPLOAD_EVENT, 
 	upload_event, 10000, TIMER_LOOP_EXECUTION | TIMER_EVENT_RESIDENTS, NULL);
 }
 
@@ -182,10 +182,9 @@ void TransconnApp_TxHandler(uint8 txBuf[], uint8 txLen)
 
 void TransconnApp_GetCommonDataSend(uint8 *buf, uint16 len)
 {
-	frhandler_arg_t *frarg = 
-		get_frhandler_arg_alloc(buf, len);
-
+	frhandler_arg_t *frarg = get_frhandler_arg_alloc(buf, len);
 	analysis_zdev_frame(frarg);
+	get_frhandler_arg_free(frarg);
 
 	//HalUARTWrite(SERIAL_COM_PORT, buf, len);
 }

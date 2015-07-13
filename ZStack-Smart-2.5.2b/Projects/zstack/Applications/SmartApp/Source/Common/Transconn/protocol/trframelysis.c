@@ -340,24 +340,48 @@ void get_trframe_free(tr_head_type_t head_type, void *p)
 	switch(head_type)
 	{
 	case TRHEAD_PI:
-		osal_mem_free(((pi_t *)p)->data);
-		osal_mem_free(p);
-		break;
+	{	
+		pi_t *p_pi = (pi_t *)p;
+		if(p_pi != NULL && p_pi->data != NULL)
+		{
+			osal_mem_free(p_pi->data);
+		}
+		osal_mem_free(p_pi);
+	}
+	break;
 		
 	case TRHEAD_BI:
-		osal_mem_free(((bi_t *)p)->data);
+	{
+		bi_t *p_bi = (bi_t *)p;
+		if(p_bi != NULL && p_bi->data != NULL)
+		{
+			osal_mem_free(p_bi->data);
+		}
 		osal_mem_free(p);
-		break;
+	}
+	break;
                 
 	case TRHEAD_DC:
-		osal_mem_free(((dc_t *)p)->data);
+	{
+		dc_t *p_dc = (dc_t *)p;
+		if(p_dc != NULL && p_dc->data != NULL)
+		{
+			osal_mem_free(p_dc->data);
+		}
 		osal_mem_free(p);
-		break;
+	}
+	break;
 		
 	case TRHEAD_UB:
-		osal_mem_free(((ub_t *)p)->data);
+	{
+		ub_t *p_ub = (ub_t *)p;
+		if(p_ub != NULL && p_ub->data != NULL)
+		{
+			osal_mem_free(p_ub->data);
+		}
 		osal_mem_free(p);
-		break;
+	}
+	break;
 		
 	default: break;
 	}
