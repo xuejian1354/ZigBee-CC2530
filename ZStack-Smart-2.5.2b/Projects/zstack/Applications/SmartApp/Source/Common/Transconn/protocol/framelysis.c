@@ -391,7 +391,7 @@ void get_frame_free(frHeadType_t htype, void *p)
 	case HEAD_UC: 
 	{
 		UC_t *p_uc = (UC_t *)p;
-		if(p_uc->data != NULL)
+		if(p_uc != NULL && p_uc->data != NULL)
 		{
 			osal_mem_free(p_uc->data);
 		}
@@ -402,7 +402,7 @@ void get_frame_free(frHeadType_t htype, void *p)
 	case HEAD_UO: 
 	{
 		UO_t *p_uo = (UO_t *)p;
-		if(p_uo->data != NULL)
+		if(p_uo != NULL && p_uo->data != NULL)
 		{
 			osal_mem_free(p_uo->data);
 		}
@@ -419,7 +419,7 @@ void get_frame_free(frHeadType_t htype, void *p)
 	case HEAD_UR: 
 	{
 		UR_t *p_ur = (UR_t *)p;
-		if(p_ur->data != NULL)
+		if(p_ur != NULL && p_ur->data != NULL)
 		{
 			osal_mem_free(p_ur->data);
 		}
@@ -430,7 +430,10 @@ void get_frame_free(frHeadType_t htype, void *p)
 	case HEAD_DE: 
 	{
 		DE_t *p_de = (DE_t *)p;
-		osal_mem_free(p_de->data);
+		if(p_de != NULL && p_de->data != NULL)
+		{
+			osal_mem_free(p_de->data);
+		}
 		osal_mem_free(p);
 	}
 	break;
