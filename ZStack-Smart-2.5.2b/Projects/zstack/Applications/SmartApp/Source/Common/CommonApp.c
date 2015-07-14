@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-08
+Date:2015-07-14
 **************************************************************************************************/
 
 
@@ -709,12 +709,10 @@ void Update_Refresh(uint8 *data, uint8 length)
 
 void PermitJoin_Refresh(uint8 *data, uint8 length)
 {
-        uint8 buf[48] = {0};
+    uint8 buf[48] = {0};
 	memcpy(buf, FR_HEAD_UJ, 3);
 	memcpy(buf+3, SHORT_ADDR_G, 4);
-
 	memcpy(buf+7, data, length);
-	
 	memcpy(buf+7+length, f_tail, 4);
 	
 #ifdef SSA_CONNECTOR

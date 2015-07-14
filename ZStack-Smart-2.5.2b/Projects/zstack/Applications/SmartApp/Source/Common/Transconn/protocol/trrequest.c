@@ -52,8 +52,6 @@ void pi_handler(pi_t *pi)
 			bi.data = frbuffer->data;
 			bi.data_len = frbuffer->size;
 			send_frame_udp_request(TRHEAD_BI, &bi);
-			
-			get_buffer_free(frbuffer);
 			break;
 		}
 		break;
@@ -126,25 +124,11 @@ void dc_handler(dc_t *dc)
 		
 	case HEAD_DE:
 	{
-		fr_buffer_t *buffer = NULL;
-		gw_info_t *p_mgw = get_gateway_info();
-		dev_info_t *dev_info = NULL;
 		DE_t *de = (DE_t *)p;
-		if(memcmp(p_mgw->gw_no, dc->zidentify_no, sizeof(zidentify_no_t)))
-		{
-			dev_info = query_zdevice_info_with_sn(dc->zidentify_no);
-		}
-		
-		if(dev_info != NULL)
-		{
-			buffer = get_switch_buffer_alloc(HEAD_DE, de);
-		}
 
-		if(buffer != NULL)
-		{
-			ConnectorApp_TxHandler(buffer->data, buffer->size);
-			get_buffer_free(buffer);
-		}
+		fr_buffer_t *buffer = get_switch_buffer_alloc(HEAD_DE, de);
+		ConnectorApp_TxHandler(buffer->data, buffer->size);
+		
 		get_frame_free(HEAD_DE, de);
 	}
 	break;

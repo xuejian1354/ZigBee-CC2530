@@ -22,7 +22,4 @@
 #include <stdio.h>
  
 extern void upload_event( void *params, uint16 *duration, uint8 *count);
-
-extern void set_zdev_check(uint16 net_addr);
- 
 #endif  //__MEVENT_H__

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-10
+Date:2015-07-14
 **************************************************************************************************/
 
 
@@ -101,6 +101,18 @@ extern "C"
 #define HAL_TOGGLE_LED4()         HAL_TOGGLE_LED1()
 #define HAL_STATE_LED4()          HAL_STATE_LED1()
 
+
+/* Output Logic Control */
+/* VALVE  Switch*/
+#define VSW_BV           BV(6)
+#define VSW_SBIT         P1_6
+#define VSW_DDR          P1DIR
+#define VSW_POLARITY     ACTIVE_HIGH
+
+#define HAL_TURN_OFF_VSW()       st( VSW_SBIT = VSW_POLARITY (0); )
+#define HAL_TURN_ON_VSW()        st( VSW_SBIT = VSW_POLARITY (1); )
+#define HAL_TOGGLE_VSW()         st( VSW_SBIT ^= 1; )
+#define HAL_STATE_VSW()          (VSW_POLARITY (VSW_SBIT))
 
 #define HAL_LED TRUE
 #define BLINK_LEDS

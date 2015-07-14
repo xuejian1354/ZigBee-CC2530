@@ -20,6 +20,20 @@
 #include "globals.h"
 #include "frame-analysis.h"
 
+//command method
+#define FR_CMD_BROCAST_REFRESH	"/BR/"		//broadcast
+#define FR_CMD_SINGLE_REFRESH	"/SR/"		//single refresh
+#define FR_CMD_SINGLE_EXCUTE	"/EC/"		//single control
+#define FR_CMD_PEROID_EXCUTE	"/EP/"		//recycle request
+#define FR_CMD_PEROID_STOP		"/ES/"		//recycle stop request
+#define FR_CMD_JOIN_CTRL		"/CJ/"		//join permit
+
+#define FR_UC_DATA_FIX_LEN		38		//UC frame fix len
+#define FR_UO_DATA_FIX_LEN		30		//UO frame fix len
+#define FR_UH_DATA_FIX_LEN		11		//UH frame fix len
+#define FR_UR_DATA_FIX_LEN		14		//HR frame fix len
+#define FR_DE_DATA_FIX_LEN		14		//DE frame fix len
+
 #define FR_TAIL ":O\r\n"
 
 typedef enum
@@ -47,7 +61,7 @@ typedef enum
 
 typedef struct
 {
-	uint8 *data;
+	uint8 data[64];
 	uint8 size;
 }fr_buffer_t;
 
@@ -63,8 +77,5 @@ char get_frnet_type_to_ch(fr_net_type_t net_type);
 
 void *get_frame_alloc(frHeadType_t htype, uint8 buffer[], int length);
 void get_frame_free(frHeadType_t htype, void *p);
-
-fr_buffer_t *get_buffer_alloc(frHeadType_t htype, void *frame);
-void get_buffer_free(fr_buffer_t *p);
 
 #endif	//  __FRAMELYSIS_H__

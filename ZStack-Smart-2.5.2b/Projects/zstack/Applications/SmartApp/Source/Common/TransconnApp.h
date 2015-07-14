@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-09
+Date:2015-07-14
 **************************************************************************************************/
 
 
@@ -39,7 +39,6 @@ extern "C"
 /*********************************************************************
  * MACROS
  */
-/*通用设备描述信息*/
 #define TRANSCONNAPP_ENDPOINT			0x11
 #define TRANSCONNAPP_PROFID             0x0F09
 #define TRANSCONNAPP_DEVICEID           0x0002
@@ -51,8 +50,6 @@ extern "C"
 #define TRANSCONNAPP_MAX_OUTCLUSTERS    1
 
 #define TIMER_UPLOAD_EVENT      0x0001
-#define ZDEVICE_WATCH_EVENT     0x0002
-#define RP_CHECK_EVENT          0x0008
 
 /*********************************************************************
  * TYPEDEFS
