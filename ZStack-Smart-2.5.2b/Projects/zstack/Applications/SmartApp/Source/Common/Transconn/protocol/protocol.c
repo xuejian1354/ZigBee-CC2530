@@ -22,7 +22,7 @@
 #include "mevent.h"
 
 #if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
-extern uint8 _client_no[8];
+extern uint8 _common_no[8];
 
 static gw_info_t gw_info;
 static fr_buffer_t frbuffer = 
@@ -35,7 +35,6 @@ gw_info_t *get_gateway_info(void)
 {
 	return &gw_info;
 }
-
 
 fr_buffer_t *get_gateway_buffer_alloc(gw_info_t *gw_info)
 {
@@ -130,7 +129,7 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 		
 		bi_t bi;
 		memcpy(bi.sn, get_gateway_info()->gw_no, sizeof(zidentify_no_t));
-		bi.trans_type = TRTYPE_UDP_NORMAL;
+		bi.trans_type = TRTYPE_UDP_TRANS;
 		bi.fr_type = TRFRAME_PUT_GW;
 		bi.data = buffer->data;
 		bi.data_len = buffer->size;
@@ -143,19 +142,22 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 	case HEAD_UO:
 	{
 		UO_t *uo = (UO_t *)p;
-		
-		fr_buffer_t *frbuffer = get_switch_buffer_alloc(HEAD_UO, uo);
-	
-		ub_t ub;
-		memcpy(ub.zidentify_no, get_gateway_info()->gw_no, sizeof(zidentify_no_t));
-		memcpy(ub.cidentify_no, _client_no, sizeof(cidentify_no_t));
-		ub.trans_type = TRTYPE_UDP_NORMAL;
-		ub.tr_info = TRINFO_REDATA;
-		ub.data = frbuffer->data;
-		ub.data_len = frbuffer->size;
 
-		send_frame_udp_request(TRHEAD_UB, &ub);
+		uint8 *dev_buffer = (uint8 *)osal_mem_alloc(ZDEVICE_BUFFER_SIZE);
+		osal_memcpy(dev_buffer, uo->ext_addr, 16);
+		osal_memcpy(dev_buffer+16, uo->short_addr, 4);
+		osal_memcpy(dev_buffer+20, uo->ed_type, 2);
+		dev_buffer[22] = uo->type;
+
+		bi_t bi;
+		memcpy(bi.sn, get_gateway_info()->gw_no, sizeof(zidentify_no_t));
+		bi.trans_type = TRTYPE_UDP_TRANS;
+		bi.fr_type = TRFRAME_PUT_DEV;
+		bi.data = dev_buffer;
+		bi.data_len = ZDEVICE_BUFFER_SIZE;
+		send_frame_udp_request(TRHEAD_BI, &bi);
 		
+		osal_mem_free(dev_buffer);
 		get_frame_free(HEAD_UO, uo);
 	}
 	break;
@@ -171,12 +173,25 @@ void analysis_zdev_frame(frhandler_arg_t *arg)
 	{
 		UR_t *ur = (UR_t *)p;
 
+		ub_t ub;
+		
+		if(ur->data_len >= EXT_ADDR_SIZE)
+		{
+			incode_ctoxs(ub.zidentify_no, 
+                                        ur->data+ur->data_len-EXT_ADDR_SIZE, 
+                                        EXT_ADDR_SIZE);
+		}
+		else
+		{
+			memcpy(ub.zidentify_no, 
+					get_gateway_info()->gw_no, 
+					sizeof(zidentify_no_t));
+		}
+
 		fr_buffer_t *frbuffer = get_switch_buffer_alloc(HEAD_UR, ur);
 
-		ub_t ub;
-		memcpy(ub.zidentify_no, get_gateway_info()->gw_no, sizeof(zidentify_no_t));
-		memcpy(ub.cidentify_no, _client_no, sizeof(cidentify_no_t));
-		ub.trans_type = TRTYPE_UDP_NORMAL;
+		memcpy(ub.cidentify_no, _common_no, sizeof(cidentify_no_t));
+		ub.trans_type = TRTYPE_UDP_TRANS;
 		ub.tr_info = TRINFO_REDATA;
 		ub.data = frbuffer->data;
 		ub.data_len = frbuffer->size;
@@ -308,6 +323,11 @@ fr_buffer_t *get_switch_buffer_alloc(frHeadType_t head_type, void *frame)
 		if(p_ur->data_len > FRAME_DATA_SIZE)
 		{
 			return NULL;
+		}
+
+		if(p_ur->data_len >= EXT_ADDR_SIZE)
+		{
+			p_ur->data_len -= EXT_ADDR_SIZE;
 		}
 		frbuffer.size = FR_UR_DATA_FIX_LEN+p_ur->data_len;
 		

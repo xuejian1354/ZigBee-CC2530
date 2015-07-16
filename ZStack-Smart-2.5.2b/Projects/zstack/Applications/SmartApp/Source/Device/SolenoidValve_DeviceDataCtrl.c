@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-14
+Date:2015-07-16
 **************************************************************************************************/
 
 /*********************************************************************
@@ -20,7 +20,15 @@ Date:2015-06-14
 /*********************************************************************
  * MACROS
  */
-#define VALVESW_DATA_SIZE	2
+#define DEVCONTROL_SW_ON	"301"
+#define DEVCONTROL_SW_OFF	"300"
+
+#define CTRL_DATA_SIZE		3
+#ifdef TRANSCONN_BOARD_ENDNODE
+#define VALVESW_DATA_SIZE	(EXT_ADDR_SIZE+CTRL_DATA_SIZE)
+#else
+#define VALVESW_DATA_SIZE	CTRL_DATA_SIZE
+#endif
 
 /*********************************************************************
  * CONSTANTS
@@ -29,6 +37,8 @@ Date:2015-06-14
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
+extern uint8 EXT_ADDR_G[16];
+
 extern uint8 *optData;
 extern uint8 optDataLen;
 
@@ -62,11 +72,11 @@ void HalStatesInit(devStates_t status)
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
-	if (osal_memcmp(data, "00", 2))
+	if (osal_memcmp(data, DEVCONTROL_SW_OFF, CTRL_DATA_SIZE))
 	{
 		HAL_TURN_OFF_VSW();
 	}
-	else if (osal_memcmp(data, "01", 2))
+	else if (osal_memcmp(data, DEVCONTROL_SW_ON, CTRL_DATA_SIZE))
 	{
 		HAL_TURN_ON_VSW();
 	}
@@ -81,11 +91,14 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 
 		if(optData == NULL)
 		{
-			osal_mem_alloc(VALVESW_DATA_SIZE);
+			optData = osal_mem_alloc(VALVESW_DATA_SIZE);
 			optDataLen = VALVESW_DATA_SIZE;
 		}
 		
-		osal_memcpy(optData, "FF", 2);
+		osal_memcpy(optData, "FFF", CTRL_DATA_SIZE);
+#ifdef TRANSCONN_BOARD_ENDNODE
+		osal_memcpy(optData+CTRL_DATA_SIZE, EXT_ADDR_G, EXT_ADDR_SIZE);
+#endif
 	}
 	
 	return 0;
@@ -103,18 +116,22 @@ int8 get_device_data(uint8 *data, uint8 *dataLen)
 
 	if(optData == NULL)
 	{
-		osal_mem_alloc(VALVESW_DATA_SIZE);
+		optData = osal_mem_alloc(VALVESW_DATA_SIZE);
 		optDataLen = VALVESW_DATA_SIZE;
 	}
 
 	if (HAL_STATE_VSW())
 	{
-		osal_memcpy(optData, "01", 2);
+		osal_memcpy(optData, DEVCONTROL_SW_ON, CTRL_DATA_SIZE);
 	}
 	else
 	{
-		osal_memcpy(optData, "00", 2);
+		osal_memcpy(optData, DEVCONTROL_SW_OFF, CTRL_DATA_SIZE);
 	}
+
+#ifdef TRANSCONN_BOARD_ENDNODE
+	osal_memcpy(optData+CTRL_DATA_SIZE, EXT_ADDR_G, EXT_ADDR_SIZE);
+#endif
 
 	if(data != NULL)
 	{

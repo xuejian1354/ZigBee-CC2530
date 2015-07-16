@@ -32,14 +32,16 @@
 
 #define TR_TYPE_UDP_NORMAL		'1'
 #define TR_TYPE_UDP_TRAVERSAL	'2'
-#define TR_TYPE_TCP_LONG		'3'
-#define TR_TYPE_TCP_SHORT		'4'
+#define TR_TYPE_UDP_TRANS		'3'
+#define TR_TYPE_TCP_LONG		'4'
+#define TR_TYPE_TCP_SHORT		'5'
 
 #define TR_FRAME_CON		'1'
 #define TR_FRAME_REG		'2'
 #define TR_FRAME_GET		'3'
 #define TR_FRAME_PUT_GW		'4'
 #define TR_FRAME_PUT_DEV	'5'
+#define TR_FRAME_TRANS		'6'
 
 #define TR_INFO_NONE		'0'
 #define TR_INFO_IP			'1'
@@ -85,6 +87,7 @@ typedef enum
 {
 	TRTYPE_UDP_NORMAL,
 	TRTYPE_UDP_TRAVERSAL,
+	TRTYPE_UDP_TRANS,
 	TRTYPE_TCP_LONG,
 	TRTYPE_TCP_SHORT,
 	TRTYPE_NONE,
@@ -97,6 +100,7 @@ typedef enum
 	TRFRAME_GET,
 	TRFRAME_PUT_GW,
 	TRFRAME_PUT_DEV,
+	TRFRAME_TRANS,
 	TRFRAME_NONE,
 }tr_frame_type_t;
 

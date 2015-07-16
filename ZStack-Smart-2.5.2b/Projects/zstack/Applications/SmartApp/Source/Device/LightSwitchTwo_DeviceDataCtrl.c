@@ -7,13 +7,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-12-01
-**************************************************************************************************/
-
-/**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-03
+Date:2015-07-16
 **************************************************************************************************/
 
 
@@ -219,7 +214,7 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 
 			if(optData == NULL)
 			{
-				osal_mem_alloc(SW2_DATA_SIZE);
+				optData = osal_mem_alloc(SW2_DATA_SIZE);
 				optDataLen = SW2_DATA_SIZE;
 			}
 			
@@ -242,7 +237,7 @@ int8 get_device_data(uint8 *data, uint8 *dataLen)
 
 	if(optData == NULL)
 	{
-		osal_mem_alloc(SW2_DATA_SIZE);
+		optData = osal_mem_alloc(SW2_DATA_SIZE);
 		optDataLen = SW2_DATA_SIZE;
 	}
 

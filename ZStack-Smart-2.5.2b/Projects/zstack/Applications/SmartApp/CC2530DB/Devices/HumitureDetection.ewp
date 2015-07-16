@@ -3360,6 +3360,12 @@
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.h</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\ht-ctrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\ht-ctrl.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.c</name>
       </file>
       <file>

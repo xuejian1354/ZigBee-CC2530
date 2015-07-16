@@ -31,8 +31,8 @@ void upload_event( void *params, uint16 *duration, uint8 *count)
 {
 	pi_t pi;
 	memcpy(pi.sn, get_gateway_info()->gw_no, sizeof(zidentify_no_t));
-	pi.trans_type = TRTYPE_UDP_NORMAL;
-	pi.fr_type = TRFRAME_CON;
+	pi.trans_type = TRTYPE_UDP_TRANS;
+	pi.fr_type = TRFRAME_TRANS;
 	pi.data = NULL;
 	pi.data_len = 0;
 	

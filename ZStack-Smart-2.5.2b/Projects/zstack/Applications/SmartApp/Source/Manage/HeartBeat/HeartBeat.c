@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-09
+Date:2015-07-16
 **************************************************************************************************/
 
 
@@ -85,6 +85,30 @@ void CommonApp_HeartBeatCB( void *params, uint16 *duration, uint8 *count)
 #ifdef POWER_SAVING
 	UO_t oFrame;
 	uint8 dbuf[16];
+
+	memcpy(oFrame.head, FR_HEAD_UO, 3);
+	oFrame.type = FR_DEV_ENDDEV;
+	memcpy(oFrame.ed_type, FR_APP_DEV, 2);
+	memcpy(oFrame.short_addr, SHORT_ADDR_G, 4);
+	memcpy(oFrame.ext_addr, EXT_ADDR_G, 16);
+	oFrame.data = dbuf;
+    CommonDevice_GetData(oFrame.data, &oFrame.data_len);
+	memcpy(oFrame.tail, f_tail, 4);
+
+	if(!SSAFrame_Package(HEAD_UO, &oFrame, &fBuf, &fLen))
+	{
+		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+	}
+#endif
+}
+
+void TransconnApp_HeartBeatCB( void *params, uint16 *duration, uint8 *count)
+{
+#ifdef TRANSCONN_BOARD_ENDNODE
+	UO_t oFrame;
+    uint8 *fBuf;		//pointer data buffer
+	uint16 fLen;		//buffer data length
+	uint8 dbuf[32];
 
 	memcpy(oFrame.head, FR_HEAD_UO, 3);
 	oFrame.type = FR_DEV_ENDDEV;

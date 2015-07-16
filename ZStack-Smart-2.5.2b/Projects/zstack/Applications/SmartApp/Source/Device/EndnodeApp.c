@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-06
+Date:2015-07-16
 **************************************************************************************************/
 
 /*********************************************************************
@@ -401,6 +401,11 @@ void EndNodeApp_HeartBeatEvent(void)
   CommonApp_HeartBeatCB(NULL, NULL, NULL);
 
   set_user_event(CommonApp_TaskID, HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
-  		HEARTBEAT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
+  	HEARTBEAT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
+
+#ifdef TRANSCONN_BOARD_ENDNODE
+  set_user_event(CommonApp_TaskID, TRANSNODE_UPLOAD_EVT, TransconnApp_HeartBeatCB, 
+  	TRANSNODE_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
+#endif
 }
 

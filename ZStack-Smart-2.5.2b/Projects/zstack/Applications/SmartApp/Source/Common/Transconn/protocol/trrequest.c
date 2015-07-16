@@ -30,6 +30,7 @@ void pi_handler(pi_t *pi)
 	switch(pi->trans_type)
 	{
 	case TRTYPE_UDP_NORMAL:
+	case TRTYPE_UDP_TRANS:
 		switch(pi->fr_type)
 		{
 		case TRFRAME_GET:
@@ -47,7 +48,7 @@ void pi_handler(pi_t *pi)
 			
 			bi_t bi;
 			memcpy(bi.sn, get_gateway_info()->gw_no, sizeof(zidentify_no_t));
-			bi.trans_type = TRTYPE_UDP_NORMAL;
+			bi.trans_type = TRTYPE_UDP_TRANS;
 			bi.fr_type = TRFRAME_PUT_GW;
 			bi.data = frbuffer->data;
 			bi.data_len = frbuffer->size;
@@ -65,6 +66,7 @@ void bi_handler(bi_t *bi)
 	switch(bi->trans_type)
 	{
 	case TRTYPE_UDP_NORMAL:
+	case TRTYPE_UDP_TRANS:
 		switch(bi->fr_type)
 		{
 		case TRFRAME_REG:

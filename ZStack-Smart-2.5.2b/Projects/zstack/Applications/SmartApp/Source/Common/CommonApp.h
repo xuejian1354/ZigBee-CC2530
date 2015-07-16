@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-08
+Date:2015-07-16
 **************************************************************************************************/
 
 
@@ -59,6 +59,7 @@ extern "C"
  */
 //User events message
 #define SERIAL_CMD_EVT			0x4000		//serial receive event by user defined
+#define TRANSNODE_UPLOAD_EVT	0x2000
 #define HEARTBERAT_EVT			0x0001		//heart beat event by user defined
 #define CMD_PEROID_EVT			0x0002		//cmd period control event
 #define PERMIT_JOIN_EVT			0x0004
@@ -69,6 +70,7 @@ extern "C"
 #define IRDETECT_DETECT_EVT		0x0020
 #define IRDETECT_QUERY_EVT		0x0040
 #define AIRCONTROLLER_QUERY_EVT	0x0080
+#define HUMITURE_DETECT_EVT		0x0010
 
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86
@@ -76,17 +78,21 @@ extern "C"
 //event peroid
 #ifndef POWER_SAVING
 #define HEARTBEAT_TIMEOUT   	30000	//Every 30 Seconds
+#define TRANSNODE_TIMEOUT   	11000	//Every 11 Seconds
 #define CMD_PEROID_TIMEOUT		5000	//Every 5 Seconds
 #define DOORSENSOR_TIMEOUT  	5000
 #define IRDETECT_TIMEOUT		10000
 #define IRDETECT_QUERY_TIMEOUT	500
 #define AIRCONTROLLER_TIMEOUT	5000
+#define HUMITUREDETECT_TIMEOUT  5000
 
-#define PERMIT_JOIN_TIMEOUT	30		//30 Seconds, <=255s
+#define PERMIT_JOIN_TIMEOUT		30		//30 Seconds, <=255s
 #else
 #define HEARTBEAT_TIMEOUT   	6000	//Every 36 Seconds
+#define TRANSNODE_TIMEOUT   	2000	//Every 12 Seconds
 #define CMD_PEROID_TIMEOUT		1000	//Every 6 Seconds
 #define DOORSENSOR_TIMEOUT  	1000	//Every 6 Seconds
+#define HUMITUREDETECT_TIMEOUT  1000
 
 #define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
 #endif
@@ -123,6 +129,8 @@ extern "C"
 
 #define AIRCONTROL_PM25_DEFAULT_TRESHOLD	115
 #endif
+
+#define EXT_ADDR_SIZE		16
 
 /*********************************************************************
  * TYPEDEFS
