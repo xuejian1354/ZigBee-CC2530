@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-14
+Date:2015-07-26
 **************************************************************************************************/
 
 
@@ -50,10 +50,21 @@ extern "C"
 #define TRANSCONNAPP_MAX_OUTCLUSTERS    1
 
 #define TIMER_UPLOAD_EVENT      0x0001
+#define TIMER_DELAY_EVENT    	0x0002
 
 /*********************************************************************
  * TYPEDEFS
  */
+typedef enum
+{
+	GPRS_INIT,
+	GPRS_READY,
+	GPRS_OK,
+	GPRS_CONNECT_OK,
+	GPRS_ERROR,
+	GPRS_CLOSE,
+	GPRS_SHUT,
+}GPRS_States_t;
 
 /*********************************************************************
  * FUNCTIONS
@@ -74,7 +85,7 @@ extern UINT16 TransconnApp_ProcessEvent( byte task_id, UINT16 events );
  */
 extern void TransconnApp_ProcessZDOStates(devStates_t status);
 extern void TransconnApp_GetCommonDataSend(uint8 *buf, uint16 len);
-
+extern void TransconnApp_HandleCombineKeys(uint16 keys, uint8 keyCounts);
 /*********************************************************************
 *********************************************************************/
 

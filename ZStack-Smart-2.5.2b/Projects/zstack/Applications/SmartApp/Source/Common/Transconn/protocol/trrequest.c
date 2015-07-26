@@ -23,6 +23,12 @@
 #include <stdio.h>
 
 #if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+#include "TransconnApp.h"
+
+extern GPRS_States_t gprs_states;
+extern uint8 sbuf[FRAME_BUFFER_SIZE];
+extern uint8 slen;
+
 void pi_handler(pi_t *pi)
 {
 	gw_info_t *p_gw = NULL;
@@ -162,13 +168,17 @@ void send_frame_udp_request(tr_head_type_t htype, void *frame)
 		}
 
 		//socket_udp_sendto(ipaddr, buffer->data, buffer->size);
-#if (HAL_UART==TRUE)
-#ifndef HAL_UART01_BOTH
-		HalUARTWrite(SERIAL_COM_PORT, buffer->data, buffer->size);
-#else
-  		HalUARTWrite(SERIAL_COM_PORT1, buffer->data, buffer->size);
-#endif
-#endif
+		if(gprs_states == GPRS_CONNECT_OK)
+		{
+			char tbuf[64] = {0};
+			
+			slen = buffer->size;
+			osal_memcpy(sbuf, buffer->data, buffer->size);
+			
+			sprintf(tbuf, "AT+CIPSEND\r\n");
+			HalUARTWrite(SERIAL_COM_PORT, (uint8 *)tbuf, strlen(tbuf));
+
+		}
 		get_trbuffer_free(buffer);	
 	}
 	break;

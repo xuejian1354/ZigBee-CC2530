@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-16
+Date:2015-07-26
 **************************************************************************************************/
 
 
@@ -33,7 +33,7 @@ extern "C"
 #define HAL_KEY_COMBINE_INT_METHOD	/*中断下 按键组合功能 */
 #define HAL_KEY_MATCH_ID	/*按键匹配ID */
 //#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
-#define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
+//#define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
 
 //#define TRANSCONN_BOARD_GATEWAY		/*板级网关应用转发层功能*/
 #define TRANSCONN_BOARD_ENDNODE			/*板级应用支持节点*/
@@ -49,21 +49,18 @@ extern "C"
 /*********************************************************************
  * MACROS
  */
-/* 1 - Green */
-#define LED1_BV           BV(0)
-#define LED1_SBIT         P1_0
+#define LED1_BV           BV(3)
+#define LED1_SBIT         P1_3
 #define LED1_DDR          P1DIR
-#define LED1_POLARITY     ACTIVE_HIGH
+#define LED1_POLARITY     ACTIVE_LOW
 
-/* 2 - Red */
 #define LED2_BV           BV(1)
 #define LED2_SBIT         P1_1
 #define LED2_DDR          P1DIR
-#define LED2_POLARITY     ACTIVE_HIGH
+#define LED2_POLARITY     ACTIVE_LOW
 
-/* 3 - Yellow */
-#define LED3_BV           BV(4)
-#define LED3_SBIT         P1_4
+#define LED3_BV           BV(0)
+#define LED3_SBIT         P1_0
 #define LED3_DDR          P1DIR
 #define LED3_POLARITY     ACTIVE_HIGH
 

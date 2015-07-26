@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-16
+Date:2015-07-26
 **************************************************************************************************/
 
 
@@ -82,7 +82,7 @@ void CommonApp_HeartBeatCB( void *params, uint16 *duration, uint8 *count)
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
 
-#ifdef POWER_SAVING
+#if defined(POWER_SAVING) && !defined(TRANSCONN_BOARD_GATEWAY)
 	UO_t oFrame;
 	uint8 dbuf[16];
 

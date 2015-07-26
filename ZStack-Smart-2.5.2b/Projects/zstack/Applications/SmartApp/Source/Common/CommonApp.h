@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-16
+Date:2015-07-26
 **************************************************************************************************/
 
 
@@ -78,25 +78,23 @@ extern "C"
 //event peroid
 #ifndef POWER_SAVING
 #define HEARTBEAT_TIMEOUT   	30000	//Every 30 Seconds
-#define TRANSNODE_TIMEOUT   	11000	//Every 11 Seconds
+#define TRANSNODE_TIMEOUT   	30000	//Every 30 Seconds
 #define CMD_PEROID_TIMEOUT		5000	//Every 5 Seconds
 #define DOORSENSOR_TIMEOUT  	5000
 #define IRDETECT_TIMEOUT		10000
 #define IRDETECT_QUERY_TIMEOUT	500
 #define AIRCONTROLLER_TIMEOUT	5000
-#define HUMITUREDETECT_TIMEOUT  5000
-
 #define PERMIT_JOIN_TIMEOUT		30		//30 Seconds, <=255s
 #else
 #define HEARTBEAT_TIMEOUT   	6000	//Every 36 Seconds
-#define TRANSNODE_TIMEOUT   	2000	//Every 12 Seconds
+#define TRANSNODE_TIMEOUT   	6000	//Every 36 Seconds
 #define CMD_PEROID_TIMEOUT		1000	//Every 6 Seconds
 #define DOORSENSOR_TIMEOUT  	1000	//Every 6 Seconds
-#define HUMITUREDETECT_TIMEOUT  1000
 
 #define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
 #endif
 
+#define HUMITUREDETECT_TIMEOUT  5000
 #define POWERSETTING_TIMEOUT	3000
 
 #define PERMIT_JOIN_FORBID	0

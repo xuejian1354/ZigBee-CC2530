@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-09
+Date:2015-07-26
 **************************************************************************************************/
 
 
@@ -282,6 +282,10 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 	default: break;
 	}
   }
+
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+	TransconnApp_HandleCombineKeys(keys, keyCounts);
+#endif
 }
 #else
 void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
