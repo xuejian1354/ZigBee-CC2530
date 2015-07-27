@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-16
+Date:2015-07-27
 **************************************************************************************************/
 
 
@@ -104,15 +104,20 @@ extern "C"
 
 /* Output Logic Control */
 /* VALVE  Switch*/
-#define VSW_BV           BV(6)
-#define VSW_SBIT         P1_6
-#define VSW_DDR          P1DIR
-#define VSW_POLARITY     ACTIVE_HIGH
+#define VSW_BV1           BV(6)
+#define VSW_SBIT1         P0_6
+#define VSW_DDR1          P0DIR
+#define VSW_POLARITY1     ACTIVE_HIGH
 
-#define HAL_TURN_OFF_VSW()       st( VSW_SBIT = VSW_POLARITY (0); )
-#define HAL_TURN_ON_VSW()        st( VSW_SBIT = VSW_POLARITY (1); )
-#define HAL_TOGGLE_VSW()         st( VSW_SBIT ^= 1; )
-#define HAL_STATE_VSW()          (VSW_POLARITY (VSW_SBIT))
+#define VSW_BV2           BV(7)
+#define VSW_SBIT2         P0_7
+#define VSW_DDR2          P0DIR
+#define VSW_POLARITY2     ACTIVE_HIGH
+
+#define HAL_TURN_OFF_VSW()       st( VSW_SBIT1 = VSW_POLARITY1 (0); VSW_SBIT2 = VSW_POLARITY2 (1); )
+#define HAL_TURN_ON_VSW()        st( VSW_SBIT1 = VSW_POLARITY1 (1); VSW_SBIT2 = VSW_POLARITY2 (0); )
+#define HAL_TOGGLE_VSW()         st( VSW_SBIT1 ^= 1; VSW_SBIT2 ^= 1; )
+#define HAL_STATE_VSW()          (VSW_POLARITY1 (VSW_SBIT1))
 
 #define HAL_LED TRUE
 #define BLINK_LEDS
