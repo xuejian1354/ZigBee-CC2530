@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-26
+Date:2015-07-31
 **************************************************************************************************/
 
 
@@ -58,19 +58,24 @@ extern "C"
  * MACROS
  */
 //User events message
-#define SERIAL_CMD_EVT			0x4000		//serial receive event by user defined
-#define TRANSNODE_UPLOAD_EVT	0x2000
-#define HEARTBERAT_EVT			0x0001		//heart beat event by user defined
-#define CMD_PEROID_EVT			0x0002		//cmd period control event
-#define PERMIT_JOIN_EVT			0x0004
-#define POWERSETTING_COUNT_EVT	0x0008
-#define DOORSENSOR_ISR_EVT		0x0010
-#define DOORSENSOR_DETECT_EVT	0x0020
-#define IRDETECT_ISR_EVT		0x0010
-#define IRDETECT_DETECT_EVT		0x0020
-#define IRDETECT_QUERY_EVT		0x0040
-#define AIRCONTROLLER_QUERY_EVT	0x0080
-#define HUMITURE_DETECT_EVT		0x0010
+#define SERIAL_CMD_EVT				0x4000		//serial receive event by user defined
+#define TRANSNODE_UPLOAD_EVT		0x2000
+#define HEARTBERAT_EVT				0x0001		//heart beat event by user defined
+#define CMD_PEROID_EVT				0x0002		//cmd period control event
+#define PERMIT_JOIN_EVT				0x0004
+#define POWERSETTING_COUNT_EVT		0x0008
+#define DOORSENSOR_ISR_EVT			0x0010
+#define DOORSENSOR_DETECT_EVT		0x0020
+#define IRDETECT_ISR_EVT			0x0010
+#define IRDETECT_DETECT_EVT			0x0020
+#define IRDETECT_QUERY_EVT			0x0040
+#define AIRCONTROLLER_QUERY_EVT		0x0080
+#define HUMITURE_DETECT_EVT			0x0010
+#define DEMOBASE_RFID_QUERY_EVT		0x0010
+#define DEMOBASE_RFID_BEE_EVT		0x0020
+#define DEMOBASE_HUMITURE_EVT		0x0040
+#define DEMOBASE_LIGHTDETECT_EVT	0x0080
+#define DEMOBASE_AIRETECT_EVT		0x0100
 
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86

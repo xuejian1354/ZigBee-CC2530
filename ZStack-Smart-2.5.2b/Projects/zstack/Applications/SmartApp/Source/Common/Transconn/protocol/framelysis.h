@@ -24,8 +24,8 @@
 #define FR_CMD_BROCAST_REFRESH	"/BR/"		//broadcast
 #define FR_CMD_SINGLE_REFRESH	"/SR/"		//single refresh
 #define FR_CMD_SINGLE_EXCUTE	"/EC/"		//single control
-#define FR_CMD_PEROID_EXCUTE	"/EP/"		//recycle request
-#define FR_CMD_PEROID_STOP		"/ES/"		//recycle stop request
+#define FR_CMD_PEROID_EXCUTE	"/ES/"		//recycle request
+#define FR_CMD_PEROID_STOP		"/EP/"		//recycle stop request
 #define FR_CMD_JOIN_CTRL		"/CJ/"		//join permit
 
 #define FR_UC_DATA_FIX_LEN		38		//UC frame fix len

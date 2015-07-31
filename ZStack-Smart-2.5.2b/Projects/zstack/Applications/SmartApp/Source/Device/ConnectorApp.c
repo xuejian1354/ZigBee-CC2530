@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-26
+Date:2015-07-31
 **************************************************************************************************/
 
 
@@ -25,8 +25,8 @@ Date:2015-07-26
 #include "OnBoard.h"
 
 #include "CommonApp.h"
-#include "framelysis.h"
 #if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
+#include "framelysis.h"
 #include "TransconnApp.h"
 #endif
 

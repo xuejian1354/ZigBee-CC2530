@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-06
+Date:2015-07-31
 **************************************************************************************************/
 
 
@@ -35,7 +35,6 @@ extern "C"
 //#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
 #define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
 
-//#define TRANSCONN_BOARD_GATEWAY		/*板级网关应用转发层功能*/
 
 /*********************************************************************
  * INCLUDES
@@ -101,6 +100,74 @@ extern "C"
 #define HAL_TOGGLE_LED4()         HAL_TOGGLE_LED1()
 #define HAL_STATE_LED4()          HAL_STATE_LED1()
 
+/* BASE LED */
+#define BASELED_PORT         P1
+#define BASELED_DDR          P1DIR
+#define BASELED_POLARITY     ~~
+
+#define HAL_INIT_BASELED()		  st( BASELED_DDR |= 0xFF; BASELED_PORT = BASELED_POLARITY(0); )
+#define HAL_SET_BASELED(x)        st( BASELED_PORT = BASELED_POLARITY (x); )
+#define HAL_STATE_BASELED()      (BASELED_POLARITY (BASELED_PORT))
+
+/* BASE PLC */
+#define PLCIN1_BV           BV(0)
+#define PLCIN1_SBIT         P1_0
+#define PLCIN1_DDR          P1DIR
+#define PLCIN1_POLARITY     ACTIVE_HIGH
+
+#define PLCIN2_BV           BV(1)
+#define PLCIN2_SBIT         P1_1
+#define PLCIN2_DDR          P1DIR
+#define PLCIN2_POLARITY     ACTIVE_HIGH
+
+#define PLCOUT1_BV           BV(4)
+#define PLCOUT1_SBIT         P1_4
+#define PLCOUT1_DDR          P1DIR
+#define PLCOUT1_POLARITY     ACTIVE_LOW
+
+#define PLCOUT2_BV           BV(5)
+#define PLCOUT2_SBIT         P1_5
+#define PLCOUT2_DDR          P1DIR
+#define PLCOUT2_POLARITY     ACTIVE_LOW
+
+#define HAL_INIT_PLCIN1()		  	 st( PLCIN1_DDR &= ~PLCIN1_BV; )
+#define HAL_STATE_PLCIN1()        	 (PLCIN1_POLARITY (PLCIN1_SBIT))
+
+#define HAL_INIT_PLCIN2()		  	 st( PLCIN2_DDR &= ~PLCIN2_BV; )
+#define HAL_STATE_PLCIN2()        	 (PLCIN2_POLARITY (PLCIN1_SBIT))
+
+#define HAL_INIT_PLCOUT1()		  	 st( PLCOUT1_DDR |= PLCOUT1_BV; PLCOUT1_SBIT = PLCOUT1_POLARITY (0); )
+#define HAL_TURN_OFF_PLCOUT1()       st( PLCOUT1_SBIT = PLCOUT1_POLARITY (0); )
+#define HAL_TURN_ON_PLCOUT1()        st( PLCOUT1_SBIT = PLCOUT1_POLARITY (1); )
+#define HAL_TOGGLE_PLCOUT1()         st( PLCOUT1_SBIT ^= 1; )
+#define HAL_STATE_PLCOUT1()          (PLCOUT1_POLARITY (PLCOUT1_SBIT))
+
+#define HAL_INIT_PLCOUT2()		  	 st( PLCOUT2_DDR |= PLCOUT2_BV; PLCOUT1_SBIT = PLCOUT1_POLARITY (0); )
+#define HAL_TURN_OFF_PLCOUT2()       st( PLCOUT2_SBIT = PLCOUT2_POLARITY (0); )
+#define HAL_TURN_ON_PLCOUT2()        st( PLCOUT2_SBIT = PLCOUT2_POLARITY (1); )
+#define HAL_TOGGLE_PLCOUT2()         st( PLCOUT2_SBIT ^= 1; )
+#define HAL_STATE_PLCOUT2()          (PLCOUT2_POLARITY (PLCOUT2_SBIT))
+
+/* Base RFID */
+#define RFIDBEE_BV           BV(5)
+#define RFIDBEE_SBIT         P1_5
+#define RFIDBEE_DDR          P1DIR
+#define RFIDBEE_POLARITY     ACTIVE_HIGH
+
+#define HAL_INIT_RFIDBEE()		  	 st( RFIDBEE_DDR |= RFIDBEE_BV; RFIDBEE_SBIT = RFIDBEE_POLARITY (0); )
+#define HAL_TURN_OFF_RFIDBEE()       st( RFIDBEE_SBIT = RFIDBEE_POLARITY (0); )
+#define HAL_TURN_ON_RFIDBEE()        st( RFIDBEE_SBIT = RFIDBEE_POLARITY (1); )
+#define HAL_TOGGLE_RFIDBEE()         st( RFIDBEE_SBIT ^= 1; )
+#define HAL_STATE_RFIDBEE()          (RFIDBEE_POLARITY (RFIDBEE_SBIT))
+
+/* Base AirDetect */
+#define AIRDETECT_BV           	BV(2)
+#define AIRDETECT_SBIT         	P1_2
+#define AIRDETECT_DDR          	P1DIR
+#define AIRDETECT_POLARITY     	ACTIVE_LOW
+
+#define HAL_INIT_AIRDETECT()		  	 st( AIRDETECT_DDR &= ~AIRDETECT_BV; )
+#define HAL_STATE_AIRDETECT()        	 (AIRDETECT_POLARITY (AIRDETECT_SBIT))
 
 #define HAL_LED TRUE
 #define BLINK_LEDS

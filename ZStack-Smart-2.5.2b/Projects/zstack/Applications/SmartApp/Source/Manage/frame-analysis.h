@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-09
+Date:2015-07-31
 **************************************************************************************************/
 
 
@@ -109,8 +109,8 @@ extern "C"
 #define FR_CMD_BROCAST_REFRESH	    "/BR/"		//广播刷新
 #define FR_CMD_SINGLE_REFRESH	    "/SR/"		//单播刷新
 #define FR_CMD_SINGLE_EXCUTE	    "/EC/"		//单次执行发送
-#define FR_CMD_PEROID_EXCUTE	    "/EP/"		//周期性执行发送
-#define FR_CMD_PEROID_STOP	    "/ES/"		//停止周期性发送
+#define FR_CMD_PEROID_EXCUTE	    "/ES/"		//周期性执行发送
+#define FR_CMD_PEROID_STOP	    "/EP/"		//停止周期性发送
 #define FR_CMD_JOIN_CTRL	    "/CJ/"		//网关允许/不允许加入
 
 #define FR_UC_DATA_FIX_LEN		38		//UC帧固定长度

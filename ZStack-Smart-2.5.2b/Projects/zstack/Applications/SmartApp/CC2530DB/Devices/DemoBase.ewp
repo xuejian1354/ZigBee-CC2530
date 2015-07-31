@@ -455,8 +455,6 @@
           <name>CCIncludePath2</name>
           <state>$PROJ_DIR$</state>
           <state>$PROJ_DIR$\..\..\Source\Common</state>
-          <state>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol</state>
-          <state>$PROJ_DIR$\..\..\Source\Common\Transconn\services</state>
           <state>$PROJ_DIR$\..\..\Source\Connector</state>
           <state>$PROJ_DIR$\..\..\Source\\EndNode</state>
           <state>$PROJ_DIR$\..\..\Source\Board</state>
@@ -3231,54 +3229,6 @@
     <name>App</name>
     <group>
       <name>Common</name>
-      <group>
-        <name>Transconn</name>
-        <excluded>
-          <configuration>ZD</configuration>
-        </excluded>
-        <group>
-          <name>protocol</name>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\framelysis.c</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\framelysis.h</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\protocol.c</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\protocol.h</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\trframelysis.c</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\trframelysis.h</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\trrequest.c</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\protocol\trrequest.h</name>
-          </file>
-        </group>
-        <group>
-          <name>services</name>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\services\globals.c</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\services\globals.h</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\services\mevent.c</name>
-          </file>
-          <file>
-            <name>$PROJ_DIR$\..\..\Source\Common\Transconn\services\mevent.h</name>
-          </file>
-        </group>
-      </group>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Common\CommonApp.c</name>
       </file>
@@ -3287,20 +3237,6 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Common\OSAL_CommonApp.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.c</name>
-        <excluded>
-          <configuration>ZR</configuration>
-          <configuration>ZD</configuration>
-        </excluded>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Source\Common\TransconnApp.h</name>
-        <excluded>
-          <configuration>ZR</configuration>
-          <configuration>ZD</configuration>
-        </excluded>
       </file>
     </group>
     <group>
@@ -3360,11 +3296,71 @@
           <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.h</name>
         </file>
       </group>
+      <group>
+        <name>rfid</name>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\I2C.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\I2C.H</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\MFRC522.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\Mifare_Terminal.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\Mifare_Util.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\Mifare_Util.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_ErrCode.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_Mifare.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_MifareCmd.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_OpCtrl.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_Reg.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_RegCtrl.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_RegCtrl.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\REG922.H</name>
+        </file>
+      </group>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\ht-ctrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\ht-ctrl.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\i2c-ctrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\i2c-ctrl.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.c</name>

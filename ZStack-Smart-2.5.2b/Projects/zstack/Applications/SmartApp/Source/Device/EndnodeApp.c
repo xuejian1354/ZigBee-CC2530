@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-16
+Date:2015-07-31
 **************************************************************************************************/
 
 /*********************************************************************
@@ -198,10 +198,13 @@ void Data_Analysis(uint8 *data, uint16 length)
     }
     else if(!memcmp(mdeFrame->cmd, FR_CMD_PEROID_EXCUTE, 4))
     {
-      set_user_event(CommonApp_TaskID, CMD_PEROID_EVT, CommonApp_CmdPeroidCB, 
+      DataCmd_Ctrl(mdeFrame->data, mdeFrame->data_len);
+
+	  if(!CommonDevice_GetData(buf, &len))
+        Update_Refresh(buf, len);
+	  
+      update_user_event(CommonApp_TaskID, CMD_PEROID_EVT, CommonApp_CmdPeroidCB, 
 	  	CMD_PEROID_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
-			
-      Update_Refresh(mdeFrame->data, mdeFrame->data_len);
     }
     else if(!memcmp(mdeFrame->cmd, FR_CMD_PEROID_STOP, 4))
     {
