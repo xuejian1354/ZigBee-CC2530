@@ -9,15 +9,15 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-06-15
+Date:2015-07-31
 **************************************************************************************************/
 
 
 /*********************************************************************
  * INCLUDES
  */
-#include "frame-analysis.h"
 #include "serial-comm.h"
+#include "frame-analysis.h"
 
 /*********************************************************************
  * MACROS
@@ -39,13 +39,6 @@ static UO_t uoFrame;
 static UH_t uhFrame;
 static UR_t urFrame;
 static DE_t deFrame;
-
-static UC_t *p_ucFrame;
-static UO_t *p_uoFrame;
-static UH_t *p_uhFrame;
-static UR_t *p_urFrame;
-static DE_t *p_deFrame;
-
 
 static uint8 pFrameBuffer[FRAME_BUFFER_SIZE] = {0};
 static uint8 pFrameLen = 0;
@@ -209,7 +202,8 @@ int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *Ds
 	switch(hType)
 	{
 	case HEAD_UC: 
-		p_ucFrame = (UC_t *)data;
+	{
+		UC_t *p_ucFrame = (UC_t *)data;
 		memset(pFrameBuffer, 0, sizeof(pFrameBuffer));
 		memcpy(pFrameBuffer, p_ucFrame->head, 3);
 		pFrameBuffer[3] = p_ucFrame->type;
@@ -225,10 +219,12 @@ int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *Ds
 
 		*DstBuf = pFrameBuffer;
 		*DstLen = pFrameLen;
-		return 0;
+	}
+	break;
 		
 	case HEAD_UO: 
-		p_uoFrame = (UO_t *)data;
+	{
+		UO_t *p_uoFrame = (UO_t *)data;
 		memset(pFrameBuffer, 0, sizeof(pFrameBuffer));
 		memcpy(pFrameBuffer, p_uoFrame->head, 3);
 		pFrameBuffer[3] = p_uoFrame->type;
@@ -242,10 +238,12 @@ int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *Ds
 
 		*DstBuf = pFrameBuffer;
 		*DstLen = pFrameLen;
-		return 0;
+	}
+	break;
 		
 	case HEAD_UH: 
-		p_uhFrame = (UH_t *)data;
+	{
+		UH_t *p_uhFrame = (UH_t *)data;
 		memset(pFrameBuffer, 0, sizeof(pFrameBuffer));
 		memcpy(pFrameBuffer, p_uhFrame->head, 3);
 		memcpy(pFrameBuffer+3, p_uhFrame->short_addr, 4);
@@ -255,10 +253,12 @@ int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *Ds
 
 		*DstBuf = pFrameBuffer;
 		*DstLen = pFrameLen;
-		return 0;
+	}
+	break;
 		
 	case HEAD_UR: 
-		p_urFrame = (UR_t *)data;
+	{
+		UR_t *p_urFrame = (UR_t *)data;
 		memset(pFrameBuffer, 0, sizeof(pFrameBuffer));
 		memcpy(pFrameBuffer, p_urFrame->head, 3);
 		pFrameBuffer[3] = p_urFrame->type;
@@ -271,10 +271,12 @@ int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *Ds
 
 		*DstBuf = pFrameBuffer;
 		*DstLen = pFrameLen;
-		return 0;
+	}
+	break;
 	
 	case HEAD_DE: 
-		p_deFrame = (DE_t *)data;
+	{
+		DE_t *p_deFrame = (DE_t *)data;
 		memset(pFrameBuffer, 0, sizeof(pFrameBuffer));
 		memcpy(pFrameBuffer, p_deFrame->head, 2);
 		memcpy(pFrameBuffer+3, p_deFrame->cmd, 4);
@@ -286,10 +288,13 @@ int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *Ds
 
 		*DstBuf = pFrameBuffer;
 		*DstLen = pFrameLen;
-		return 0;
+	}
+	break;
 
 	default: goto  FR_Package_err;
 	}
+
+	return 0;
 
 FR_Package_err:
 	return -1;

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-06-26
+Date:2015-07-31
 **************************************************************************************************/
 
 
@@ -90,7 +90,6 @@ static uint16 fLen;		//buffer data length
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen);
 #ifndef ZDO_COORDINATOR
 static void ConnectorApp_HeartBeatEvent(void);
 #endif
@@ -121,7 +120,10 @@ static void ConnectorApp_HeartBeatEvent(void);
 void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-  CommonApp_SetUARTTxHandler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
+  
+#if(HAL_UART==TRUE)
+  SerialTx_Handler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
+#endif
 }
 
 
@@ -142,7 +144,7 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
   switch ( pkt->clusterId )
   {
     case COMMONAPP_CLUSTERID:
-      HalUARTWrite(SERIAL_COM_PORT, pkt->cmd.Data, pkt->cmd.DataLength);
+      CommonApp_GetDevDataSend(pkt->cmd.Data, pkt->cmd.DataLength);
       break; 
   }
 }
@@ -183,7 +185,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UC, &mFrame, &fBuf, &fLen))
 	{
-		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
+		CommonApp_GetDevDataSend(fBuf, fLen);
 	}
 #else
 	UO_t mFrame;
@@ -199,7 +201,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
 	{
-		HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
+		CommonApp_GetDevDataSend(fBuf, fLen);
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
 
@@ -331,7 +333,7 @@ void ConnectorApp_HeartBeatEvent(void)
 {
 	CommonApp_HeartBeatCB(NULL, NULL, NULL);
 	
-	CommonApp_SetUserEvent(HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
+	set_user_event(CommonApp_TaskID, HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
   		HEARTBEAT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
 }
 #endif

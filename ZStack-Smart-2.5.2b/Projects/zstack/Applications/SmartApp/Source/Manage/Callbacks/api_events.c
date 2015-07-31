@@ -7,13 +7,8 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-Create by Sam_Chen
-Date:2014-04-29
-**************************************************************************************************/
-
-/**************************************************************************************************
 Modify by Sam_Chen
-Date:2014-04-29
+Date:2014-07-31
 **************************************************************************************************/
 
 
@@ -41,12 +36,13 @@ Date:2014-04-29
 /*********************************************************************
  * GLOBAL VARIABLES
  */
-//chain list header
-ssaUserEvent_t *puser_event = NULL;
 
 /*********************************************************************
  * LOCAL VARIABLES
  */
+//chain list header
+static ssaUserEvent_t *puser_event = NULL;
+
 //event map
 #ifdef EVENT_MAP_ID
 static ssaUserEvent_t *userevent_map[USER_EVENT_MAP_SIZE] = {NULL};
@@ -55,6 +51,15 @@ static ssaUserEvent_t *userevent_map[USER_EVENT_MAP_SIZE] = {NULL};
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
+
+#ifdef EVENT_MAP_ID
+static uint8 event_to_id(uint16 event);
+#endif
+static int8 Add_User_Event(ssaUserEvent_t *ssaUserEvent);
+static ssaUserEvent_t *Query_User_Event(uint16 event);
+static int8 Del_User_Event(uint16 event);
+
+static void set_app_event(ssaUserEvent_t *ssaUserEvent);
 
 /*********************************************************************
  * PUBLIC FUNCTIONS
@@ -229,7 +234,145 @@ int8 Del_User_Event(uint16 event)
   }
   else
   	return -2;
-  
 }
 
+/*********************************************************************
+ * @fn      set_app_event
+ *
+ * @brief   set osal event from app event
+ *
+ * @param   user process event
+ *
+ * @return  none
+ */
+void set_app_event(ssaUserEvent_t *ssaUserEvent)
+{
+  if(ssaUserEvent->count.branch.count)
+  {
+    if(ssaUserEvent->duration > TIMER_LOWER_LIMIT)
+    {
+	  osal_stop_timerEx(ssaUserEvent->task_id, ssaUserEvent->event);
+	  osal_start_timerEx(ssaUserEvent->task_id, 
+	  		ssaUserEvent->event, ssaUserEvent->duration);
+    }
+    else
+    {
+	  osal_set_event(ssaUserEvent->task_id, ssaUserEvent->event);
+    }
+  }
+}
+
+
+/*********************************************************************
+ * @fn      set_user_event
+ *
+ * @brief   set user defined events
+ *
+ * @param   none
+ *
+ * @return  none
+ */
+int8 set_user_event(uint8 task_id, uint16 event, 
+	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype)
+{
+	ssaUserEvent_t *m_ssaUserEvent;
+	m_ssaUserEvent = (ssaUserEvent_t *)osal_mem_alloc(sizeof(ssaUserEvent_t));
+
+	m_ssaUserEvent->task_id = task_id;
+	m_ssaUserEvent->event = event;
+	m_ssaUserEvent->duration = duration;
+	m_ssaUserEvent->count.overall = count;
+	m_ssaUserEvent->ptype = ptype;
+	m_ssaUserEvent->ssa_ProcessUserTaskCB = ssa_ProcessUserTaskCB;
+
+	if(Add_User_Event(m_ssaUserEvent) < 0)
+	{
+	  osal_mem_free(m_ssaUserEvent);
+	  return -1;
+	}
+
+	set_app_event(m_ssaUserEvent);
+	return 0;
+}
+
+
+/*********************************************************************
+ * @fn      update_user_event
+ *
+ * @brief   update user defined events
+ *
+ * @param   none
+ *
+ * @return  none
+ */
+int8 update_user_event(uint8 task_id, uint16 event, 
+	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype)
+{
+  ssaUserEvent_t *m_ssaUserEvent;
+  m_ssaUserEvent = Query_User_Event(event);
+
+  if(m_ssaUserEvent == NULL)
+  {
+	return set_user_event(task_id, event, 
+		ssa_ProcessUserTaskCB, duration, count, ptype);
+  }
+
+  m_ssaUserEvent->duration = duration;
+  m_ssaUserEvent->count.overall = count;
+  m_ssaUserEvent->ptype = ptype;
+  m_ssaUserEvent->ssa_ProcessUserTaskCB = ssa_ProcessUserTaskCB;
+
+  set_app_event(m_ssaUserEvent);
+  
+  return 0;
+}
+
+
+/*********************************************************************
+ * @fn      process_event
+ *
+ * @brief   Task event processor. 
+ *
+ * @param   task_id  - The OSAL assigned task ID.
+ * @param   events - events to process.  This is a bit map and can
+ *                   contain more than one event.
+ *
+ * @return  none
+ */
+uint16 process_event(uint8 task_id, uint16 events)
+{
+  ssaUserEvent_t *t_ssaUserEvent = puser_event;
+  
+  while(t_ssaUserEvent)
+  {
+    if(t_ssaUserEvent->count.branch.count>0
+		|| t_ssaUserEvent->count.branch.resident==1)
+    {
+	  if((t_ssaUserEvent->task_id == task_id )
+	  		&& (events & t_ssaUserEvent->event))
+	  {
+		if(t_ssaUserEvent->ssa_ProcessUserTaskCB != NULL)
+      	  t_ssaUserEvent->ssa_ProcessUserTaskCB(t_ssaUserEvent->ptype, 
+	    		&t_ssaUserEvent->duration, &t_ssaUserEvent->count.overall);
+
+	    if(t_ssaUserEvent->count.branch.count != TIMER_LOOP_EXECUTION)
+          t_ssaUserEvent->count.branch.count--;
+
+	    if(t_ssaUserEvent->count.branch.count > 0)
+		  set_app_event(t_ssaUserEvent);
+
+		return (events ^ t_ssaUserEvent->event);
+	  }
+  	}
+  	else
+  	{
+	  Del_User_Event(t_ssaUserEvent->event);
+  	}
+  
+  	t_ssaUserEvent = t_ssaUserEvent->next;
+  }	
+
+  // Discard unknown events
+  return 0;
+}
 

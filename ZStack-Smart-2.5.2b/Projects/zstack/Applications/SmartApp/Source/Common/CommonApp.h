@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-02
+Date:2015-07-31
 **************************************************************************************************/
 
 
@@ -54,33 +54,28 @@ extern "C"
 #define COORDINATOR_ADDR		0x0000
 #define BROADCAST_ADDR		0xFFFF
 
-//USER
-#define TIMER_LOWER_LIMIT	99	//lower limit of user event's timer count
-#define TIMER_NO_LIMIT	0	//set the timer event immediately
-
-#define TIMER_CLEAR_EXECUTION	0x00	//clear timer event from list
-#define TIMER_ONE_EXECUTION		0x01	//set the timer event once
-#define TIMER_LOOP_EXECUTION	0x7F	//set the timer event always
-
-#define TIMER_EVENT_RESIDENTS	0x80	//set the timer event and resident always
-
-#define FRAME_DATA_LENGTH   64		//frame data length by serial port
-
 /*********************************************************************
  * MACROS
  */
 //User events message
-#define SERIAL_CMD_EVT			0x4000		//serial receive event by user defined
-#define HEARTBERAT_EVT			0x0001		//heart beat event by user defined
-#define CMD_PEROID_EVT			0x0002		//cmd period control event
-#define PERMIT_JOIN_EVT			0x0004
-#define POWERSETTING_COUNT_EVT	0x0008
-#define DOORSENSOR_ISR_EVT		0x0010
-#define DOORSENSOR_DETECT_EVT	0x0020
-#define IRDETECT_ISR_EVT		0x0010
-#define IRDETECT_DETECT_EVT		0x0020
-#define IRDETECT_QUERY_EVT		0x0040
-#define AIRCONTROLLER_QUERY_EVT	0x0080
+#define SERIAL_CMD_EVT				0x4000		//serial receive event by user defined
+#define TRANSNODE_UPLOAD_EVT		0x2000
+#define HEARTBERAT_EVT				0x0001		//heart beat event by user defined
+#define CMD_PEROID_EVT				0x0002		//cmd period control event
+#define PERMIT_JOIN_EVT				0x0004
+#define POWERSETTING_COUNT_EVT		0x0008
+#define DOORSENSOR_ISR_EVT			0x0010
+#define DOORSENSOR_DETECT_EVT		0x0020
+#define IRDETECT_ISR_EVT			0x0010
+#define IRDETECT_DETECT_EVT			0x0020
+#define IRDETECT_QUERY_EVT			0x0040
+#define AIRCONTROLLER_QUERY_EVT		0x0080
+#define HUMITURE_DETECT_EVT			0x0010
+#define DEMOBASE_RFID_QUERY_EVT		0x0010
+#define DEMOBASE_RFID_BEE_EVT		0x0020
+#define DEMOBASE_HUMITURE_EVT		0x0040
+#define DEMOBASE_LIGHTDETECT_EVT	0x0080
+#define DEMOBASE_AIRETECT_EVT		0x0100
 
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86
@@ -88,21 +83,23 @@ extern "C"
 //event peroid
 #ifndef POWER_SAVING
 #define HEARTBEAT_TIMEOUT   	30000	//Every 30 Seconds
+#define TRANSNODE_TIMEOUT   	30000	//Every 30 Seconds
 #define CMD_PEROID_TIMEOUT		5000	//Every 5 Seconds
 #define DOORSENSOR_TIMEOUT  	5000
 #define IRDETECT_TIMEOUT		10000
 #define IRDETECT_QUERY_TIMEOUT	500
 #define AIRCONTROLLER_TIMEOUT	5000
-
-#define PERMIT_JOIN_TIMEOUT	30		//30 Seconds, <=255s
+#define PERMIT_JOIN_TIMEOUT		30		//30 Seconds, <=255s
 #else
 #define HEARTBEAT_TIMEOUT   	6000	//Every 36 Seconds
+#define TRANSNODE_TIMEOUT   	6000	//Every 36 Seconds
 #define CMD_PEROID_TIMEOUT		1000	//Every 6 Seconds
 #define DOORSENSOR_TIMEOUT  	1000	//Every 6 Seconds
 
 #define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
 #endif
 
+#define HUMITUREDETECT_TIMEOUT  5000
 #define POWERSETTING_TIMEOUT	3000
 
 #define PERMIT_JOIN_FORBID	0
@@ -136,6 +133,8 @@ extern "C"
 #define AIRCONTROL_PM25_DEFAULT_TRESHOLD	115
 #endif
 
+#define EXT_ADDR_SIZE		16
+
 /*********************************************************************
  * TYPEDEFS
  */
@@ -149,9 +148,6 @@ typedef struct DATA_CMD
    uint8 Check_sum;//
    uint8 Tail;//53
 }DATA_CMD_T;
-
-//type structure of UART receive handler
-typedef void(*UART_TxHandler)(uint8[], uint8);
 
 #if (DEVICE_TYPE_ID==0xF0 || DEVICE_TYPE_ID==14)
 typedef enum
@@ -240,23 +236,11 @@ ZStatus_t CommonApp_PermitJoiningRequest( byte PermitDuration );
  */
 extern void CommonApp_GetDeviceInfo ( uint8 param, void *pValue );
 
+#ifdef SSA_CONNECTOR
+extern void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen);
+#endif
 
-/*
- * Task Set User Defined Events for the Common Application
- */
-extern int8 CommonApp_SetUserEvent(uint16 event, 
-	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype);
-
-/*
- * Task Update User Defined Events for the Common Application
- */
-extern int8 CommonApp_UpdateUserEvent(uint16 event, 
-	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype);
-
-/*
- *Task Update UART Receive Handler for the Common Application
- */
-extern void CommonApp_SetUARTTxHandler(int port, UART_TxHandler txHandler);
+extern void CommonApp_GetDevDataSend(uint8 *buf, uint16 len);
 
 /*********************************************************************
 *********************************************************************/

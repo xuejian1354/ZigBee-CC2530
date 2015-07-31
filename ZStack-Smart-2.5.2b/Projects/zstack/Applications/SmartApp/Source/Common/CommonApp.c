@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-01
+Date:2015-07-31
 **************************************************************************************************/
 
 
@@ -43,10 +43,6 @@ Date:2015-07-01
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
-
-//chain list header
-extern ssaUserEvent_t *puser_event;
-
 
 /*********************************************************************
  * GLOBAL VARIABLES
@@ -129,48 +125,9 @@ static void CommonApp_PermitJoiningLedIndicate(
 				void *params, uint16 *duration, uint8 *count);
 #endif
 
-static void set_app_event(ssaUserEvent_t *ssaUserEvent);
-#if(HAL_UART==TRUE)
-static void SerialTx_CallBack(uint8 port, uint8 event);
-#ifndef HAL_UART01_BOTH
-static void Data_TxHandler(uint8 txBuf[], uint8 txLen);
-#else
-static void Data0_TxHandler(uint8 txBuf[], uint8 txLen);
-static void Data1_TxHandler(uint8 txBuf[], uint8 txLen);
-#endif
-static void CommonApp_SerialTxCB( void *params, uint16 *duration, uint8 *count);
-#endif
-
 /*********************************************************************
  * LOCAL VARIABLES
  */
-/*串口缓冲区*/
-#if(HAL_UART==TRUE)
-#ifndef HAL_UART01_BOTH
-//static uint8 Serial_TxSeq;
-static uint8 Serial_TxBuf[SERIAL_COM_TX_MAX];
-static uint8 Serial_TxLen;
-
-/*解析串口数据得到的有效命令缓冲区*/
-static uint8 data_TxLen;
-static uint8 data_TxBuf[FRAME_DATA_LENGTH];
-static UART_TxHandler mData_TxHandler;
-#else
-static uint8 Serial0_TxBuf[SERIAL_COM_TX_MAX];
-static uint8 Serial1_TxBuf[SERIAL_COM_TX_MAX];
-static uint8 Serial0_TxLen;
-static uint8 Serial1_TxLen;
-
-/*解析串口数据得到的有效命令缓冲区*/
-static uint8 data0_TxLen;
-static uint8 data1_TxLen;
-static uint8 data0_TxBuf[FRAME_DATA_LENGTH];
-static uint8 data1_TxBuf[FRAME_DATA_LENGTH];
-static UART_TxHandler mData0_TxHandler;
-static UART_TxHandler mData1_TxHandler;
-#endif
-#endif
-
 
 /*********************************************************************
  * PUBLIC FUNCTIONS
@@ -199,18 +156,11 @@ void CommonApp_Init( uint8 task_id )
 
 #if(HAL_UART==TRUE)
 #ifndef HAL_UART01_BOTH
-   	Serial_TxLen = 0;
-	mData_TxHandler = Data_TxHandler;
+	Serial_Init(Data_TxHandler);
 #else
-	Serial0_TxLen = 0;
-	Serial1_TxLen = 0;
-	mData0_TxHandler = Data0_TxHandler;
-	mData1_TxHandler = Data1_TxHandler;
+	Serial_Init(Data0_TxHandler, Data1_TxHandler);
 #endif
-    Serial_Init(SerialTx_CallBack);
 #endif
-
-	puser_event = NULL;
   
     // Device hardware initialization can be added here or in main() (Zmain.c).
     // If the hardware is application specific - add it here.
@@ -258,8 +208,6 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
 {
     afIncomingMSGPacket_t *MSGpkt;
     afDataConfirm_t *afDataConfirm;
-
-	ssaUserEvent_t *t_ssaUserEvent;
   
     // Data Confirmation message fields
     byte sentEP;
@@ -267,7 +215,6 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
     byte sentTransID;       // This should match the value sent
     (void)task_id;  // Intentionally unreferenced parameter
     
-
     if ( events & SYS_EVENT_MSG )
     {
       MSGpkt = (afIncomingMSGPacket_t *)osal_msg_receive( CommonApp_TaskID );
@@ -337,214 +284,13 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
     return (events ^ SYS_EVENT_MSG);
   }
 
-#if 0
-//#if(HAL_UART==TRUE)
-  if(events & SERIAL_CMD_EVT)
-  {
-  	mData_TxHandler(data_TxBuf, data_TxLen);
-	return (events ^ SERIAL_CMD_EVT);
-  }
-#endif
-
-  t_ssaUserEvent=puser_event;
-  while(t_ssaUserEvent)
-  {
-    if(t_ssaUserEvent->count.branch.count>0
-		|| t_ssaUserEvent->count.branch.resident==1)
-    {
-	  if(events & t_ssaUserEvent->event)
-	  {
-		if(t_ssaUserEvent->ssa_ProcessUserTaskCB != NULL)
-      	  t_ssaUserEvent->ssa_ProcessUserTaskCB(t_ssaUserEvent->ptype, 
-	    		&t_ssaUserEvent->duration, &t_ssaUserEvent->count.overall);
-
-	    if(t_ssaUserEvent->count.branch.count != TIMER_LOOP_EXECUTION)
-          t_ssaUserEvent->count.branch.count--;
-
-	    if(t_ssaUserEvent->count.branch.count > 0)
-		  set_app_event(t_ssaUserEvent);
-
-		return (events ^ t_ssaUserEvent->event);
-	  }
-  	}
-	//只有在count==0 且长驻内存标志resident 为0的情况下
-	//将该事件从链表中删除
-  	else
-  	{
-	  Del_User_Event(t_ssaUserEvent->event);
-  	}
-  
-  	t_ssaUserEvent = t_ssaUserEvent->next;
-  }	
-
-  // Discard unknown events
-  return 0;
+  return process_event(task_id, events);
 }
 
 
 /*********************************************************************
  * Event Generation Functions
  */
-#if(HAL_UART==TRUE)
-#ifndef HAL_UART01_BOTH
-/*********************************************************************
- * @fn      SerialTx_CallBack()
- *
- * @brief   receive data from serial port
- *
- * @param   serial receive port, event
- *
- * @return  none
- */
-void SerialTx_CallBack(uint8 port, uint8 event)
-{
-  (void)port;
-
-  if ((event & (HAL_UART_RX_FULL | HAL_UART_RX_ABOUT_FULL 
-  			| HAL_UART_RX_TIMEOUT)) && !Serial_TxLen)
-  {
-    if (Serial_TxLen < SERIAL_COM_TX_MAX)
-    {
-      Serial_TxLen = HalUARTRead( port, Serial_TxBuf, SERIAL_COM_TX_MAX);
-    }
-
-    if(Serial_TxLen)
-    {  
-      memset(data_TxBuf, 0, FRAME_DATA_LENGTH);
-
-	  if(Serial_TxLen<FRAME_DATA_LENGTH)
-        data_TxLen = Serial_TxLen;
-	  else
-	  	data_TxLen = FRAME_DATA_LENGTH;
-	  
-      memcpy(data_TxBuf,Serial_TxBuf,data_TxLen);
-
-      memset(Serial_TxBuf, 0, SERIAL_COM_TX_MAX);
-      Serial_TxLen = 0;
-
-      //osal_set_event(CommonApp_TaskID, SERIAL_CMD_EVT);
-	  
-      //CommonApp_UpdateUserEvent(SERIAL_CMD_EVT, CommonApp_SerialTxCB, 
-  			//TIMER_NO_LIMIT, TIMER_ONE_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
-  	  CommonApp_SerialTxCB((void *)port, NULL, NULL);
-	}
-  }
-}
-#else
-void SerialTx_CallBack(uint8 port, uint8 event)
-{
-  if(port == SERIAL_COM_PORT0)
-  {
-    if ((event & (HAL_UART_RX_FULL | HAL_UART_RX_ABOUT_FULL 
-  			| HAL_UART_RX_TIMEOUT)) && !Serial0_TxLen)
-    {
-      if (Serial0_TxLen < SERIAL_COM_TX_MAX)
-      {
-        Serial0_TxLen = HalUARTRead( port, Serial0_TxBuf, SERIAL_COM_TX_MAX);
-      }
-
-      if(Serial0_TxLen)
-      {  
-        memset(data0_TxBuf, 0, FRAME_DATA_LENGTH);
-
-	    if(Serial0_TxLen<FRAME_DATA_LENGTH)
-          data0_TxLen = Serial0_TxLen;
-	    else
-	  	  data0_TxLen = FRAME_DATA_LENGTH;
-	  
-        memcpy(data0_TxBuf,Serial0_TxBuf,data0_TxLen);
-
-        memset(Serial0_TxBuf, 0, SERIAL_COM_TX_MAX);
-        Serial0_TxLen = 0;
-  	    CommonApp_SerialTxCB((void *)port, NULL, NULL);
-	  }
-    }
-  }
-  else if(port == SERIAL_COM_PORT1)
-  {
-	if ((event & (HAL_UART_RX_FULL | HAL_UART_RX_ABOUT_FULL 
-  			| HAL_UART_RX_TIMEOUT)) && !Serial1_TxLen)
-    {
-      if (Serial1_TxLen < SERIAL_COM_TX_MAX)
-      {
-        Serial1_TxLen = HalUARTRead( port, Serial1_TxBuf, SERIAL_COM_TX_MAX);
-      }
-
-      if(Serial1_TxLen)
-      {  
-        memset(data1_TxBuf, 0, FRAME_DATA_LENGTH);
-
-	    if(Serial1_TxLen<FRAME_DATA_LENGTH)
-          data1_TxLen = Serial1_TxLen;
-	    else
-	  	  data1_TxLen = FRAME_DATA_LENGTH;
-	  
-        memcpy(data1_TxBuf,Serial1_TxBuf,data1_TxLen);
-
-        memset(Serial1_TxBuf, 0, SERIAL_COM_TX_MAX);
-        Serial1_TxLen = 0;
-  	    CommonApp_SerialTxCB((void *)port, NULL, NULL);
-	  }
-    }
-  }
-}
-#endif
-
-/*********************************************************************
- * @fn      CommonApp_SerialTxCB()
- *
- * @brief   deal with serial receice data
- *
- * @param   none
- *
- * @return  none
- */
-void CommonApp_SerialTxCB( void *params, uint16 *duration, uint8 *count)
-{
-  HalLedSet(HAL_LED_2, HAL_LED_MODE_BLINK);
-#ifndef HAL_UART01_BOTH
-  mData_TxHandler(data_TxBuf, data_TxLen);
-#else
-  int port = (int)params;
-
-  if(port == SERIAL_COM_PORT0)
-  {
-	mData0_TxHandler(data0_TxBuf, data0_TxLen);
-  }
-  else if(port == SERIAL_COM_PORT1)
-  {
-	mData1_TxHandler(data1_TxBuf, data1_TxLen);
-  }
-#endif
-}
-
-
-#ifndef HAL_UART01_BOTH
-/*********************************************************************
- * @fn      Data_TxHandler()
- *
- * @brief   deault function to deal with serial receice data
- *
- * @param   point to data, data length
- *
- * @return  none
- */
-void Data_TxHandler(uint8 txBuf[], uint8 txLen)
-{
-  HalUARTWrite(SERIAL_COM_PORT, txBuf, txLen);
-}
-#else
-void Data0_TxHandler(uint8 txBuf[], uint8 txLen)
-{
-  HalUARTWrite(SERIAL_COM_PORT1, txBuf, txLen);
-}
-
-void Data1_TxHandler(uint8 txBuf[], uint8 txLen)
-{
-  HalUARTWrite(SERIAL_COM_PORT0, txBuf, txLen);
-}
-#endif
-#endif
 
 #if defined(POWERON_FACTORY_SETTING) && !defined(RTR_NWK)
 #define POWERSETTING_COUNT	3
@@ -575,7 +321,7 @@ void CommonApp_PowerOnFactorySetting(devStates_t status)
 		                &powerSetCount);
 	}
 
-	CommonApp_SetUserEvent(POWERSETTING_COUNT_EVT, CommonApp_PowerSettingCountCB, 
+	set_user_event(CommonApp_TaskID, POWERSETTING_COUNT_EVT, CommonApp_PowerSettingCountCB, 
   		POWERSETTING_TIMEOUT, TIMER_ONE_EXECUTION, NULL);
   }
 	
@@ -943,11 +689,7 @@ void Update_Refresh(uint8 *data, uint8 length)
 	{
 		if(nwkAddr == COORDINATOR_ADDR)
 		{
-#ifndef HAL_UART01_BOTH
-			HalUARTWrite(SERIAL_COM_PORT, fBuf, fLen);
-#else
-			HalUARTWrite(SERIAL_COM_PORT1, fBuf, fLen);
-#endif
+			CommonApp_GetDevDataSend(fBuf, fLen);
 		}
 		else
 		{
@@ -960,21 +702,14 @@ void Update_Refresh(uint8 *data, uint8 length)
 
 void PermitJoin_Refresh(uint8 *data, uint8 length)
 {
-  	uint8 buf[FRAME_BUFFER_SIZE] = {0};
-  
+    uint8 buf[48] = {0};
 	memcpy(buf, FR_HEAD_UJ, 3);
 	memcpy(buf+3, SHORT_ADDR_G, 4);
-
 	memcpy(buf+7, data, length);
-	
 	memcpy(buf+7+length, f_tail, 4);
 	
 #ifdef SSA_CONNECTOR
-#ifndef HAL_UART01_BOTH
-	HalUARTWrite(SERIAL_COM_PORT, buf, 11+length);
-#else
-	HalUARTWrite(SERIAL_COM_PORT1, buf, 11+length);
-#endif
+	CommonApp_GetDevDataSend(buf, 11+length);
 #else
 	CommonApp_SendTheMessage(COORDINATOR_ADDR, buf, 11+length);
 #endif
@@ -1016,14 +751,16 @@ ZStatus_t CommonApp_PermitJoiningRequest( byte PermitDuration )
 	{
 		CommonApp_PermitJoiningLedIndicate( (void *)HAL_LED_MODE_ON, NULL, NULL );
 		
-		CommonApp_UpdateUserEvent(PERMIT_JOIN_EVT, CommonApp_PermitJoiningLedIndicate, 
-	  		PermitDuration*1000, TIMER_ONE_EXECUTION, (void *)HAL_LED_MODE_OFF);
+		update_user_event(CommonApp_TaskID, PERMIT_JOIN_EVT, 
+							CommonApp_PermitJoiningLedIndicate, 
+	  						PermitDuration*1000, TIMER_ONE_EXECUTION, 
+	  						(void *)HAL_LED_MODE_OFF);
 	}
 	else
 	{
 		CommonApp_PermitJoiningLedIndicate( (void *)HAL_LED_MODE_OFF, NULL, NULL );
 
-		CommonApp_UpdateUserEvent(PERMIT_JOIN_EVT, 
+		update_user_event(CommonApp_TaskID, PERMIT_JOIN_EVT, 
 				NULL, TIMER_NO_LIMIT, TIMER_CLEAR_EXECUTION, NULL);
 	}
 
@@ -1032,123 +769,6 @@ ZStatus_t CommonApp_PermitJoiningRequest( byte PermitDuration )
 	return 0;
 #endif
 }
-
-/*********************************************************************
- * @fn      set_app_event
- *
- * @brief   set osal event from app event
- *
- * @param   user process event
- *
- * @return  none
- */
-void set_app_event(ssaUserEvent_t *ssaUserEvent)
-{
-  if(ssaUserEvent->count.branch.count)
-  {
-    if(ssaUserEvent->duration > TIMER_LOWER_LIMIT)
-	  osal_start_timerEx(CommonApp_TaskID, ssaUserEvent->event, 
-		  ssaUserEvent->duration);
-    else
-	  osal_set_event(CommonApp_TaskID, ssaUserEvent->event);
-  }
-}
-
-
-
-/*********************************************************************
- * @fn      CommonApp_SetUserEvent
- *
- * @brief   set user defined events
- *
- * @param   none
- *
- * @return  none
- */
-int8 CommonApp_SetUserEvent(uint16 event, 
-	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype)
-{
-	ssaUserEvent_t *m_ssaUserEvent;
-	m_ssaUserEvent = (ssaUserEvent_t *)osal_mem_alloc(sizeof(ssaUserEvent_t));
-
-	m_ssaUserEvent->event = event;
-	m_ssaUserEvent->duration = duration;
-	m_ssaUserEvent->count.overall = count;
-	m_ssaUserEvent->ptype = ptype;
-	m_ssaUserEvent->ssa_ProcessUserTaskCB = ssa_ProcessUserTaskCB;
-
-	if(Add_User_Event(m_ssaUserEvent) < 0)
-	{
-	  osal_mem_free(m_ssaUserEvent);
-	  return -1;
-	}
-
-	set_app_event(m_ssaUserEvent);
-	return 0;
-}
-
-
-/*********************************************************************
- * @fn      CommonApp_UpdateUserEvent
- *
- * @brief   update user defined events
- *
- * @param   none
- *
- * @return  none
- */
-int8 CommonApp_UpdateUserEvent(uint16 event, 
-	ssa_ProcessUserTaskCB_t ssa_ProcessUserTaskCB, uint16 duration, uint8 count, void *ptype)
-{
-  ssaUserEvent_t *m_ssaUserEvent;
-  m_ssaUserEvent = Query_User_Event(event);
-
-  if(m_ssaUserEvent == NULL)
-  {
-	return CommonApp_SetUserEvent(event, 
-		ssa_ProcessUserTaskCB, duration, count, ptype);
-  }
-
-  m_ssaUserEvent->duration = duration;
-  m_ssaUserEvent->count.overall = count;
-  m_ssaUserEvent->ptype = ptype;
-  m_ssaUserEvent->ssa_ProcessUserTaskCB = ssa_ProcessUserTaskCB;
-
-  set_app_event(m_ssaUserEvent);
-  return 0;
-}
-
-
-/*********************************************************************
- * @fn      CommonApp_SetUARTTxHandler
- *
- * @brief   update user uart receive handler
- *
- * @param   uart receive handler
- *
- * @return  none
- */
-void CommonApp_SetUARTTxHandler(int port, UART_TxHandler txHandler)
-{
-#if(HAL_UART==TRUE)
-  if(txHandler != NULL)
-  {
-#ifndef HAL_UART01_BOTH
-  	mData_TxHandler = txHandler;
-#else
-	if(port == SERIAL_COM_PORT0)
-	{
-	  mData0_TxHandler = txHandler;
-	}
-	else if(port == SERIAL_COM_PORT1)
-	{
-	  mData1_TxHandler = txHandler;
-	}
-#endif
-  }
-#endif
-}
- 
 
 /*********************************************************************
  * @fn      CommonApp_SendTheMessage
@@ -1172,4 +792,15 @@ void CommonApp_SendTheMessage(uint16 dstNwkAddr, uint8 *data, uint8 length)
                        data,
                        &CommonApp_TransID,
                        AF_DISCV_ROUTE, AF_DEFAULT_RADIUS );
+}
+
+void CommonApp_GetDevDataSend(uint8 *buf, uint16 len)
+{
+#if (HAL_UART==TRUE)
+  #ifndef HAL_UART01_BOTH
+	HalUARTWrite(SERIAL_COM_PORT, buf, len);
+  #else
+  	HalUARTWrite(SERIAL_COM_PORT1, buf, len);
+  #endif
+#endif
 }

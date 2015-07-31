@@ -265,8 +265,10 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
+          <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xPOWER_AMPLIFIER_POSITION_1</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
@@ -1338,8 +1340,10 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
+          <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
@@ -2410,8 +2414,10 @@
         </option>
         <option>
           <name>CCDefines</name>
+          <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=0xFE</state>
+          <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
@@ -3283,12 +3289,78 @@
         <file>
           <name>$PROJ_DIR$\..\..\Source\Manage\incode\incode.h</name>
         </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.h</name>
+        </file>
+      </group>
+      <group>
+        <name>rfid</name>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\I2C.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\I2C.H</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\MFRC522.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\Mifare_Terminal.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\Mifare_Util.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\Mifare_Util.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_ErrCode.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_Mifare.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_MifareCmd.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_OpCtrl.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_Reg.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_RegCtrl.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\RC522_RegCtrl.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\rfid\REG922.H</name>
+        </file>
       </group>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\ht-ctrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\ht-ctrl.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\i2c-ctrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\i2c-ctrl.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.c</name>
