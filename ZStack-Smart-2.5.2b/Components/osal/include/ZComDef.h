@@ -226,6 +226,8 @@ extern "C"
 #define ZCD_NV_POWER_SETTING_COUNT			0x0412	//self authentication method
 #define ZCD_NV_AIRCONTROLLER_MODE			0x0413
 #define ZCD_NV_AIRCONTROLLER_HOLD			0x0414
+#define ZCD_NV_TRANSCONN_IPASET				0x0415
+#define ZCD_NV_TRANSCONN_IPADDR				0x0416
 
 // ZCD_NV_STARTUP_OPTION values
 //   These are bit weighted - you can OR these together.

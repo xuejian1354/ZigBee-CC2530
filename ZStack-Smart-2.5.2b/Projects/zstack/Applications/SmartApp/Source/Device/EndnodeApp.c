@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-31
+Date:2015-08-07
 **************************************************************************************************/
 
 /*********************************************************************
@@ -347,9 +347,14 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 
   if (keysPush[0] == HAL_KEY_LONG_PUSH)
   {
+/*SolenoidValve*/
+#if (DEVICE_TYPE_ID==0xA2)
+	if(keyCounts == 1 )
+#else
 	if(keyCounts == 6 &&(osal_memcmp(keysID, "333333", keyCounts)
 		|| osal_memcmp(keysID, "444444", keyCounts)
 		|| osal_memcmp(keysID, "555555", keyCounts)))
+#endif
     { 
 #if defined(HOLD_INIT_AUTHENTICATION)
       if(devState != DEV_HOLD)
@@ -392,6 +397,10 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
   }
   else if (keysPush[0] == HAL_KEY_SHORT_PUSH)
   {
+/*SolenoidValve*/
+#if (DEVICE_TYPE_ID==0xA2)
+	SolenoidValve_KeyHandler();
+#endif
 #ifdef KEY_PUSH_PORT_1_BUTTON
     DeviceCtrl_HandlePort1Keys(keys, keyCounts);
 #endif

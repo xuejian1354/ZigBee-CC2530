@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-31
+Date:2015-08-07
 **************************************************************************************************/
 
 
@@ -358,70 +358,95 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
 	uint16 Send_shortAddr = 0;
 
-	//Command Handler
+	if(txLen>=16 && !memcmp(txBuf, FR_HEAD_DE, 2)
+		&& !memcmp(txBuf+2, FR_CMD_JOIN_CTRL, 4)
+		&& !memcmp(txBuf+txLen-4, f_tail, 4))
 	{
-		if(txLen>=16 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& !memcmp(txBuf+2, FR_CMD_JOIN_CTRL, 4)
-			&& !memcmp(txBuf+txLen-4, f_tail, 4))
+		if(!memcmp(txBuf+6, SHORT_ADDR_G, 4))
 		{
-			if(!memcmp(txBuf+6, SHORT_ADDR_G, 4))
-			{
-				uint8 cmdData, ret;
-				uint8 retData[2] = {0};
-			
-				cmdData = atox(txBuf+10, 2);
+			uint8 cmdData, ret;
+			uint8 retData[2] = {0};
+		
+			cmdData = atox(txBuf+10, 2);
 
-				if(!cmdData)
-					ret = !CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-				else if(cmdData == 1)
-					ret = !CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
+			if(!cmdData)
+				ret = !CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
+			else if(cmdData == 1)
+				ret = !CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
 
-				incode_2_to_16(retData, &ret, 1);
-				PermitJoin_Refresh(retData, 2);
-			}
-			else
-			{
-				incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-				CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
-			}
-			
+			incode_2_to_16(retData, &ret, 1);
+			PermitJoin_Refresh(retData, 2);
 		}
-		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& !memcmp(txBuf+2, FR_CMD_BROCAST_REFRESH, 4)
-			&& !memcmp(txBuf+txLen-4, f_tail, 4))
-		{
-			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-			if(Send_shortAddr == COORDINATOR_ADDR)
-			{
-				CommonApp_ProcessZDOStates(DEV_ZB_COORD);
-			}
-			
-			CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
-		}
-		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& (!memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)
-			|| !memcmp(txBuf+2, FR_CMD_PEROID_EXCUTE, 4)
-			|| !memcmp(txBuf+2, FR_CMD_PEROID_STOP, 4))
-			&& !memcmp(txBuf+txLen-4, f_tail, 4))
+		else
 		{
 			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
 			CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
 		}
-		else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-			&& !memcmp(txBuf+2, FR_CMD_SINGLE_REFRESH, 4)
-			&& !memcmp(txBuf+txLen-4, f_tail, 4))
+		
+	}
+	else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
+		&& !memcmp(txBuf+2, FR_CMD_BROCAST_REFRESH, 4)
+		&& !memcmp(txBuf+txLen-4, f_tail, 4))
+	{
+		incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+		if(Send_shortAddr == COORDINATOR_ADDR)
 		{
-			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-			if(Send_shortAddr == COORDINATOR_ADDR) //coord self
+			CommonApp_ProcessZDOStates(DEV_ZB_COORD);
+		}
+		
+		CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
+	}
+	else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
+		&& (!memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)
+		|| !memcmp(txBuf+2, FR_CMD_PEROID_EXCUTE, 4)
+		|| !memcmp(txBuf+2, FR_CMD_PEROID_STOP, 4))
+		&& !memcmp(txBuf+txLen-4, f_tail, 4))
+	{
+		incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+		CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+	}
+	else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
+		&& !memcmp(txBuf+2, FR_CMD_SINGLE_REFRESH, 4)
+		&& !memcmp(txBuf+txLen-4, f_tail, 4))
+	{
+		incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+		if(Send_shortAddr == COORDINATOR_ADDR) //coord self
+		{
+			CommonApp_ProcessZDOStates(DEV_ZB_COORD);
+		}
+		else
+		{
+			CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+		}
+	}
+#if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)		
+	else if(txLen>=26 && !memcmp(txBuf, FR_HEAD_DE, 2)
+		&& !memcmp(txBuf+2, FR_CMD_WR_IPADDR, 4)
+		&& !memcmp(txBuf+txLen-4, f_tail, 4))
+	{
+		if(!memcmp(txBuf+6, SHORT_ADDR_G, 4))
+		{
+			uint8 ipaddr[24] = {0};
+			if (ZSUCCESS == osal_nv_item_init( 
+	  				ZCD_NV_TRANSCONN_IPADDR, sizeof(ipaddr),  ipaddr))
 			{
-				CommonApp_ProcessZDOStates(DEV_ZB_COORD);
+				osal_nv_write(
+					ZCD_NV_TRANSCONN_IPADDR, 0, sizeof(ipaddr),  ipaddr);
+
+				Update_Refresh("WIOK", 4);
 			}
 			else
 			{
-				CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+				Update_Refresh("WIFAIL", 6);
 			}
 		}
+		else
+		{
+			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
+			CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
+		}
 	}
+#endif
 }
 
 /*********************************************************************

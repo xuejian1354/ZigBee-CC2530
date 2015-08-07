@@ -27,6 +27,7 @@
 #define FR_CMD_PEROID_EXCUTE	"/ES/"		//recycle request
 #define FR_CMD_PEROID_STOP		"/EP/"		//recycle stop request
 #define FR_CMD_JOIN_CTRL		"/CJ/"		//join permit
+#define FR_CMD_WR_IPADDR		"/WI/"		//write ipaddr
 
 #define FR_UC_DATA_FIX_LEN		38		//UC frame fix len
 #define FR_UO_DATA_FIX_LEN		30		//UO frame fix len

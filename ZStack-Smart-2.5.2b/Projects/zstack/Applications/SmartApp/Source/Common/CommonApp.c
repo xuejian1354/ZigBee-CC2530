@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-31
+Date:2015-08-07
 **************************************************************************************************/
 
 
@@ -671,6 +671,7 @@ int8 DataCmd_Ctrl(uint8 *data, uint8 length)
 {
 	return CommonDevice_SetData(data, length);
 }
+#endif
 
 void Update_Refresh(uint8 *data, uint8 length)
 {
@@ -703,9 +704,7 @@ void Update_Refresh(uint8 *data, uint8 length)
 			CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 		}
 	}
-}
-#endif
-
+}
 
 void PermitJoin_Refresh(uint8 *data, uint8 length)
 {

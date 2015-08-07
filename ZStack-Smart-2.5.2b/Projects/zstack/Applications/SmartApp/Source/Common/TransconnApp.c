@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-26
+Date:2015-08-07
 **************************************************************************************************/
 
 
@@ -41,6 +41,12 @@ Date:2015-07-26
 #define GPRS_MODEL_SHUT_OK		"SHUT OK"
 #define GPRS_MODEL_ERROR		"ERROR"
 #define GPRS_MODEL_SENACK		"> "
+
+
+#define DEFAULT_IPADDR		"115.28.214.50:11578"
+#define DEFAULT_IPSIZE		19
+
+#define DEFAULT_IPSET		54
 
 /*********************************************************************
  * CONSTANTS
@@ -103,6 +109,8 @@ byte TransconnApp_TaskID;   // Task ID for internal task/event processing
  */
 static void TransconnApp_TxHandler(uint8 txBuf[], uint8 txLen);
 static void TransconnApp_GPRSStatesHandler(GPRS_States_t states);
+static void set_ipaddr(void);
+static void ipaddr_to_ipport(uint8 *ipaddr, uint8 size);
 static void delay_event( void *params, uint16 *duration, uint8 *count);
 static void TransconnApp_GPRSStepHandler(uint8 step);
 
@@ -114,6 +122,9 @@ uint8 slen = 0;
 GPRS_States_t gprs_states = GPRS_INIT;
 static uint8 gprs_Step = 0;
 uint8 gprs_SenACK = 0;
+
+static uint8 ip[18] = {0};
+static uint8 port[6] = {0};
 
 /*********************************************************************
  * PUBLIC FUNCTIONS
@@ -309,7 +320,7 @@ void TransconnApp_GetCommonDataSend(uint8 *buf, uint16 len)
 }
 
 void TransconnApp_GPRSStatesHandler(GPRS_States_t states)
-{	
+{		
 	if(states == GPRS_READY)
 	{
 		gprs_states = GPRS_READY;
@@ -355,6 +366,63 @@ void TransconnApp_GPRSStatesHandler(GPRS_States_t states)
 	}
 }
 
+void set_ipaddr(void)
+{
+	uint8 ipset = 0;
+	uint8 ipaddr[24] = {0};
+	
+	if ((ZSUCCESS == osal_nv_item_init( 
+			ZCD_NV_TRANSCONN_IPASET, sizeof(ipset),  &ipset))
+			&& (SUCCESS == osal_nv_read( 
+					ZCD_NV_TRANSCONN_IPASET, 0, sizeof(ipset),  &ipset))
+			&& ipset != DEFAULT_IPSET)
+	{
+		ipset = DEFAULT_IPSET;
+		
+		osal_nv_write( 
+			ZCD_NV_TRANSCONN_IPASET, 0, sizeof(ipset),  &ipset);
+
+		osal_memcpy(ipaddr, DEFAULT_IPADDR, DEFAULT_IPSIZE);
+		if(ZSUCCESS == osal_nv_item_init( 
+				ZCD_NV_TRANSCONN_IPADDR, sizeof(ipaddr),  &ipaddr))
+		{
+			osal_nv_write( 
+				ZCD_NV_TRANSCONN_IPADDR, 0, sizeof(ipaddr),  &ipaddr);
+		}
+	}
+
+	if(ipset == DEFAULT_IPSET
+		&& (ZSUCCESS == osal_nv_item_init( 
+				ZCD_NV_TRANSCONN_IPADDR, sizeof(ipaddr),  &ipaddr))
+		&& (SUCCESS == osal_nv_read( 
+				ZCD_NV_TRANSCONN_IPADDR, 0, sizeof(ipaddr),  &ipaddr)))
+	{}
+	else
+	{
+		osal_memcpy(ipaddr, DEFAULT_IPADDR, DEFAULT_IPSIZE);
+	}
+
+	ipaddr_to_ipport(ipaddr, strlen((char *)ipaddr));
+}
+
+void ipaddr_to_ipport(uint8 *ipaddr, uint8 size)
+{
+	int i;
+	for(i=0; i<size; i++)
+	{
+		if(*(ipaddr+i) == ':')
+		{
+			break;
+		}
+	}
+
+	if(i > 0 && i < size)
+	{
+		osal_memcpy(ip, ipaddr, i);
+		osal_memcpy(port, ipaddr+i+1, size-i-1);
+	}
+}
+
 void delay_event( void *params, uint16 *duration, uint8 *count)
 {
 	HalLedBlink ( HAL_LED_2, 1, 50, 100 );
@@ -388,7 +456,8 @@ void TransconnApp_GPRSStepHandler(uint8 step)
 		break;
 
 	case 5:
-		sprintf(tbuf, "AT+CIPSTART=\"UDP\",\"115.28.214.50\",\"11578\"\r\n");
+		set_ipaddr();
+		sprintf(tbuf, "AT+CIPSTART=\"UDP\",\"%s\",\"%s\"\r\n", ip, port);
 		HalUARTWrite(SERIAL_COM_PORT, (uint8 *)tbuf, strlen(tbuf));
 		break;
 

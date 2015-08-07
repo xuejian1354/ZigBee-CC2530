@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-31
+Date:2015-08-07
 **************************************************************************************************/
 
 
@@ -212,6 +212,10 @@ extern void CommonApp_InitConfirm( byte task_id );
 extern void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pckt );
 extern void CommonApp_ProcessZDOStates(devStates_t status);
 extern void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts);
+/*SolenoidValve*/
+#if (DEVICE_TYPE_ID==0xA2)
+extern void SolenoidValve_KeyHandler(void);
+#endif
 #ifdef KEY_PUSH_PORT_1_BUTTON
 extern void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts);
 #endif
@@ -225,8 +229,8 @@ extern int8 CommonDevice_GetData(uint8 *data, uint8 *dataLen);
 
 extern void CommonApp_CmdPeroidCB( void *params, uint16 *duration, uint8 *count);
 extern int8 DataCmd_Ctrl(uint8 *data, uint8 length);
-extern void Update_Refresh(uint8 *data, uint8 length);
 #endif
+extern void Update_Refresh(uint8 *data, uint8 length);
 extern void PermitJoin_Refresh(uint8 *data, uint8 length);
 ZStatus_t CommonApp_PermitJoiningRequest( byte PermitDuration );
 

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-27
+Date:2015-08-07
 **************************************************************************************************/
 
 /*********************************************************************
@@ -16,6 +16,7 @@ Date:2015-07-27
  */
 #include "CommonApp.h"
 #include "hal_drivers.h" 
+#include "hal_led.h"
 
 /*********************************************************************
  * MACROS
@@ -63,23 +64,34 @@ extern uint8 optDataLen;
  */
 void HalDeviceInit (void)
 {
-  HAL_TURN_OFF_VSW();
+  
   VSW_DDR1 |= VSW_BV1;
   VSW_DDR2 |= VSW_BV2;
+  
+  HAL_TURN_OFF_VSW();
+  HalLedSet( HAL_LED_1,  HAL_LED_MODE_OFF);
 }
 
 void HalStatesInit(devStates_t status)
 {}
+
+void SolenoidValve_KeyHandler(void)
+{
+	HAL_TOGGLE_VSW();
+	HalLedSet( HAL_LED_1,  HAL_LED_MODE_TOGGLE);
+}
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
 	if (osal_memcmp(data, DEVCONTROL_SW_OFF, CTRL_DATA_SIZE))
 	{
 		HAL_TURN_OFF_VSW();
+		HalLedSet( HAL_LED_1,  HAL_LED_MODE_OFF);
 	}
 	else if (osal_memcmp(data, DEVCONTROL_SW_ON, CTRL_DATA_SIZE))
 	{
 		HAL_TURN_ON_VSW();
+		HalLedSet( HAL_LED_1,  HAL_LED_MODE_ON);
 	}
 	else
 	{
