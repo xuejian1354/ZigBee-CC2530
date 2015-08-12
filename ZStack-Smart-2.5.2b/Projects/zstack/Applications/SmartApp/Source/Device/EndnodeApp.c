@@ -349,7 +349,7 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
   {
 /*SolenoidValve*/
 #if (DEVICE_TYPE_ID==0xA2)
-	if(keyCounts == 1 )
+	if(keyCounts == 3 )
 #else
 	if(keyCounts == 6 &&(osal_memcmp(keysID, "333333", keyCounts)
 		|| osal_memcmp(keysID, "444444", keyCounts)
