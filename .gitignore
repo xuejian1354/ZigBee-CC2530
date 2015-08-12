@@ -1,0 +1,9 @@
+TIMAC-Smart-1.4.0a/_iss/
+TIMAC-Smart-1.4.0a/documents/
+TIMAC-Smart-1.4.0a/Projects/mac/sample/cc2530/Project/Normal/
+TIMAC-Smart-1.4.0a/Projects/mac/sample/cc2530/Project/Normal-Banked/
+TIMAC-Smart-1.4.0a/Projects/mac/sample/cc2530/Project/Secure/
+TIMAC-Smart-1.4.0a/Projects/mac/sample/cc2530/Project/Secure-Banked/
+TIMAC-Smart-1.4.0a/Projects/mac/sample/cc2530/Project/settings/
+*.dep
+
