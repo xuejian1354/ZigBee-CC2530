@@ -89,6 +89,8 @@
 #include "hal_key.h"
 #include "osal.h"
 
+#define HAL_JOYSTICK_DISABLE
+
 #if (defined HAL_KEY) && (HAL_KEY == TRUE)
 
 /**************************************************************************************************
@@ -109,7 +111,7 @@
 
 /* SW_6 is at P0.1 */
 #define HAL_KEY_SW_6_PORT   P0
-#define HAL_KEY_SW_6_BIT    BV(1)
+#define HAL_KEY_SW_6_BIT    PUSH1_BV
 #define HAL_KEY_SW_6_SEL    P0SEL
 #define HAL_KEY_SW_6_DIR    P0DIR
 
@@ -122,7 +124,7 @@
 #define HAL_KEY_SW_6_IEN      IEN1  /* CPU interrupt mask register */
 #define HAL_KEY_SW_6_IENBIT   BV(5) /* Mask bit for all of Port_0 */
 #define HAL_KEY_SW_6_ICTL     P0IEN /* Port Interrupt Control register */
-#define HAL_KEY_SW_6_ICTLBIT  BV(1) /* P0IEN - P0.1 enable/disable bit */
+#define HAL_KEY_SW_6_ICTLBIT  PUSH1_BV 
 #define HAL_KEY_SW_6_PXIFG    P0IFG /* Interrupt flag at source */
 
 /* Joy stick move at P2.0 */
@@ -188,9 +190,10 @@ void HalKeyInit( void )
   HAL_KEY_SW_6_SEL &= ~(HAL_KEY_SW_6_BIT);    /* Set pin function to GPIO */
   HAL_KEY_SW_6_DIR &= ~(HAL_KEY_SW_6_BIT);    /* Set pin direction to Input */
 
+#ifndef HAL_JOYSTICK_DISABLE
   HAL_KEY_JOY_MOVE_SEL &= ~(HAL_KEY_JOY_MOVE_BIT); /* Set pin function to GPIO */
   HAL_KEY_JOY_MOVE_DIR &= ~(HAL_KEY_JOY_MOVE_BIT); /* Set pin direction to Input */
-
+#endif
 
   /* Initialize callback function */
   pHalKeyProcessFunction  = NULL;
@@ -240,7 +243,7 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
     HAL_KEY_SW_6_PXIFG = ~(HAL_KEY_SW_6_BIT);
 
 
-
+#ifndef HAL_JOYSTICK_DISABLE
     /* Rising/Falling edge configuratinn */
 
     HAL_KEY_JOY_MOVE_ICTL &= ~(HAL_KEY_JOY_MOVE_EDGEBIT);    /* Clear the edge bit */
@@ -258,7 +261,7 @@ void HalKeyConfig (bool interruptEnable, halKeyCBack_t cback)
     HAL_KEY_JOY_MOVE_ICTL |= HAL_KEY_JOY_MOVE_ICTLBIT;
     HAL_KEY_JOY_MOVE_IEN |= HAL_KEY_JOY_MOVE_IENBIT;
     HAL_KEY_JOY_MOVE_PXIFG = ~(HAL_KEY_JOY_MOVE_BIT);
-
+#endif
 
     /* Do this only after the hal_key is configured - to work with sleep stuff */
     if (HalKeyConfigured == TRUE)
@@ -297,10 +300,12 @@ uint8 HalKeyRead ( void )
     keys |= HAL_KEY_SW_6;
   }
 
+#ifndef HAL_JOYSTICK_DISABLE
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active low */
   {
     keys |= halGetJoyKeyInput();
   }
+#endif
 
   return keys;
 }
@@ -319,10 +324,12 @@ void HalKeyPoll (void)
 {
   uint8 keys = 0;
 
+#ifndef HAL_JOYSTICK_DISABLE
   if ((HAL_KEY_JOY_MOVE_PORT & HAL_KEY_JOY_MOVE_BIT))  /* Key is active HIGH */
   {
     keys = halGetJoyKeyInput();
   }
+#endif
 
   /* If interrupts are not enabled, previous key status and current key status
    * are compared to find out if a key has changed status.
@@ -428,11 +435,13 @@ void halProcessKeyInterrupt (void)
     valid = TRUE;
   }
 
+#ifndef HAL_JOYSTICK_DISABLE
   if (HAL_KEY_JOY_MOVE_PXIFG & HAL_KEY_JOY_MOVE_BIT)  /* Interrupt Flag has been set */
   {
     HAL_KEY_JOY_MOVE_PXIFG = ~(HAL_KEY_JOY_MOVE_BIT); /* Clear Interrupt Flag */
     valid = TRUE;
   }
+#endif
 
   if (valid)
   {

@@ -275,6 +275,7 @@
         <option>
           <name>CCDefines</name>
           <state>CC2530EB</state>
+          <state>ZAPP_P1</state>
           <state>POWER_SAVING</state>
           <state>HAL_AES=FALSE</state>
           <state>HAL_DMA=FALSE</state>

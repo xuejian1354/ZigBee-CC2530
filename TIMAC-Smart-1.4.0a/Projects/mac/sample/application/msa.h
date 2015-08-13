@@ -65,11 +65,11 @@ extern "C"
 #define MSA_MAC_BEACON_ORDER      15            /* Setting beacon order to 15 will disable the beacon */
 #define MSA_MAC_SUPERFRAME_ORDER  15            /* Setting superframe order to 15 will disable the superframe */
 
-#define MSA_PACKET_LENGTH         20            /* Min = 4, Max = 102 */
+#define MSA_PACKET_LENGTH         21            /* Min = 4, Max = 102 */
 
 #define MSA_PWR_MGMT_ENABLED      FALSE         /* Enable or Disable power saving */
 
-#define MSA_KEY_INT_ENABLED       FALSE         /*
+#define MSA_KEY_INT_ENABLED       TRUE         /*
                                                  * FALSE = Key Polling
                                                  * TRUE  = Key interrupt
                                                  *

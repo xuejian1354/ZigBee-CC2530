@@ -137,17 +137,9 @@
 #define ACTIVE_LOW        !
 #define ACTIVE_HIGH       !!    /* double negation forces result to be '1' */
 
-/* S1 */
-#define PUSH1_BV          BV(1)
-#define PUSH1_SBIT        P0_1
-
-#if defined (HAL_BOARD_CC2530EB_REV17)
-  #define PUSH1_POLARITY    ACTIVE_HIGH
-#elif defined (HAL_BOARD_CC2530EB_REV13)
-  #define PUSH1_POLARITY    ACTIVE_LOW
-#else
-  #error Unknown Board Indentifier
-#endif
+#define PUSH1_BV          BV(5)
+#define PUSH1_SBIT        P0_5
+#define PUSH1_POLARITY    ACTIVE_LOW
 
 /* Joystick Center Press */
 #define PUSH2_BV          BV(0)
@@ -432,7 +424,7 @@ st( \
 
 /* Set to TRUE enable LCD usage, FALSE disable it */
 #ifndef HAL_LCD
-#define HAL_LCD TRUE
+#define HAL_LCD FALSE
 #endif
 
 /* Set to TRUE enable LED usage, FALSE disable it */

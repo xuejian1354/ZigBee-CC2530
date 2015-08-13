@@ -23,7 +23,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -39,26 +39,6 @@
 **************************************************************************************************/
 
 /**************************************************************************************************
-
-    Description:
-
-                                KEY UP (or S1)
-                              - Non Beacon
-                              - First board in the network will be setup as the coordinator
-                              - Any board after the first one will be setup as the device
-                                 |
-          KEY LEFT               |      KEY RIGHT(or S2)
-                             ----+----- - Start transmitting
-                                 |
-                                 |
-                                KEY DOWN
-
-
-
-**************************************************************************************************/
-
-
-/**************************************************************************************************
  *                                           Includes
  **************************************************************************************************/
 
@@ -70,6 +50,7 @@
 #include "hal_led.h"
 #include "hal_adc.h"
 #include "hal_lcd.h"
+#include "hal_uart.h"
 
 /* OS includes */
 #include "OSAL.h"
@@ -207,7 +188,7 @@ bool          msa_IsCoordinator  = FALSE;   /* True if the device is started as 
 bool          msa_IsStarted      = FALSE;   /* True if the device started, either as Pan Coordinator or device */
 bool          msa_IsSampleBeacon = FALSE;   /* True if the beacon payload match with the predefined */
 bool          msa_IsDirectMsg    = FALSE;   /* True if the messages will be sent as direct messages */
-uint8         msa_State = MSA_IDLE_STATE;   /* Either IDLE state or SEND state */
+uint8         msa_State = MSA_SEND_STATE;   /* Either IDLE state or SEND state */
 
 /* Structure that used for association request */
 macMlmeAssociateReq_t msa_AssociateReq;
@@ -223,7 +204,7 @@ typedef struct
 }msa_DeviceInfo_t;
 
 /* Array contains the information of the devices */
-static msa_DeviceInfo_t msa_DeviceRecord[MSA_MAX_DEVICE_NUM];
+//static msa_DeviceInfo_t msa_DeviceRecord[MSA_MAX_DEVICE_NUM];
 
 uint8 msa_SuperFrameOrder;
 uint8 msa_BeaconOrder;
@@ -331,6 +312,7 @@ uint8 msa_keyIndex      = 0;
 /**************************************************************************************************
  *                                     Local Function Prototypes
  **************************************************************************************************/
+void Serial_Init(halUARTCBack_t SerialRx_CallBack);
 /* Setup routines */
 void MSA_CoordinatorStartup(void);
 void MSA_DeviceStartup(void);
@@ -346,6 +328,7 @@ void MSA_SyncReq(void);
 /* Support */
 bool MSA_BeaconPayLoadCheck(uint8* pSdu);
 bool MSA_DataCheck(uint8* data, uint8 dataLength);
+void MSA_DataRSSISet(int8 rssi);
 
 
 #ifdef MAC_SECURITY
@@ -458,7 +441,7 @@ void MSA_Init(uint8 taskId)
 #endif /* MAC_SECURITY */
 
   /* Initialize the data packet */
-  for (i=MSA_HEADER_LENGTH; i<MSA_PACKET_LENGTH; i++)
+  for (i=MSA_HEADER_LENGTH; i<MSA_PACKET_LENGTH-1; i++)
   {
     msa_Data1[i] = i-MSA_HEADER_LENGTH;
   }
@@ -472,6 +455,24 @@ void MSA_Init(uint8 taskId)
   msa_BeaconOrder = MSA_MAC_BEACON_ORDER;
   msa_SuperFrameOrder = MSA_MAC_SUPERFRAME_ORDER;
 
+  Serial_Init(NULL);
+}
+
+void Serial_Init(halUARTCBack_t SerialRx_CallBack)
+{
+	halUARTCfg_t uartConfig;
+
+	uartConfig.configured           = TRUE;
+	uartConfig.baudRate             = HAL_UART_BR_115200;
+	uartConfig.flowControl          = HAL_UART_FLOW_OFF;
+	uartConfig.flowControlThreshold = 64;
+	uartConfig.rx.maxBufSize        = 128;
+	uartConfig.tx.maxBufSize        = 128;
+	uartConfig.idleTimeout          = 6;
+	uartConfig.intEnable            = TRUE;
+	uartConfig.callBackFunc         = SerialRx_CallBack;
+	
+	HalUARTOpen (ZAPP_PORT, &uartConfig);
 }
 
 /**************************************************************************************************
@@ -498,7 +499,7 @@ uint16 MSA_ProcessEvent(uint8 taskId, uint16 events)
 #endif /* MAC_SECURITY */
 
   static uint8 index;
-  static uint8 sequence;
+  static uint8 sequence = 1;
 
   if (events & SYS_EVENT_MSG)
   {
@@ -616,7 +617,7 @@ uint16 MSA_ProcessEvent(uint8 taskId, uint16 events)
               (pData->dataCnf.hdr.status == MAC_CHANNEL_ACCESS_FAILURE) ||
               (pData->dataCnf.hdr.status == MAC_NO_ACK))
           {
-            osal_start_timerEx(MSA_TaskId, MSA_SEND_EVENT, MSA_WAIT_PERIOD);
+            //osal_start_timerEx(MSA_TaskId, MSA_SEND_EVENT, MSA_WAIT_PERIOD);
           }
 
           mac_msg_deallocate((uint8**)&pData->dataCnf.pDataReq);
@@ -627,25 +628,28 @@ uint16 MSA_ProcessEvent(uint8 taskId, uint16 events)
 
           if (MSA_DataCheck ( pData->dataInd.msdu.p, pData->dataInd.msdu.len ))
           {
+			MSA_DataRSSISet(pData->dataInd.mac.rssi);
+			
             HalLedSet (HAL_LED_3, HAL_LED_MODE_TOGGLE);
+            HalUARTWrite(ZAPP_PORT, msa_Data1, MSA_PACKET_LENGTH);
 
             /* Only send the echo back if the received */
-            if (!msa_IsCoordinator)
-            {
-              if (MSA_ECHO_LENGTH >= 4)
-              {
-                /* Return the first 4 bytes and the last byte of the received packet */
-                msa_Data2[0] = pData->dataInd.msdu.p[0];
-                msa_Data2[1] = pData->dataInd.msdu.p[1];
-                msa_Data2[2] = pData->dataInd.msdu.p[2];
-                msa_Data2[3] = pData->dataInd.msdu.p[3];
-              }
+            /*if (!msa_IsCoordinator)
+			{
+				if (MSA_ECHO_LENGTH >= 4)
+				{
+					// Return the first 4 bytes and the last byte of the received packet 
+					msa_Data2[0] = pData->dataInd.msdu.p[0];
+					msa_Data2[1] = pData->dataInd.msdu.p[1];
+					msa_Data2[2] = pData->dataInd.msdu.p[2];
+					msa_Data2[3] = pData->dataInd.msdu.p[3];
+				}
 
-              MSA_McpsDataReq(msa_Data2,
-                              MSA_ECHO_LENGTH,
-                              TRUE,
-                              msa_CoordShortAddr );
-            }
+				MSA_McpsDataReq(msa_Data2,
+								MSA_ECHO_LENGTH,
+								TRUE,
+								msa_CoordShortAddr );
+			}*/
           }
           break;
       }
@@ -680,15 +684,22 @@ uint16 MSA_ProcessEvent(uint8 taskId, uint16 events)
         {
           /* Coordinator sending to devices. Use the associated list of device to send out msg */
           msa_Data1[0] = MSA_PACKET_LENGTH;
-          msa_Data1[1] = HI_UINT16(msa_DeviceRecord[index].devShortAddr);
-          msa_Data1[2] = LO_UINT16(msa_DeviceRecord[index].devShortAddr);
+          //msa_Data1[1] = HI_UINT16(msa_DeviceRecord[index].devShortAddr);
+          //msa_Data1[2] = LO_UINT16(msa_DeviceRecord[index].devShortAddr);
+		  msa_Data1[1] = HI_UINT16(msa_CoordShortAddr);
+          msa_Data1[2] = LO_UINT16(msa_CoordShortAddr);
           msa_Data1[3] = sequence;
         }
 
-        MSA_McpsDataReq((uint8*)msa_Data1,
+        /*MSA_McpsDataReq((uint8*)msa_Data1,
                         MSA_PACKET_LENGTH,
                         msa_DeviceRecord[index].isDirectMsg,
-                        msa_DeviceRecord[index].devShortAddr );
+                        msa_DeviceRecord[index].devShortAddr );*/
+
+		MSA_McpsDataReq((uint8*)msa_Data1,
+                        MSA_PACKET_LENGTH,
+                        TRUE,
+                        MAC_SHORT_ADDR_BROADCAST );
 
         /* Reset the index if it reaches the current number of associated devices */
         if (++index == msa_NumOfDevices)
@@ -702,8 +713,8 @@ uint16 MSA_ProcessEvent(uint8 taskId, uint16 events)
         {
           /* Device sending to coordinator */
           msa_Data1[0] = MSA_PACKET_LENGTH;
-          msa_Data1[1] = HI_UINT16(msa_CoordShortAddr);
-          msa_Data1[2] = LO_UINT16(msa_CoordShortAddr);
+          msa_Data1[1] = HI_UINT16(msa_DevShortAddr);
+          msa_Data1[2] = LO_UINT16(msa_DevShortAddr);
           msa_Data1[3] = sequence;
         }
         MSA_McpsDataReq((uint8*)msa_Data1,
@@ -715,10 +726,10 @@ uint16 MSA_ProcessEvent(uint8 taskId, uint16 events)
 
       if (sequence++ == 0xFF)
       {
-        sequence = 0;
+        sequence = 1;
       }
 
-      HalLedSet (HAL_LED_1, HAL_LED_MODE_BLINK);
+	  HalLedBlink(HAL_LED_2, 2, 40, 50);
     }
 
     return events ^ MSA_SEND_EVENT;
@@ -981,8 +992,8 @@ void MSA_AssociateRsp(macCbackEvent_t* pMsg)
 #endif /* MAC_SECURITY */
 
   /* Build the record for this device */
-  msa_DeviceRecord[msa_NumOfDevices].devShortAddr = msa_DevShortAddrList[msa_NumOfDevices];
-  msa_DeviceRecord[msa_NumOfDevices].isDirectMsg = pMsg->associateInd.capabilityInformation & MAC_CAPABLE_RX_ON_IDLE;
+  //msa_DeviceRecord[msa_NumOfDevices].devShortAddr = msa_DevShortAddrList[msa_NumOfDevices];
+//  msa_DeviceRecord[msa_NumOfDevices].isDirectMsg = pMsg->associateInd.capabilityInformation & MAC_CAPABLE_RX_ON_IDLE;
   msa_NumOfDevices++;
 
   /* If the number of devices are more than MAX_DEVICE_NUM, turn off the association permit */
@@ -1169,9 +1180,11 @@ bool MSA_DataCheck(uint8* data, uint8 dataLength)
 {
   uint8 i = 0;
 
+  osal_memcpy(msa_Data1, data, dataLength);
+  
   if (data[0] == dataLength)
   {
-    for (i=MSA_HEADER_LENGTH; i<(data[0] - 1); i++)
+    for (i=MSA_HEADER_LENGTH; i<(data[0] - 2); i++)
     {
        if (data[i] != msa_Data1[i])
          return FALSE;
@@ -1182,6 +1195,11 @@ bool MSA_DataCheck(uint8* data, uint8 dataLength)
     return FALSE;
   }
   return TRUE;
+}
+
+void MSA_DataRSSISet(int8 rssi)
+{
+	msa_Data1[MSA_PACKET_LENGTH-1] = rssi;
 }
 
 /**************************************************************************************************
@@ -1216,7 +1234,7 @@ void MSA_HandleKeys(uint8 keys, uint8 shift)
   }
 #endif /* HAL_BOARD_LM3S9B96 */
 
-  if ( keys & HAL_KEY_SW_1 )
+  if ( keys & HAL_KEY_SW_6 )
   {
     /* Start the device as a direct message device and beacon disabled*/
     if (!msa_IsStarted)
@@ -1243,6 +1261,10 @@ void MSA_HandleKeys(uint8 keys, uint8 shift)
          }
       }
     }
+	else 
+	{
+		osal_start_timerEx(MSA_TaskId, MSA_SEND_EVENT, 100);
+	}
 #ifdef HAL_BOARD_CC2530USB
     /* CC2531DK_Dongle has no Reset button - use S1 if msa_IsStarted */
     else
@@ -1257,7 +1279,7 @@ void MSA_HandleKeys(uint8 keys, uint8 shift)
 
   if ( keys & HAL_KEY_SW_2 )
   {
-    /* Start sending message */
+  	/* Start sending message */
     if (msa_IsStarted)
     {
       /* Set App's state to SEND or IDLE */
