@@ -84,7 +84,7 @@
 
 #define MSA_DEV_SHORT_ADDR        0x0000        /* Device initial short address - This will change after association */
 
-#define MSA_HEADER_LENGTH         4             /* Header includes DataLength + DeviceShortAddr + Sequence */
+#define MSA_HEADER_LENGTH         6             /* Header includes DataLength + Sequence + PanID + DeviceShortAddr */
 #define MSA_ECHO_LENGTH           8             /* Echo packet */
 
 #define MSA_MAC_MAX_RESULTS       5             /* Maximun number of scan result that will be accepted */
@@ -684,11 +684,11 @@ uint16 MSA_ProcessEvent(uint8 taskId, uint16 events)
         {
           /* Coordinator sending to devices. Use the associated list of device to send out msg */
           msa_Data1[0] = MSA_PACKET_LENGTH;
-          //msa_Data1[1] = HI_UINT16(msa_DeviceRecord[index].devShortAddr);
-          //msa_Data1[2] = LO_UINT16(msa_DeviceRecord[index].devShortAddr);
-		  msa_Data1[1] = HI_UINT16(msa_CoordShortAddr);
-          msa_Data1[2] = LO_UINT16(msa_CoordShortAddr);
-          msa_Data1[3] = sequence;
+          msa_Data1[1] = sequence;
+		  msa_Data1[2] = HI_UINT16(msa_PanId);
+          msa_Data1[3] = LO_UINT16(msa_PanId);
+		  msa_Data1[4] = HI_UINT16(msa_CoordShortAddr);
+          msa_Data1[5] = LO_UINT16(msa_CoordShortAddr);
         }
 
         /*MSA_McpsDataReq((uint8*)msa_Data1,
@@ -713,9 +713,11 @@ uint16 MSA_ProcessEvent(uint8 taskId, uint16 events)
         {
           /* Device sending to coordinator */
           msa_Data1[0] = MSA_PACKET_LENGTH;
-          msa_Data1[1] = HI_UINT16(msa_DevShortAddr);
-          msa_Data1[2] = LO_UINT16(msa_DevShortAddr);
-          msa_Data1[3] = sequence;
+          msa_Data1[1] = sequence;
+		  msa_Data1[2] = HI_UINT16(msa_PanId);
+          msa_Data1[3] = LO_UINT16(msa_PanId);
+          msa_Data1[4] = HI_UINT16(msa_DevShortAddr);
+          msa_Data1[5] = LO_UINT16(msa_DevShortAddr);
         }
         MSA_McpsDataReq((uint8*)msa_Data1,
                         MSA_PACKET_LENGTH,
