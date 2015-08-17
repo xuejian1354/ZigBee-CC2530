@@ -158,6 +158,9 @@ static void GenericApp_SendTheMessage( void );
 static void GenericApp_ProcessRtosMessage( void );
 #endif
 
+static void UART_Init(halUARTCBack_t cb);
+static void UART_CallBack(uint8 port, uint8 event);
+
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
  */
@@ -193,6 +196,8 @@ void GenericApp_Init( uint8 task_id )
   // If the hardware is application specific - add it here.
   // If the hardware is other parts of the device add it in main().
 
+  UART_Init(UART_CallBack);
+
   GenericApp_DstAddr.addrMode = (afAddrMode_t)AddrNotPresent;
   GenericApp_DstAddr.endPoint = 0;
   GenericApp_DstAddr.addr.shortAddr = 0;
@@ -222,6 +227,8 @@ void GenericApp_Init( uint8 task_id )
   // Register this task with RTOS task initiator
   RTOS_RegisterApp( task_id, GENERICAPP_RTOS_MSG_EVT );
 #endif
+
+  ZDOInitDevice( 0 );
 }
 
 /*********************************************************************
@@ -282,6 +289,7 @@ uint16 GenericApp_ProcessEvent( uint8 task_id, uint16 events )
           break;
 
         case AF_INCOMING_MSG_CMD:
+		  HalLedBlink(HAL_LED_2, 2, 50, 100);
           GenericApp_MessageMSGCB( MSGpkt );
           break;
 
@@ -292,9 +300,9 @@ uint16 GenericApp_ProcessEvent( uint8 task_id, uint16 events )
               || (GenericApp_NwkState == DEV_END_DEVICE) )
           {
             // Start sending "the" message in a regular interval.
-            osal_start_timerEx( GenericApp_TaskID,
-                                GENERICAPP_SEND_MSG_EVT,
-                                GENERICAPP_SEND_MSG_TIMEOUT );
+            //osal_start_timerEx( GenericApp_TaskID,
+              //                  GENERICAPP_SEND_MSG_EVT,
+                //                GENERICAPP_SEND_MSG_TIMEOUT );
           }
           break;
 
@@ -344,6 +352,63 @@ uint16 GenericApp_ProcessEvent( uint8 task_id, uint16 events )
 
   // Discard unknown events
   return 0;
+}
+
+void UART_Init(halUARTCBack_t cb)
+{
+	halUARTCfg_t uartConfig;
+
+	uartConfig.configured           = TRUE;
+	uartConfig.baudRate             = HAL_UART_BR_115200;
+	uartConfig.flowControl          = HAL_UART_FLOW_OFF;
+	uartConfig.flowControlThreshold = 64;
+	uartConfig.rx.maxBufSize        = 128;
+	uartConfig.tx.maxBufSize        = 128;
+	uartConfig.idleTimeout          = 6;
+	uartConfig.intEnable            = TRUE;
+	uartConfig.callBackFunc         = cb;
+	
+	HalUARTOpen (ZTOOL_PORT, &uartConfig);
+}
+
+void UART_CallBack(uint8 port, uint8 event)
+{
+  uint8 data_TxLen = 0;
+  uint8 data_TxBuf[64] = {0};
+
+  if ((event & (HAL_UART_RX_FULL | HAL_UART_RX_ABOUT_FULL 
+  			| HAL_UART_RX_TIMEOUT)) && !data_TxLen)
+  {
+    data_TxLen = HalUARTRead( port, data_TxBuf, 80);
+
+    if(data_TxLen)
+    {  
+	  if(data_TxLen>64)
+	  	data_TxLen = 64;
+	  
+      memcpy(data_TxBuf, data_TxBuf, data_TxLen);
+
+#ifdef ZDO_COORDINATOR
+	  GenericApp_DstAddr.addrMode = (afAddrMode_t)Addr16Bit;
+      GenericApp_DstAddr.addr.shortAddr = 0xFFFF;
+      GenericApp_DstAddr.endPoint = GENERICAPP_ENDPOINT;
+#else
+	  GenericApp_DstAddr.addrMode = (afAddrMode_t)Addr16Bit;
+      GenericApp_DstAddr.addr.shortAddr = 0x0000;
+      GenericApp_DstAddr.endPoint = GENERICAPP_ENDPOINT;
+#endif
+
+	  AF_DataRequest( &GenericApp_DstAddr, &GenericApp_epDesc,
+                       GENERICAPP_CLUSTERID,
+                       data_TxLen,
+                       data_TxBuf,
+                       &GenericApp_TransID,
+                       AF_DISCV_ROUTE, AF_DEFAULT_RADIUS );
+
+      memset(data_TxBuf, 0, 64);
+      data_TxLen = 0;
+	}
+  }
 }
 
 /*********************************************************************
@@ -503,6 +568,8 @@ static void GenericApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
   {
     case GENERICAPP_CLUSTERID:
       // "the" message
+      HalUARTWrite(ZTOOL_PORT, pkt->cmd.Data, pkt->cmd.DataLength);
+	  
 #if defined( LCD_SUPPORTED )
       HalLcdWriteScreen( (char*)pkt->cmd.Data, "rcvd" );
 #elif defined( WIN32 )
