@@ -25,9 +25,6 @@ extern "C"
 {
 #endif
 
-#include "frame-analysis.h"
-
-
 #if (DEVICE_TYPE_ID==21)
 
 #define HAL_GPIO_FEATURE

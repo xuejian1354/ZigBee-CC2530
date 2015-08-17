@@ -20,9 +20,6 @@ extern "C"
 {
 #endif
 
-#include "frame-analysis.h"
-
-
 #if (DEVICE_TYPE_ID==0xA2)
 
 #define HAL_GPIO_FEATURE

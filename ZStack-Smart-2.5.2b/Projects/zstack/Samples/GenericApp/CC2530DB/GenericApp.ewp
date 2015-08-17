@@ -275,6 +275,7 @@
         <option>
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
+          <state>DEVICE_TYPE_ID=0xFE</state>
           <state>MT_TASK</state>
           <state>MT_SYS_FUNC</state>
           <state>MT_ZDO_FUNC</state>
@@ -447,6 +448,7 @@
           <state>$PROJ_DIR$</state>
           <state>$PROJ_DIR$\..\Source</state>
           <state>$PROJ_DIR$\..\..\..\ZMain\TI2530DB</state>
+          <state>$PROJ_DIR$\..\..\..\Applications\SmartApp\Source\Board</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\hal\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530EB</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\mac\include</state>
@@ -1333,6 +1335,7 @@
         <option>
           <name>CCDefines</name>
           <state>ZTOOL_P1</state>
+          <state>DEVICE_TYPE_ID=0xFE</state>
           <state>MT_TASK</state>
           <state>MT_SYS_FUNC</state>
           <state>MT_ZDO_FUNC</state>
@@ -1505,6 +1508,7 @@
           <state>$PROJ_DIR$</state>
           <state>$PROJ_DIR$\..\Source</state>
           <state>$PROJ_DIR$\..\..\..\ZMain\TI2530DB</state>
+          <state>$PROJ_DIR$\..\..\..\Applications\SmartApp\Source\Board</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\hal\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530EB</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\mac\include</state>
@@ -2392,6 +2396,7 @@
           <name>CCDefines</name>
           <state>NWK_AUTO_POLL</state>
           <state>ZTOOL_P1</state>
+          <state>DEVICE_TYPE_ID=0xFE</state>
           <state>MT_TASK</state>
           <state>MT_SYS_FUNC</state>
           <state>MT_ZDO_FUNC</state>
@@ -2565,6 +2570,7 @@
           <state>$PROJ_DIR$</state>
           <state>$PROJ_DIR$\..\Source</state>
           <state>$PROJ_DIR$\..\..\..\ZMain\TI2530DB</state>
+          <state>$PROJ_DIR$\..\..\..\Applications\SmartApp\Source\Board</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\hal\include</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\hal\target\CC2530EB</state>
           <state>$PROJ_DIR$\..\..\..\..\..\Components\mac\include</state>
