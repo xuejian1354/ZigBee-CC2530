@@ -90,7 +90,6 @@ Date:2015-03-03
 #include "hal_types.h"
 #include "hal_board.h"
 #include "hal_drivers.h"
-#include "CommonApp.h"
 #include "hal_adc.h"
 #include "hal_key.h"
 #include "hal_led.h"
