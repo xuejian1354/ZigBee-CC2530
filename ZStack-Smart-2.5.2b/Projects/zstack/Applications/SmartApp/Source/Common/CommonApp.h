@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-07
+Date:2015-08-20
 **************************************************************************************************/
 
 
@@ -90,16 +90,17 @@ extern "C"
 #define IRDETECT_QUERY_TIMEOUT	500
 #define AIRCONTROLLER_TIMEOUT	5000
 #define PERMIT_JOIN_TIMEOUT		30		//30 Seconds, <=255s
+#define HUMITUREDETECT_TIMEOUT  5000
 #else
 #define HEARTBEAT_TIMEOUT   	6000	//Every 36 Seconds
 #define TRANSNODE_TIMEOUT   	6000	//Every 36 Seconds
 #define CMD_PEROID_TIMEOUT		1000	//Every 6 Seconds
 #define DOORSENSOR_TIMEOUT  	1000	//Every 6 Seconds
+#define HUMITUREDETECT_TIMEOUT  3000
 
 #define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
 #endif
 
-#define HUMITUREDETECT_TIMEOUT  5000
 #define POWERSETTING_TIMEOUT	3000
 
 #define PERMIT_JOIN_FORBID	0

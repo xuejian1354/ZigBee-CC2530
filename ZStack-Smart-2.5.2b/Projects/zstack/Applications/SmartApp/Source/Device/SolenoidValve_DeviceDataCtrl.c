@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-07
+Date:2015-08-20
 **************************************************************************************************/
 
 /*********************************************************************
@@ -77,8 +77,14 @@ void HalStatesInit(devStates_t status)
 
 void SolenoidValve_KeyHandler(void)
 {
+	uint8 buf[FRAME_DATA_SIZE] = {0};
+  	uint8 len = 0;
+	
 	HAL_TOGGLE_VSW();
 	HalLedSet( HAL_LED_1,  HAL_LED_MODE_TOGGLE);
+
+	if(!CommonDevice_GetData(buf, &len))
+        Update_Refresh(buf, len);
 }
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)

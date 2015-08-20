@@ -278,7 +278,7 @@
           <state>MT_ZDO_FUNC</state>
           <state>NV_INIT</state>
           <state>NV_RESTORE</state>
-          <state>xPOWER_SAVING</state>
+          <state>POWER_SAVING</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
