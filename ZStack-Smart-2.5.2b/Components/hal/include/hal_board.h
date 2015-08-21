@@ -12,6 +12,7 @@
 #include "LightSwitchTwo_Board_cfg.h"
 #include "LightSwitchThree_Board_cfg.h"
 #include "LightSwitchFour_Board_cfg.h"
+#include "HueLight_Board_cfg.h"
 #include "Alarm_Board_cfg.h"
 #include "IRDetection_Board_cfg.h"
 #include "DoorSensor_Board_cfg.h"

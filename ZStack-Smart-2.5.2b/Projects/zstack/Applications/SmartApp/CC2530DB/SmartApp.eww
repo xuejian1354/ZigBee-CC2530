@@ -23,6 +23,9 @@
     <path>$WS_DIR$\Devices\LightSwitchFour.ewp</path>
   </project>
   <project>
+    <path>$WS_DIR$\Devices\HueLight.ewp</path>
+  </project>
+  <project>
     <path>$WS_DIR$\Devices\Alarm.ewp</path>
   </project>
   <project>

@@ -95,6 +95,10 @@ fr_app_type_t get_frapp_type_from_str(char *app_type)
 	{
 		return FRAPP_LIGHTSWITCH_FOUR;
 	}
+	else if(!strncmp(FR_APP_HUELIGHT, app_type, 2))
+	{
+		return FRAPP_HUELIGHT;
+	}
 	else if(!strncmp(FR_APP_ALARM, app_type, 2))
 	{
 		return FRAPP_ALARM;
@@ -118,6 +122,14 @@ fr_app_type_t get_frapp_type_from_str(char *app_type)
 	else if(!strncmp(FR_APP_AIRCONTROLLER, app_type, 2))
 	{
 		return FRAPP_AIRCONTROLLER;
+	}
+	else if(!strncmp(FR_APP_HUMITURE_DETECTION, app_type, 2))
+	{
+		return FRAPP_HUMITURE_DETECTION;
+	}
+	else if(!strncmp(FR_APP_SOLENOID_VALVE, app_type, 2))
+	{
+		return FRAPP_SOLENOID_VALVE;
 	}
 
 	return FRAPP_NONE;
@@ -147,6 +159,10 @@ int get_frapp_type_to_str(char *dst, fr_app_type_t app_type)
 		strcpy(dst, FR_APP_LIGHTSWITCH_FOUR);
 		break;
 
+	case FRAPP_HUELIGHT:
+		strcpy(dst, FR_APP_HUELIGHT);
+		break;
+
 	case FRAPP_ALARM:
 		strcpy(dst, FR_APP_ALARM);
 		break;
@@ -169,6 +185,14 @@ int get_frapp_type_to_str(char *dst, fr_app_type_t app_type)
 
 	case FRAPP_AIRCONTROLLER:
 		strcpy(dst, FR_APP_AIRCONTROLLER);
+		break;
+
+	case FRAPP_HUMITURE_DETECTION:
+		strcpy(dst, FR_APP_HUMITURE_DETECTION);
+		break;
+
+	case FRAPP_SOLENOID_VALVE:
+		strcpy(dst, FR_APP_SOLENOID_VALVE);
 		break;
 
 	default:
