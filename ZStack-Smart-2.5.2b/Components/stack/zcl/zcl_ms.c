@@ -1,12 +1,12 @@
 /**************************************************************************************************
   Filename:       zcl_ms.c
-  Revised:        $Date: 2010-02-09 15:28:14 -0800 (Tue, 09 Feb 2010) $
-  Revision:       $Revision: 21679 $
+  Revised:        $Date: 2013-06-11 13:53:09 -0700 (Tue, 11 Jun 2013) $
+  Revision:       $Revision: 34523 $
 
   Description:    Zigbee Cluster Library - Measurements and Sensing ( MS )
 
 
-  Copyright 2006-2010 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2006-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+  PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE, 
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -40,8 +40,6 @@
 /*********************************************************************
  * INCLUDES
  */
-#include "ZComDef.h"
-#include "OSAL.h"
 #include "zcl.h"
 #include "zcl_general.h"
 #include "zcl_ms.h"
@@ -122,7 +120,7 @@ ZStatus_t zclMS_RegisterCmdCallbacks( uint8 endpoint, zclMS_AppCallbacks_t *call
   }
 
   // Fill in the new profile list
-  pNewItem = osal_mem_alloc( sizeof( zclMSCBRec_t ) );
+  pNewItem = zcl_mem_alloc( sizeof( zclMSCBRec_t ) );
   if ( pNewItem == NULL )
     return (ZMemError);
 

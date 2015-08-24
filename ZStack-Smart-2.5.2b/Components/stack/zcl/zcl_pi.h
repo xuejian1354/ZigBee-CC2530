@@ -1,12 +1,12 @@
 /**************************************************************************************************
   Filename:       zcl_pi.h
-  Revised:        $Date: 2010-09-28 08:39:46 -0700 (Tue, 28 Sep 2010) $
-  Revision:       $Revision: 23926 $
+  Revised:        $Date: 2013-10-16 16:38:58 -0700 (Wed, 16 Oct 2013) $
+  Revision:       $Revision: 35701 $
 
   Description:    This file contains the ZCL Protocol Interfaces Definitions
 
 
-  Copyright 2010 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2010-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -22,8 +22,8 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
-  INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE, 
+  PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
   NEGLIGENCE, STRICT LIABILITY, CONTRIBUTION, BREACH OF WARRANTY, OR OTHER
@@ -34,7 +34,7 @@
   (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
 
   Should you have any questions regarding your right to use this Software,
-  contact Texas Instruments Incorporated at www.TI.com. 
+  contact Texas Instruments Incorporated at www.TI.com.
 **************************************************************************************************/
 
 #ifndef ZCL_PI_H
@@ -104,7 +104,7 @@ extern "C"
 #define ATTRID_IOV_BACNET_EXT_EV_TIME_STAMPS               0x0082
 
 /*** Connect Control field: 8-bit bitmap ***/
-// Preemptible (bit 1) - indicates whether or not this connection can be 
+// Preemptible (bit 1) - indicates whether or not this connection can be
 // removed by a different Data Management device.
 #define CONNECT_CTRL_PREEMPTIBLE_BIT                       0x01
 
@@ -209,7 +209,7 @@ typedef struct
   uint8 connectCtrl;     // connect control
   uint16 idleTimeout;    // inactivity time (in minutes) which Data Management device
                          // will wait w/o receiving any data before it disconnects
-  uint8 *managerAddr;    // IEEE address (64-bit) of Data Management device 
+  uint8 *managerAddr;    // IEEE address (64-bit) of Data Management device
                          // transmitting this frame
   uint8 managerEP;       // source endpoint from which Data Management device is
                          // transmitting this frame
@@ -232,40 +232,32 @@ typedef struct
 } zcl11073ConnectStatusNoti_t;
 
 // This callback is called to process a Match Protocol Address command
-//  pCmd - received command data
 typedef void (*zclPICB_MatchProtocolAddr_t)( zclPIMatchProtocolAddr_t *pCmd );
 
 // This callback is called to process a Match Protocol Address response
-//  pCmd - received command data
 typedef void (*zclPICB_MatchProtocolAddrRsp_t)( zclPIMatchProtocolAddrRsp_t *pRsp );
 
 // This callback is called to process a Advertise Protocol Address command
-//  pCmd - received command data
 typedef void (*zclPICB_AdvertiseProtocolAddr_t)( zclPIAdvertiseProtocolAddr_t *pCmd );
 
 // This callback is called to process a BACnet Transfer NPDU command
-//  pCmd - received command data
 typedef void (*zclPICB_BACnetTransferNPDU_t)( zclBACnetTransferNPDU_t *pCmd );
 
 // This callback is called to process an 11037 Transfer APDU command
-//  pCmd - received command data
 typedef void (*zclPICB_11073TransferAPDU_t)( zcl11073TransferAPDU_t *pCmd );
 
 // This callback is called to process an 11037 Connect Request command
-//  pCmd - received command data
 typedef void (*zclPICB_11073ConnectReq_t)( zcl11073ConnectReq_t *pCmd );
 
 // This callback is called to process an 11037 Disconnect Request command
-//  pCmd - received command data
 typedef void (*zclPICB_11073DisconnectReq_t)( zcl11073DisconnectReq_t *pCmd );
 
 // This callback is called to process an 11037 Connect Status Notification command
-//  pCmd - received command data
 typedef void (*zclPICB_11073ConnectStatusNoti_t)( zcl11073ConnectStatusNoti_t *pCmd );
 
 // Register Callbacks table entry - enter function pointers for callbacks that
 // the application would like to receive
-typedef struct			
+typedef struct
 {
   zclPICB_MatchProtocolAddr_t      pfnPI_MatchProtocolAddr;
   zclPICB_MatchProtocolAddrRsp_t   pfnPI_MatchProtocolAddrRsp;
@@ -283,11 +275,11 @@ typedef struct
 
 /*
  *  Send a BACnet Transfer NPDU Command. This command is used when a
- *  BACnet network layer wishes to transfer a BACnet NPDU across a 
+ *  BACnet network layer wishes to transfer a BACnet NPDU across a
  *  ZigBee tunnel to another BACnet network layer.
  *
  *  Use like: ZStatus_t zclPI_Send_BACnetTransferNPDUCmd( uint16 srcEP, afAddrType_t *dstAddr,
- *                                                        uint16 len, uint8 *npdu, 
+ *                                                        uint16 len, uint8 *npdu,
  *                                                        uint8 disableDefaultRsp, uint8 seqNum );
  *  @param   srcEP - Sending application's endpoint
  *  @param   dstAddr - where you want the message to go
@@ -325,7 +317,7 @@ typedef struct
 /*
  *  Call to send out an 11073 Connect Status Notification Command. This
  *  command is generated by an agent device in response to a connect
- *  request command, disconnect command, or in response to some other 
+ *  request command, disconnect command, or in response to some other
  *  event that causes the tunnel to become connected or disconnected.
  *  It is also sent by the agent device to request the Data Management
  *  device to reconnect a tunnel.
@@ -363,19 +355,19 @@ extern ZStatus_t zclPI_RegisterCmdCallbacks( uint8 endpoint, zclPI_AppCallbacks_
  * Send out a Match Protocol Address Command
  */
 extern ZStatus_t zclPI_Send_MatchProtocolAddrCmd( uint8 srcEP, afAddrType_t *dstAddr,
-                                                  uint8 len, uint8 *protocolAddr, 
+                                                  uint8 len, uint8 *protocolAddr,
                                                   uint8 disableDefaultRsp, uint8 seqNum );
 /*
  *  Send a Match Protocol Address Response
 */
 extern ZStatus_t zclPI_Send_MatchProtocolAddrRsp( uint8 srcEP, afAddrType_t *dstAddr,
-                                                  uint8 *ieeeAddr, uint8 len, uint8 *protocolAddr, 
+                                                  uint8 *ieeeAddr, uint8 len, uint8 *protocolAddr,
                                                   uint8 disableDefaultRsp, uint8 seqNum );
 /*
  * Send out an Advertise Protocol Address Command
  */
 extern ZStatus_t zclPI_Send_AdvertiseProtocolAddrCmd( uint8 srcEP, afAddrType_t *dstAddr,
-                                                      uint8 len, uint8 *protocolAddr, 
+                                                      uint8 len, uint8 *protocolAddr,
                                                       uint8 disableDefaultRsp, uint8 seqNum );
 /*
  * Send out an 11073 Transfer APDU Command
@@ -387,7 +379,7 @@ extern ZStatus_t zclPI_Send_11073TransferAPDUCmd( uint8 srcEP, afAddrType_t *dst
  */
 extern ZStatus_t zclPI_Send_11073ConnectReq( uint8 srcEP, afAddrType_t *dstAddr,
                                              uint8 connectCtrl, uint16 idleTimeout,
-                                             uint8 *managerAddr, uint8 managerEP, 
+                                             uint8 *managerAddr, uint8 managerEP,
                                              uint8 disableDefaultRsp, uint8 seqNum );
 
 

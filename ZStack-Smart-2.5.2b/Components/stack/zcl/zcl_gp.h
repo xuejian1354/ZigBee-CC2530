@@ -1,7 +1,7 @@
 /**************************************************************************************************
   Filename:       zcl_gp.h
-  Revised:        $Date: 2011-05-19 16:43:00 -0700 (Thu, 19 May 2011) $
-  Revision:       $Revision: 26037 $
+  Revised:        $Date: 2011-09-07 15:22:35 -0700 (Wed, 07 Sep 2011) $
+  Revision:       $Revision: 27480 $
 
   Description:    This file contains the ZCL Green Power definitions.
 
@@ -58,16 +58,13 @@ extern "C"
 #define ZGP_ENDPOINT_ID                                               0x00F2
   
 // ZGP Infrastructure Device IDs  
-#define ZGP_DEVICE_ID_PROXY                                           0x0500
-#define ZGP_DEVICE_ID_TARGET                                          0x0501
-#define ZGP_DEVICE_ID_COMBO                                           0x0502
-#define ZGP_DEVICE_ID_TARGET_PLUS                                     0x0503
-#define ZGP_DEVICE_ID_COMMISSIONING_TOOL                              0x0504
-#define ZGP_DEVICE_ID_PROXY_MINIMUN                                   0x0505
-#define ZGP_DEVICE_ID_COMBO_MINIMUM                                   0x0506
-
-#define ZGP_STUB_SECURITY_NONE      0
-#define ZGP_STUB_SECURITY_ALL       1
+#define ZGP_DEVICE_ID_PROXY                                           0x0060
+#define ZGP_DEVICE_ID_PROXY_MINIMUN                                   0x0061
+#define ZGP_DEVICE_ID_TARGET_PLUS                                     0x0062
+#define ZGP_DEVICE_ID_TARGET                                          0x0063
+#define ZGP_DEVICE_ID_COMMISSIONING_TOOL                              0x0064
+#define ZGP_DEVICE_ID_COMBO                                           0x0065
+#define ZGP_DEVICE_ID_COMBO_MINIMUM                                   0x0066  
   
 /**********************************************/
 /*** Green Power Features                   ***/
@@ -81,12 +78,33 @@ extern "C"
  *   ZGP_DEVICE_COMBO
  *   ZGP_DEVICE_PROXY_MIN
  *   ZGP_DEVICE_COMBO_MIN
+ *   ZGP_DEVICE_COMMISSIONING_TOOL
  *
  * Comment (or uncomment) the supported features 
  * and supported commands bitmasks added to each
  * device in order to control its capabilities.
  *
  **********************************************/
+
+#if !defined ( ZGP_DEVICE_ID )
+  #if defined( ZGP_DEVICE_TARGET ) 
+    #define ZGP_DEVICE_ID  ZGP_DEVICE_ID_TARGET
+  #elif defined( ZGP_DEVICE_TARGETPLUS )
+    #define ZGP_DEVICE_ID  ZGP_DEVICE_ID_TARGET_PLUS
+  #elif defined( ZGP_DEVICE_PROXY )
+    #define ZGP_DEVICE_ID  ZGP_DEVICE_ID_PROXY
+  #elif defined( ZGP_DEVICE_COMBO )
+    #define ZGP_DEVICE_ID  ZGP_DEVICE_ID_COMBO
+  #elif defined( ZGP_DEVICE_PROXY_MIN )
+    #define ZGP_DEVICE_ID  ZGP_DEVICE_ID_PROXY_MINIMUN
+  #elif defined( ZGP_DEVICE_COMBO_MIN )
+    #define ZGP_DEVICE_ID  ZGP_DEVICE_ID_COMBO_MINIMUM
+  #elif defined( ZGP_DEVICE_COMMISSIONING_TOOL )
+    #define ZGP_DEVICE_ID  ZGP_DEVICE_ID_COMMISSIONING_TOOL
+  #else
+    #error ZGP Device type is not defined
+  #endif
+#endif
 
 #define SUPP_ZGP_FEATURE_COMMON                    0x0001
 #define SUPP_ZGP_FEATURE_DIRECT                    0x0002
@@ -116,6 +134,11 @@ extern "C"
 #define SUPP_ZGP_CMD_TT_REQ                        0x0200
 #define SUPP_ZGP_CMD_TT_RESP                       0x0400
 #define SUPP_ZGP_CMD_CONFIGURE_PAIRING             0x0800
+  
+#define SUPP_ZGP_SECURITY_NONE      0x0
+#define SUPP_ZGP_SECURITY_SHORT     0x1
+#define SUPP_ZGP_SECURITY_LONG      0x2
+#define SUPP_ZGP_SECURITY_FULL      0x4
 
 #if defined ( ZGP_DEVICE_PROXY ) || ( ZGP_DEVICE_COMBO )
   #define ZGP_DEVICE_SUPPORTED_CLIENT_FEATURE         ( \
@@ -271,6 +294,14 @@ extern "C"
 
   #define ZGP_DEVICE_SUPPORTED_SERVER_RX_CMD  ZGP_DEVICE_SUPPORTED_SERVER_TX_CMD
 #endif
+  
+#if defined ( ZGP_DEVICE_PROXY_MIN )
+  #define ZGP_DEVICE_SUPPORTED_SECURITY         ( SUPP_ZGP_SECURITY_LONG )
+#else
+  #define ZGP_DEVICE_SUPPORTED_SECURITY         ( SUPP_ZGP_SECURITY_SHORT \
+                                                + SUPP_ZGP_SECURITY_LONG  \
+                                                + SUPP_ZGP_SECURITY_FULL )
+#endif
 
 #ifndef ZGP_DEVICE_SUPPORTED_CLIENT_TX_CMD
   #define ZGP_DEVICE_SUPPORTED_CLIENT_TX_CMD 0x0000
@@ -291,6 +322,10 @@ extern "C"
 #ifndef ZGP_DEVICE_SUPPORTED_SERVER_FEATURE
   #define ZGP_DEVICE_SUPPORTED_SERVER_FEATURE 0x0000
 #endif
+  
+#ifndef ZGP_STUB_SECURITY
+  #define ZGP_STUB_SECURITY ( SUPP_ZGP_SECURITY_NONE )
+#endif
 
 #define SUPPORTED_C_FEATURE(x) ( ZGP_DEVICE_SUPPORTED_CLIENT_FEATURE & (x) )
 #define SUPPORTED_S_FEATURE(x) ( ZGP_DEVICE_SUPPORTED_SERVER_FEATURE & (x) )
@@ -301,18 +336,14 @@ extern "C"
 #define SUPPORTED_S_TX_CMD(x) ( ZGP_DEVICE_SUPPORTED_SERVER_TX_CMD & (x) )
 #define SUPPORTED_RX_CMD(x) ( SUPPORTED_C_RX_CMD(x) || SUPPORTED_S_RX_CMD(x) )
 #define SUPPORTED_TX_CMD(x) ( SUPPORTED_C_TX_CMD(x) || SUPPORTED_S_TX_CMD(x) )
-
-#define ZGP_FEATURE_STUB_SECURITY  
-
-#if !defined ( ZGP_STUB_SECURITY ) 
-  #if defined ( ZGP_FEATURE_STUB_SECURITY )
-    #define ZGP_STUB_SECURITY         (ZGP_STUB_SECURITY_ALL)
-  #else
-    #define ZGP_STUB_SECURITY         (ZGP_STUB_SECURITY_NONE)
-  #endif  
-#endif
   
-#define ZGP_DEVICE_COMISSIONING_TOOL
+#define SUPPORTED_FEATURE_BIDIR ( SUPPORTED_FEATURE(SUPP_ZGP_FEATURE_SINGLE_HOP_BIDIR_OPER)     \
+                                || SUPPORTED_FEATURE(SUPP_ZGP_FEATURE_MULTI_HOP_BIDIR_OPER)     \
+                                || SUPPORTED_FEATURE(SUPP_ZGP_FEATURE_SINGLE_HOP_BIDIR_COMMISS) \
+                                || SUPPORTED_FEATURE(SUPP_ZGP_FEATURE_MULTI_HOP_BIDIR_COMMISS) )
+
+#define SUPPORTED_ZGP_SECURITY_LEVEL(x) ( ZGP_DEVICE_SUPPORTED_SECURITY & (x) )
+#define SUPPORTED_ZGP_SECURITY ( ZGP_DEVICE_SUPPORTED_SECURITY > SUPP_ZGP_SECURITY_NONE )
   
 /**********************************************/
 /*** Green Power Attributes                 ***/
@@ -324,6 +355,8 @@ extern "C"
 #define ATTRID_GP_COMM_EXIT_MODE                                      0x0003
 #define ATTRID_GP_COMM_WINDOW                                         0x0004
 #define ATTRID_GP_SECURITY_LEVEL                                      0x0005
+#define ATTRID_GP_SINK_FEATURES                                       0x0006
+#define ATTRID_GP_SINK_ACTIVE_FEATURES                                0x0007
   
 #define ATTRID_GP_SHARED_SECURITY_KEYTYPE                             0x0020
 #define ATTRID_GP_SHARED_SECURITY_KEY                                 0x0021
@@ -336,6 +369,8 @@ extern "C"
 #define ATTRID_GP_NOTIFICATION_RETRY_TIMER                            0x0013
 #define ATTRID_GP_MAX_SEARCH_COUNTER                                  0x0014
 #define ATTRID_GP_BLOCKED_SRC_ID                                      0x0015
+#define ATTRID_GP_PROXY_FEATURES                                      0x0016
+#define ATTRID_GP_PROXY_ACTIVE_FEATURES                               0x0017
 
 // Server Commands
 #define COMMAND_ZGP_NOTIFICATION                                      0x00
@@ -382,23 +417,17 @@ extern "C"
   
 // Security Level Mode
 #define ZGP_SECURITY_LEVEL_NONE                 0
-#define ZGP_SECURITY_LEVEL_SMALL                1
+#define ZGP_SECURITY_LEVEL_SHORT                1
 #define ZGP_SECURITY_LEVEL_LONG                 2
 #define ZGP_SECURITY_LEVEL_FULL                 3
   
-#define ZGP_SECURITY_LEVEL_SMALL_MIC_SIZE       2         
+#define ZGP_SECURITY_LEVEL_SHORT_MIC_SIZE       2         
 #define ZGP_SECURITY_LEVEL_STD_MIC_SIZE         4
   
 // Exit Mode Attribute definitions (bitmap)
 #define ZGP_EXIT_MODE_ON_COMMISSIONING_WINDOW_EXPIRATION    0x01
 #define ZGP_EXIT_MODE_ON_FIRST_PAIRING_SUCCESS              0x02
 #define ZGP_EXIT_MODE_ON_PROXY_COMMISSIONING_MODE           0x04
-  
-// ATTRID_GP_SHARED_SECURITY_KEYTYPE 
-#define ZGP_SHARED_KEYTYPE_NONE                     0x00
-#define ZGP_SHARED_KEYTYPE_NWK                      0x01
-#define ZGP_SHARED_KEYTYPE_GROUP                    0x02
-#define ZGP_SHARED_KEYTYPE_NWK_DERIVED_GROUP        0x03
   
 #define ZGP_TEMP_MASTER_CHANNEL_MASK                0x0F
 
@@ -425,7 +454,7 @@ typedef struct
   unsigned int fixedLoc:1;      // set if the location of this ZGPD is expected to change.
   unsigned int assignAlias:1;   // indicates that the assigned alias as stored in the ZGPD AssignedAlias field shall be used instead of the alias derived from SrcID.
   unsigned int secUse:1;        // Security related fields of the Sink Table entry are present
-  unsigned int commissioned:1;  // Reserved for future use
+  unsigned int reserved:1;      // Reserved for future use
 } gpSinkTableOptionsBits_t;
 
 // ZGP Sink Table Options field bitmap
@@ -449,12 +478,6 @@ typedef union
   uint8 optByte;
 } gpSinkTableSecOptions_t;
 
-//typedef struct
-//{
-//  uint8 endpoint;
-//  uint16 clusterID;
-//} zgpPairedEndpoint_t;
-
 // ZGP Sink Table Entry
 typedef struct
 {
@@ -469,11 +492,9 @@ typedef struct
   uint8 groupcastRadius;            // The range limit of groupcast
   uint32 secFrameCounter;           // The incoming security frame counter for the srcID
   uint8 secKey[SEC_KEY_LEN];        // The security key for the srcID. It me be skipped, if common/derived key is used (as indicated by securityUse)
-//  uint8 numEndpoints;               // number of elements in the following array
-//  zgpPairedEndpoint_t endpoints[];  // array of endpoints
+  uint8 pendingForCommRes;          // Is the entry pending for a successful commissioning response
   
   // shorthand "Options" access
-#define ST_commissioned       bitmap.optBits.commissioned
 #define ST_securityUse        bitmap.optBits.secUse
 #define assignedAliasFlag     bitmap.optBits.assignAlias
 #define fixedLocation         bitmap.optBits.fixedLoc
@@ -504,7 +525,7 @@ typedef struct
 typedef union
 {
   gpProxyTableOptionsBits_t optBits;
-  uint8 optWord;
+  uint16 optWord;
 } gpProxyTableOptions_t;
 
 // ZGP Sink Table Security Options field
@@ -860,9 +881,8 @@ typedef struct
 typedef struct
 {
   unsigned int action:1;            // indicates a request to enter commissioning mode, if 0 indicates a request to exist commissioning mode
-  unsigned int exitMode:2;          // zgpsCommissioningExitMode attribute bitmap.  ie. ZGP_EXIT_MODE_ON_COMMISSIONING_WINDOW_EXPIRATION
+  unsigned int exitMode:3;          // zgpsCommissioningExitMode attribute bitmap.  ie. ZGP_EXIT_MODE_ON_COMMISSIONING_WINDOW_EXPIRATION
   unsigned int channelPresent:1;    // indicates whether the channel field is present
-  unsigned int feedback:1;          // if set, it requests proxies to report commissioning success on successfully sending GPDF Commissioning Response frame, if 0, it request to report receiving Commissioning GPDF with the correct parameter values.
   unsigned int reserved:2;          // Reserved for future use
 } proxyCommOptionsbits_t;
 
@@ -881,7 +901,6 @@ typedef struct
   uint8 channel;
   
   // shorthand "Options" access
-#define proxyCommFeedback       bitmap.optBits.feedback
 #define proxyCommChannelPresent bitmap.optBits.channelPresent
 #define proxyCommExitMode       bitmap.optBits.exitMode
 #define proxyCommAction         bitmap.optBits.action

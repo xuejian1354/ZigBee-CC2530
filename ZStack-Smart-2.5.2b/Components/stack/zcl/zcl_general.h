@@ -1,12 +1,12 @@
 /**************************************************************************************************
   Filename:       zcl_general.h
-  Revised:        $Date: 2011-12-14 16:30:16 -0800 (Wed, 14 Dec 2011) $
-  Revision:       $Revision: 28678 $
+  Revised:        $Date: 2013-11-06 11:29:52 -0800 (Wed, 06 Nov 2013) $
+  Revision:       $Revision: 35933 $
 
   Description:    This file contains the ZCL General definitions.
 
 
-  Copyright 2006-2011 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2006-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -67,11 +67,14 @@ extern "C"
 #define ATTRID_BASIC_MODEL_ID                             0x0005
 #define ATTRID_BASIC_DATE_CODE                            0x0006
 #define ATTRID_BASIC_POWER_SOURCE                         0x0007
+#define ATTRID_BASIC_SW_BUILD_ID                          0x4000
+
   // Basic Device Settings
 #define ATTRID_BASIC_LOCATION_DESC                        0x0010
 #define ATTRID_BASIC_PHYSICAL_ENV                         0x0011
 #define ATTRID_BASIC_DEVICE_ENABLED                       0x0012
 #define ATTRID_BASIC_ALARM_MASK                           0x0013
+#define ATTRID_BASIC_DISABLE_LOCAL_CONFIG                 0x0014
 
 /*** Power Source Attribute values ***/
   // Bits b0-b6 represent the primary power source of the device
@@ -115,13 +118,20 @@ extern "C"
   // Mains Information
 #define ATTRID_POWER_CFG_MAINS_VOLTAGE                    0x0000
 #define ATTRID_POWER_CFG_MAINS_FREQUENCY                  0x0001
+
   // Mains Settings
 #define ATTRID_POWER_CFG_MAINS_ALARM_MASK                 0x0010
 #define ATTRID_POWER_CFG_MAINS_VOLT_MIN_THRES             0x0011
 #define ATTRID_POWER_CFG_MAINS_VOLT_MAX_THRES             0x0012
 #define ATTRID_POWER_CFG_MAINS_DWELL_TRIP_POINT           0x0013
+
   // Battery Information
 #define ATTRID_POWER_CFG_BATTERY_VOLTAGE                  0x0020
+#define ATTRID_POWER_CFG_BATTERY_PERCENTAGE_REMAINING     0x0021
+
+  // Battery Information Default Attribute Value
+#define ATTR_DEFAULT_POWER_CFG_BATTERY_PERCENTAGE_REMAINING    0
+
   // Battery Settings
 #define ATTRID_POWER_CFG_BAT_MANU                         0x0030
 #define ATTRID_POWER_CFG_BAT_SIZE                         0x0031
@@ -130,6 +140,14 @@ extern "C"
 #define ATTRID_POWER_CFG_BAT_RATED_VOLTAGE                0x0034
 #define ATTRID_POWER_CFG_BAT_ALARM_MASK                   0x0035
 #define ATTRID_POWER_CFG_BAT_VOLT_MIN_THRES               0x0036
+#define ATTRID_POWER_CFG_BAT_VOLT_THRES_1                 0x0037
+#define ATTRID_POWER_CFG_BAT_VOLT_THRES_2                 0x0038
+#define ATTRID_POWER_CFG_BAT_VOLT_THRES_3                 0x0039
+#define ATTRID_POWER_CFG_BAT_PERCENT_MIN_THRES            0x003A
+#define ATTRID_POWER_CFG_BAT_PERCENT_THRES_1              0x003B
+#define ATTRID_POWER_CFG_BAT_PERCENT_THRES_2              0x003C
+#define ATTRID_POWER_CFG_BAT_PERCENT_THRES_3              0x003D
+#define ATTRID_POWER_CFG_BAT_ALARM_STATE                  0x003E
 
 /*** Mains Alarm Mask Attribute bit ***/
 #define MAINS_ALARM_MASK_VOLT_2_LOW                       0x01
@@ -145,8 +163,26 @@ extern "C"
 #define BAT_SIZE_D                                        0x06
 #define BAT_SIZE_UNKNOWN                                  0xFF
 
-/*** Batter Alarm Mask Attribute bit ***/
-#define BAT_ALARM_MASK_VOLT_2_LOW                         0x01
+/*** Battery Alarm Mask Attribute bit ***/
+#define BAT_ALARM_MASK_VOLT_2_LOW                         0x01  // i.e., BatteryVoltageMinThreshold value has been reached
+#define BAT_ALARM_MASK_BATTERY_ALARM_1                    0x02
+#define BAT_ALARM_MASK_BATTERY_ALARM_2                    0x04
+#define BAT_ALARM_MASK_BATTERY_ALARM_3                    0x08
+
+/*** Alarm Code Field Enumerations for Battery Alarm values ***/
+#define ALARM_CODE_BAT_VOLT_MIN_THRES_BAT_SRC_1           0x10  // BatteryPercentageMinThreshold reached for Battery Source 1
+#define ALARM_CODE_BAT_VOLT_THRES_1_BAT_SRC_1             0x11  // BatteryPercentageThreshold1 reached for Battery Source 1
+#define ALARM_CODE_BAT_VOLT_THRES_2_BAT_SRC_1             0x12  // BatteryPercentageThreshold2 reached for Battery Source 1
+#define ALARM_CODE_BAT_VOLT_THRES_3_BAT_SRC_1             0x13  // BatteryPercentageThreshold3 reached for Battery Source 1
+#define ALARM_CODE_BAT_VOLT_MIN_THRES_BAT_SRC_2           0x20  // BatteryPercentageMinThreshold reached for Battery Source 2
+#define ALARM_CODE_BAT_VOLT_THRES_1_BAT_SRC_2             0x21  // BatteryPercentageThreshold1 reached for Battery Source 2
+#define ALARM_CODE_BAT_VOLT_THRES_2_BAT_SRC_2             0x22  // BatteryPercentageThreshold2 reached for Battery Source 2
+#define ALARM_CODE_BAT_VOLT_THRES_3_BAT_SRC_2             0x23  // BatteryPercentageThreshold3 reached for Battery Source 2
+#define ALARM_CODE_BAT_VOLT_MIN_THRES_BAT_SRC_3           0x30  // BatteryPercentageMinThreshold reached for Battery Source 3
+#define ALARM_CODE_BAT_VOLT_THRES_1_BAT_SRC_3             0x31  // BatteryPercentageThreshold1 reached for Battery Source 3
+#define ALARM_CODE_BAT_VOLT_THRES_2_BAT_SRC_3             0x32  // BatteryPercentageThreshold2 reached for Battery Source 3
+#define ALARM_CODE_BAT_VOLT_THRES_3_BAT_SRC_3             0x33  // BatteryPercentageThreshold3 reached for Battery Source 3
+#define ALARM_CODE_BAT_ALARM_NOT_GEN                      0xFF  // Alarm shall not be generated
 
 /********************************************/
 /*** Power Configuration Cluster Commands ***/
@@ -161,6 +197,7 @@ extern "C"
 #define ATTRID_DEV_TEMP_MIN_EXPERIENCED                   0x0001
 #define ATTRID_DEV_TEMP_MAX_EXPERIENCED                   0x0002
 #define ATTRID_DEV_TEMP_OVER_TOTAL_DWELL                  0x0003
+
   // Device Temperature Settings
 #define ATTRID_DEV_TEMP_ALARM_MASK                        0x0010
 #define ATTRID_DEV_TEMP_LOW_THRES                         0x0011
@@ -181,14 +218,33 @@ extern "C"
 /*** Identify Cluster Attributes ***/
 /***********************************/
 #define ATTRID_IDENTIFY_TIME                             0x0000
+#define ATTRID_IDENTIFY_COMMISSION_STATE                 0x0001
+
+/*** Values of the commissionState Attribute ***/
+#define IDENTIFY_COM_STATE_ON_NETWORK                    0x01 // Network State
+#define IDENTIFY_COM_STATE_DEVICE_COMMISSIONED           0x02 // Operational State
 
 /*********************************/
 /*** Identify Cluster Commands ***/
 /*********************************/
 #define COMMAND_IDENTIFY                                 0x00
 #define COMMAND_IDENTIFY_QUERY                           0x01
+#define COMMAND_IDENTIFY_EZMODE_INVOKE                   0x02 // see HA 1.2 specification
+#define COMMAND_IDENTIFY_UPDATE_COMMISSION_STATE         0x03
+#define COMMAND_IDENTIFY_TRIGGER_EFFECT                  0x40 // see ZCL 1.0 specification
 
 #define COMMAND_IDENTIFY_QUERY_RSP                       0x00
+
+/*** Values of 'effect identifier' field of 'trigger effect' command ***/
+#define EFFECT_ID_BLINK                                  0x00 // Light is turned on/off once
+#define EFFECT_ID_BREATHE                                0x01 // Light turned on/off over 1s, repeated 15 times
+#define EFFECT_ID_OKAY                                   0x02 // Colored light turns green for 1s; colored light flashes twice
+#define EFFECT_ID_CHANNEL_CHANGE                         0x0b // Colored light turns orange for 8s; non-colored light switches to max brightness for 0.5s and then min brightness for 7.5s
+#define EFFECT_ID_FINISH_EFFECT                          0xfe // Finish effect
+#define EFFECT_ID_STOP_EFFECT                            0xff // Stop effect
+
+/*** Values of 'effect variant' field of 'trigger effect' command ***/
+#define EFFECT_VARIANT_DEFAULT                           0x00 // Default
 
 /********************************/
 /*** Group Cluster Attributes ***/
@@ -231,6 +287,9 @@ extern "C"
 #define COMMAND_SCENE_STORE                               0x04
 #define COMMAND_SCENE_RECALL                              0x05
 #define COMMAND_SCENE_GET_MEMBERSHIP                      0x06
+#define COMMAND_SCENE_ENHANCED_ADD                        0x40
+#define COMMAND_SCENE_ENHANCED_VIEW                       0x41
+#define COMMAND_SCENE_COPY                                0x42
 
 #define COMMAND_SCENE_ADD_RSP                             0x00
 #define COMMAND_SCENE_VIEW_RSP                            0x01
@@ -238,11 +297,20 @@ extern "C"
 #define COMMAND_SCENE_REMOVE_ALL_RSP                      0x03
 #define COMMAND_SCENE_STORE_RSP                           0x04
 #define COMMAND_SCENE_GET_MEMBERSHIP_RSP                  0x06
+#define COMMAND_SCENE_ENHANCED_ADD_RSP                    0x40
+#define COMMAND_SCENE_ENHANCED_VIEW_RSP                   0x41
+#define COMMAND_SCENE_COPY_RSP                            0x42
+
+// command parameter
+#define SCENE_COPY_MODE_ALL_BIT                           0x01
 
 /*********************************/
 /*** On/Off Cluster Attributes ***/
 /*********************************/
 #define ATTRID_ON_OFF                                     0x0000
+#define ATTRID_ON_OFF_GLOBAL_SCENE_CTRL                   0x4000
+#define ATTRID_ON_OFF_ON_TIME                             0x4001
+#define ATTRID_ON_OFF_OFF_WAIT_TIME                       0x4002
 
 /*******************************/
 /*** On/Off Cluster Commands ***/
@@ -250,18 +318,37 @@ extern "C"
 #define COMMAND_OFF                                       0x00
 #define COMMAND_ON                                        0x01
 #define COMMAND_TOGGLE                                    0x02
+#define COMMAND_OFF_WITH_EFFECT                           0x40
+#define COMMAND_ON_WITH_RECALL_GLOBAL_SCENE               0x41
+#define COMMAND_ON_WITH_TIMED_OFF                         0x42
+
+/*** Values of 'effect identifier' field of 'off with effect' command  ***/
+#define EFFECT_ID_DELAY_ALL_OFF                           0x00
+#define EFFECT_ID_DYING_LIGHT                             0x01
+
+/*** Values of 'effect variant' field of 'off with effect' command ***/
+// Effect identifier value = 0x00
+#define EFFECT_VARIANT_FADE_TO_OFF                        0x00 // Fade to off in 0.8 seconds (default)
+#define EFFECT_VARIANT_NO_FADE                            0x01 // No fade
+#define EFFECT_VARIANT_DIM_DOWN                           0x01 // 50% dim down and fade to off in 12s
+
+// Effect identifier value = 0x01
+#define EFFECT_VARIANT_DIM_UP                             0x00 // 20% dim up in 0.5s then fade to off in 1s (default)
 
 /****************************************/
 /*** On/Off Switch Cluster Attributes ***/
 /****************************************/
   // Switch Information
 #define ATTRID_ON_OFF_SWITCH_TYPE                         0x0000
+
   // Switch Settings
+#define ATTRID_ON_OFF_SWITCH_MULTI_FUNCTION               0x0002
 #define ATTRID_ON_OFF_SWITCH_ACTIONS                      0x0010
 
 /*** On Off Switch Type attribute values ***/
 #define ON_OFF_SWITCH_TYPE_TOGGLE                         0x00
 #define ON_OFF_SWITCH_TYPE_MOMENTARY                      0x01
+#define ON_OFF_SWITCH_TYPE_MULTIFUNCTION                  0x02
 
 /*** On Off Switch Actions attribute values ***/
 #define ON_OFF_SWITCH_ACTIONS_0                           0x00
@@ -280,6 +367,21 @@ extern "C"
 #define ATTRID_LEVEL_REMAINING_TIME                       0x0001
 #define ATTRID_LEVEL_ON_OFF_TRANSITION_TIME               0x0010
 #define ATTRID_LEVEL_ON_LEVEL                             0x0011
+#define ATTRID_LEVEL_ON_TRANSITION_TIME                   0x0012
+#define ATTRID_LEVEL_OFF_TRANSITION_TIME                  0x0013
+#define ATTRID_LEVEL_DEFAULT_MOVE_RATE                    0x0014
+
+  // Level Control Default Attribute Values
+#define ATTR_DEFAULT_LEVEL_CURRENT_LEVEL                  0
+#define ATTR_DEFAULT_LEVEL_REMAINING_TIME                 0
+#define ATTR_DEFAULT_LEVEL_ON_OFF_TRANSITION_TIME         0
+#define ATTR_DEFAULT_LEVEL_ON_LEVEL                       0xFE
+#define ATTR_DEFAULT_LEVEL_ON_TRANSITION_TIME             0
+#define ATTR_DEFAULT_LEVEL_OFF_TRANSITION_TIME            0
+#define ATTR_DEFAULT_LEVEL_DEFAULT_MOVE_RATE              0
+
+#define ATTR_LEVEL_ON                                   255   // fully on
+#define ATTR_LEVEL_OFF                                    0   // fully off
 
 /**************************************/
 /*** Level Control Cluster Commands ***/
@@ -310,12 +412,14 @@ extern "C"
 /*******************************/
 /*** Alarms Cluster Commands ***/
 /*******************************/
+  // Client generated commands
 #define COMMAND_ALARMS_RESET                              0x00
 #define COMMAND_ALARMS_RESET_ALL                          0x01
 #define COMMAND_ALARMS_GET                                0x02
 #define COMMAND_ALARMS_RESET_LOG                          0x03
 #define COMMAND_ALARMS_PUBLISH_EVENT_LOG                  0x04
 
+  // Server generated commands
 #define COMMAND_ALARMS_ALARM                              0x00
 #define COMMAND_ALARMS_GET_RSP                            0x01
 #define COMMAND_ALARMS_GET_EVENT_LOG                      0x02
@@ -323,18 +427,25 @@ extern "C"
 /*******************************/
 /*** Time Cluster Attributes ***/
 /*******************************/
-#define ATTRID_TIME_TIME                                  0x00
-#define ATTRID_TIME_STATUS                                0x01
-#define ATTRID_TIME_ZONE                                  0x02
-#define ATTRID_TIME_DST_START                             0x03
-#define ATTRID_TIME_DST_END                               0x04
-#define ATTRID_TIME_DST_SHIFT                             0x05
-#define ATTRID_TIME_STANDARD_TIME                         0x06
-#define ATTRID_TIME_LOCAL_TIME                            0x07
-#define ATTRID_TIME_LAST_SET_TIME                         0x08
-#define ATTRID_TIME_VALID_UNTIL_TIME                      0x09
+#define ATTRID_TIME_TIME                                  0x0000
+#define ATTRID_TIME_TIME_STATUS                           0x0001
+#define ATTRID_TIME_TIME_ZONE                             0x0002
+#define ATTRID_TIME_DST_START                             0x0003
+#define ATTRID_TIME_DST_END                               0x0004
+#define ATTRID_TIME_DST_SHIFT                             0x0005
+#define ATTRID_TIME_STANDARD_TIME                         0x0006
+#define ATTRID_TIME_LOCAL_TIME                            0x0007
+#define ATTRID_TIME_LAST_SET_TIME                         0x0008
+#define ATTRID_TIME_VALID_UNTIL_TIME                      0x0009
 
-/*** TimeStatus Attribute bits ***/
+#define TIME_SECONDS_IN_ONE_DAY                       (60*60*24L) // one day in seconds
+#define TIME_INVALID_TIME_ZONE                               -1L
+
+  /*** DST Shift Range Values ***/
+#define TIME_DST_SHIFT_MIN                                0xFFFEAE80
+#define TIME_DST_SHIFT_MAX                                0x00015180
+
+  /*** TimeStatus Attribute bits ***/
 #define TIME_STATUS_MASTER                                0x01
 #define TIME_STATUS_SYNCH                                 0x02
 #define TIME_STATUS_MASTER_ZONE_DST                       0x04
@@ -883,10 +994,10 @@ extern "C"
 // The maximum length of the scene extension field:
 //   2 + 1 + 1 for On/Off cluster (onOff attibute)
 //   2 + 1 + 1 for Level Control cluster (currentLevel attribute)
-//   2 + 1 + 4 for Color Control cluster (currentX/currentY attributes)
+//   2 + 1 + 11 for Color Control cluster (currentX/currentY/EnhancedCurrentHue/CurrentSaturation/colorLoopActive/colorLoopDirection/colorLoopTime attributes)
 //   2 + 1 + 1 for Door Lock cluster (Lock State attribute)
 //   2 + 1 + 2 for Window Covering cluster (LiftPercentage/TiltPercentage attributes)
-#define ZCL_GEN_SCENE_EXT_LEN                            24
+#define ZCL_GEN_SCENE_EXT_LEN                            31
 
 // The maximum number of entries in the Scene table
 #define ZCL_GEN_MAX_SCENES                               16
@@ -901,10 +1012,18 @@ typedef struct
   uint16 groupID;                   // The group ID for which this scene applies
   uint8 ID;                         // Scene ID
   uint16 transTime;                 // Time to take to transition to this scene
+  uint16 transTime100ms;            // Together with transTime, this allows transition time to be specified in 1/10s
   uint8 name[ZCL_GEN_SCENE_NAME_LEN]; // Scene name
   uint8 extLen;                     // Length of extension fields
   uint8 extField[ZCL_GEN_SCENE_EXT_LEN]; // Extension fields
 } zclGeneral_Scene_t;
+
+// The format of an Update Commission State Command Payload
+typedef struct
+{
+  uint8 action;               // describes the action to the CommissionState attr
+  uint8 commissionStateMask;  // used by the action parameter to update the CommissionState attr
+} zclIdentifyUpdateCommState_t;
 
 // The format of an Alarm Table entry
 typedef struct
@@ -1031,8 +1150,41 @@ typedef struct
 typedef struct
 {
   afAddrType_t *srcAddr; // requestor's address
+  uint8        effectId;      // identify effect to use
+  uint8        effectVariant; // which variant of effect to be triggered
+} zclIdentifyTriggerEffect_t;
+
+typedef struct
+{
+  afAddrType_t *srcAddr; // requestor's address
   uint16       timeout;  // number of seconds the device will continue to identify itself
 } zclIdentifyQueryRsp_t;
+
+typedef struct
+{
+  afAddrType_t *srcAddr;      // requestor's address
+  uint8        effectId;      // identify effect to use
+  uint8        effectVariant; // which variant of effect to be triggered
+} zclOffWithEffect_t;
+
+typedef struct
+{
+  unsigned int acceptOnlyWhenOn:1;
+  unsigned int reserved:7;
+} zclOnOffCtrlBits_t;
+
+typedef union
+{
+  zclOnOffCtrlBits_t bits;
+  uint8 byte;
+} zclOnOffCtrl_t;
+
+typedef struct
+{
+  zclOnOffCtrl_t onOffCtrl;    // how the lamp is to be operated
+  uint16         onTime;      // the length of time (in 1/10ths second) that the lamp is to remain on, before automatically turning off
+  uint16         offWaitTime; // the length of time (in 1/10ths second) that the lamp shall remain off, and guarded to prevent an on command turning the light back on.
+} zclOnWithTimedOff_t;
 
 typedef struct
 {
@@ -1140,39 +1292,39 @@ typedef struct
 typedef void (*zclGCB_BasicReset_t)( void );
 
 // This callback is called to process an incoming Identify command.
-//   srcAddr - requestor's address
-//   identifyTime - number of seconds the device will continue to identify itself
 typedef void (*zclGCB_Identify_t)( zclIdentify_t *pCmd );
 
+// This callback is called to process an incoming Identify Trigger Effect command.
+typedef void (*zclGCB_IdentifyTriggerEffect_t)( zclIdentifyTriggerEffect_t *pCmd );
+
+// This callback is called to process an incoming Identify EZ-Mode Invoke command.
+typedef ZStatus_t (*zclGCB_IdentifyEZModeInvoke_t)( uint8 action );
+
+// This callback is called to process an incoming Identify Update Commission State command.
+typedef ZStatus_t (*zclGCB_IdentifyUpdateCommState_t)( zclIdentifyUpdateCommState_t *pCmd );
+
 // This callback is called to process an incoming Identify Query Response command.
-//   srcAddr - requestor's address
-//   timeout - number of seconds the device will continue to identify itself
 typedef void (*zclGCB_IdentifyQueryRsp_t)( zclIdentifyQueryRsp_t *pRsp );
 
 // This callback is called to process an incoming On, Off or Toggle command.
-//   cmd - received command, which will be either COMMAND_ON, COMMAND_OFF
-//         or COMMAND_TOGGLE.
 typedef void (*zclGCB_OnOff_t)( uint8 cmd );
 
+// This callback is called to process an incoming Off with Effect
+typedef void (*zclGCB_OnOff_OffWithEffect_t)( zclOffWithEffect_t *pCmd );
+
+// This callback is called to process an incoming On with Recall Global Scene command.
+typedef void (*zclGCB_OnOff_OnWithRecallGlobalScene_t)( void );
+
+// This callback is called to process an incoming On with Timed Off.
+typedef void (*zclGCB_OnOff_OnWithTimedOff_t)( zclOnWithTimedOff_t *pCmd );
+
 // This callback is called to process a Level Control - Move to Level command
-//   level - new level to move to
-//   tansitionTime - time to take to move to the new level (in seconds)
-//   withOnOff - with On/off command
 typedef void (*zclGCB_LevelControlMoveToLevel_t)( zclLCMoveToLevel_t *pCmd );
 
 // This callback is called to process a Level Control - Move command
-//   moveMode - move mode which is either LEVEL_MOVE_STOP, LEVEL_MOVE_UP,
-//              LEVEL_MOVE_ON_AND_UP, LEVEL_MOVE_DOWN, or LEVEL_MOVE_DOWN_AND_OFF
-//   rate - rate of movement in steps per second.
-//   withOnOff - with On/off command
 typedef void (*zclGCB_LevelControlMove_t)( zclLCMove_t *pCmd );
 
 // This callback is called to process a Level Control - Step command
-//   stepMode - step mode which is either LEVEL_STEP_UP, LEVEL_STEP_ON_AND_UP,
-//              LEVEL_STEP_DOWN, or LEVEL_STEP_DOWN_AND_OFF
-//   amount - number of levels to step
-//   transitionTime - time, in 1/10ths of a second, to take to perform the step
-//   withOnOff - with On/off command
 typedef void (*zclGCB_LevelControlStep_t)( zclLCStep_t *pCmd );
 
 // This callback is called to process a Level Control - Stop command
@@ -1180,90 +1332,36 @@ typedef void (*zclGCB_LevelControlStop_t)( void );
 
 // This callback is called to process an received Group Response message.
 // This means that this app sent the request message.
-//   srcAddr - requestor's address
-//   cmdID - which group message - COMMAND_GROUP_ADD_RSP, COMMAND_GROUP_VIEW_RSP,
-//           COMMAND_GROUP_REMOVE_RSP or COMMAND_GROUP_GET_MEMBERSHIP_RSP
-//   status - GROUP_STATUS_SUCCESS, GROUP_STATUS_TABLE_FULL,
-//            GROUP_STATUS_ALREADY_IN_TABLE, or GROUP_STATUS_NOT_IN_TABLE. Not
-//            valid for COMMAND_GROUP_GET_MEMBERSHIP_RSP
-//   grpCnt - number of groups contained in group list
-//   grpList - what group IDs the action was performed on
-//   capacity - remaining capacity of group table
-//   grpName - only valid for COMMAND_GROUP_VIEW_RSP
 typedef void (*zclGCB_GroupRsp_t)( zclGroupRsp_t *pRsp );
 
 // This callback is called to process an incoming Scene Store request.
 // The app will fill in the "extField" with what is needed to restore its
 // current settings.
-//   srcAddr - requestor's address
-//   scene - pointer to the scene structure
-//   returns TRUE if extField is filled in, FALSE if not used.
 typedef uint8 (*zclGCB_SceneStoreReq_t)( zclSceneReq_t *pReq );
 
 // This callback is called to process an incoming Scene Recall request
 // The app will use what's in the "extField" to restore to these settings.
-//   srcAddr - requestor's address
-//   scene - pointer to the scene structure
 typedef void (*zclGCB_SceneRecallReq_t)( zclSceneReq_t *pReq );
 
 // This callback is called to process an incoming Scene responses. This means
 // that this app sent the request for this response.
-//   srcAddr - requestor's address
-//   cmdID - which response - COMMAND_SCENE_ADD_RSP, COMMAND_SCENE_VIEW_RSP,
-//            COMMAND_SCENE_REMOVE_RSP, COMMAND_SCENE_REMOVE_ALL_RSP,
-//            COMMAND_SCENE_STORE_RSP or COMMAND_SCENE_GET_MEMBERSHIPSHIP_RSP
-//   status - response status
-//   sceneCnt - number of scenes in the scene list (only valid for
-//              COMMAND_SCENE_GET_MEMBERSHIPSHIP_RSP)
-//   sceneList - list of scene IDs (only valid for COMMAND_SCENE_GET_MEMBERSHIPSHIP_RSP)
-//   capacity - remaining capacity of the scene table (only valid for
-//              COMMAND_SCENE_GET_MEMBERSHIPSHIP_RSP)
-//   scene - pointer to the scene structure
-
 typedef void (*zclGCB_SceneRsp_t)( zclSceneRsp_t *pRsp );
 
 // This callback is called to process an incoming Alarm request or response command.
-//   srcAddr - requestor's address
-//   cmdID - COMMAND_ALARMS_ALARM or COMMAND_ALARMS_GET_RSP
-//   status - response status (only applicable to COMMAND_ALARMS_GET_RSP)
-//   alarmCode - identifying code for the cause of the alarm
-//   clusterID - the id of the cluster whose attribute generated this alarm
-//   timeStamp - the time at which the alarm occurred (only applicable to
-//               COMMAND_ALARMS_GET_RSP)
-typedef void (*zclGCB_Alarm_t)( zclAlarm_t *pAlarm );
+typedef void (*zclGCB_Alarm_t)( uint8 direction, zclAlarm_t *pAlarm );
 
 // This callback is called to process an incoming Alarm Get Event Log command.
-//   srcAddr - requestor's address
-//   pEventLog - pointer to Get Event Log Command
-typedef void (*zclGCB_GetEventLog_t)( uint8 srcEP, afAddrType_t *srcAddr, 
+typedef void (*zclGCB_GetEventLog_t)( uint8 srcEP, afAddrType_t *srcAddr,
                                       zclGetEventLog_t *pEventLog, uint8 seqNum );
 
 // This callback is called to process an incoming Alarm Publish Event Log command.
-//   srcAddr - responder's address
-//   pEventLog - pointer to Publish Event Log Command
 typedef void (*zclGCB_PublishEventLog_t)( afAddrType_t *srcAddr, zclPublishEventLog_t *pEventLog );
 
 // This callback is called to to process an incoming RSSI Location command.
-//   srcAddr - requestor's address
-//   cmdID - COMMAND_LOCATION_SET_ABSOLUTE, COMMAND_LOCATION_SET_DEV_CFG,
-//           COMMAND_LOCATION_GET_DEV_CFG or COMMAND_LOCATION_GET_DATA
-//   absLoc - Absolute Location info (only valid for COMMAND_LOCATION_SET_ABSOLUTE)
-//   loc - Get Location info (only valid for COMMAND_LOCATION_GET_DATA)
-//   devCfg - Device Config info (only valid for COMMAND_LOCATION_SET_DEV_CFG)
-//   ieeeAddr - Device's IEEE Addr (only valid for COMMAND_LOCATION_GET_DEV_CFG)
-//   seqNum - Sequence number received with the message  (only valid for GET commands)
 typedef void (*zclGCB_Location_t)( zclLocation_t *pCmd );
 
 // This callback is called to process an incoming RSSI Location response command.
 // This means  that this app sent the request for this response.
-//   srcAddr - requestor's address
-//   cmdID - COMMAND_LOCATION_DEV_CFG_RSP, COMMAND_LOCATION_DATA_RSP,
-//           COMMAND_LOCATION_DATA_NOTIF, COMMAND_LOCATION_COMPACT_DATA_NOTIF
-//           or COMMAND_LOCATION_RSSI_PING
-//   locRsp - the Location Data Response command (applicable to Data Response/Notification)
-//   devCfgRsp - the Device Configuration Response command (only applicable to
-//               COMMAND_LOCATION_DEV_CFG_RSP)
-//   locationType - location type (only applicable to COMMAND_LOCATION_RSSI_PING)
 typedef void (*zclGCB_LocationRsp_t)( zclLocationRsp_t *pRsp );
 
 // Register Callbacks table entry - enter function pointers for callbacks that
@@ -1272,17 +1370,33 @@ typedef struct
 {
   zclGCB_BasicReset_t               pfnBasicReset;                // Basic Cluster Reset command
   zclGCB_Identify_t                 pfnIdentify;                  // Identify command
+#ifdef ZCL_EZMODE
+  zclGCB_IdentifyEZModeInvoke_t     pfnIdentifyEZModeInvoke;      // Identify EZ-Mode Invoke command
+  zclGCB_IdentifyUpdateCommState_t  pfnIdentifyUpdateCommState;   // Identify Update Commission State command
+#endif
+  zclGCB_IdentifyTriggerEffect_t    pfnIdentifyTriggerEffect;     // Identify Trigger Effect command
   zclGCB_IdentifyQueryRsp_t         pfnIdentifyQueryRsp;          // Identify Query Response command
   zclGCB_OnOff_t                    pfnOnOff;                     // On/Off cluster commands
+  zclGCB_OnOff_OffWithEffect_t      pfnOnOff_OffWithEffect;       // On/Off cluster enhanced command Off with Effect
+  zclGCB_OnOff_OnWithRecallGlobalScene_t  pfnOnOff_OnWithRecallGlobalScene;  // On/Off cluster enhanced command On with Recall Global Scene
+  zclGCB_OnOff_OnWithTimedOff_t     pfnOnOff_OnWithTimedOff;      // On/Off cluster enhanced command On with Timed Off
+#ifdef ZCL_LEVEL_CTRL
   zclGCB_LevelControlMoveToLevel_t  pfnLevelControlMoveToLevel;   // Level Control Move to Level command
   zclGCB_LevelControlMove_t         pfnLevelControlMove;          // Level Control Move command
   zclGCB_LevelControlStep_t         pfnLevelControlStep;          // Level Control Step command
   zclGCB_LevelControlStop_t         pfnLevelControlStop;          // Level Control Stop command
+#endif
+#ifdef ZCL_GROUPS
   zclGCB_GroupRsp_t                 pfnGroupRsp;                  // Group Response commands
+#endif
+#ifdef ZCL_SCENES
   zclGCB_SceneStoreReq_t            pfnSceneStoreReq;             // Scene Store Request command
   zclGCB_SceneRecallReq_t           pfnSceneRecallReq;            // Scene Recall Request command
   zclGCB_SceneRsp_t                 pfnSceneRsp;                  // Scene Response command
+#endif
+#if ZCL_ALARMS
   zclGCB_Alarm_t                    pfnAlarm;                     // Alarm (Response) commands
+#endif
 #ifdef SE_UK_EXT
   zclGCB_GetEventLog_t              pfnGetEventLog;               // Get Event Log command
   zclGCB_PublishEventLog_t          pfnPublishEventLog;           // Publish Event Log command
@@ -1379,6 +1493,13 @@ typedef struct
 
 #ifdef ZCL_SCENES
 /*
+ *  Send an Add Scene Request
+ *  Use like:
+ *      ZStatus_t zclGeneral_SendAddScene( uint8 srcEP, afAddrType_t *dstAddr, zclGeneral_Scene_t *scene, uint8 disableDefaultRsp, uint8 seqNum )
+ */
+#define zclGeneral_SendAddScene(a,b,c,d,e) zclGeneral_SendAddSceneRequest( (a), (b), COMMAND_SCENE_ADD, (c), (d), (e) )
+
+/*
  *  Send a Scene View Command
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneView( uint8 srcEP, afAddrType_t *dstAddr, uint16 groupID, uint8 sceneID, uint8 disableDefaultRsp, uint8 seqNum );
@@ -1421,11 +1542,18 @@ typedef struct
 #define zclGeneral_SendSceneGetMembership(a,b,c,d,e) zclGeneral_SendSceneRequest( (a), (b), COMMAND_SCENE_GET_MEMBERSHIP, (c), 0, (d), (e) )
 
 /*
- *  Send a Scene Remove ALL Response Command - COMMAND_SCENE_ADD_RSP
+ *  Send a Scene Add Response Command - COMMAND_SCENE_ADD_RSP
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneAddResponse( uint16 srcEP, afAddrType_t *dstAddr, uint8 status, uint16 groupID, uint8 sceneID, uint8 disableDefaultRsp, uint8 seqNum );
  */
 #define zclGeneral_SendSceneAddResponse(a,b,c,d,e,f,g) zclGeneral_SendSceneResponse( (a), (b), COMMAND_SCENE_ADD_RSP, (c), (d), (e), (f), (g) )
+
+/*
+ *  Send a Scene View Response Command - COMMAND_SCENE_VIEW_RSP
+ *  Use like:
+ *      ZStatus_t zclGeneral_SendSceneViewResponse( uint16 srcEP, afAddrType_t *dstAddr, uint8 status, zclGeneral_Scene_t *scene, uint8 disableDefaultRsp, uint8 seqNum );
+ */
+#define zclGeneral_SendSceneViewResponse(a,b,c,d,e,f) zclGeneral_SendSceneViewRsp( (a), (b), COMMAND_SCENE_VIEW_RSP, (c), (d), (e), (f) )
 
 /*
  *  Send a Scene Remove Response Command - COMMAND_SCENE_REMOVE_RSP
@@ -1442,11 +1570,41 @@ typedef struct
 #define zclGeneral_SendSceneRemoveAllResponse(a,b,c,d,e,f) zclGeneral_SendSceneResponse( (a), (b), COMMAND_SCENE_REMOVE_ALL_RSP, (c), (d), 0, (e), (f) )
 
 /*
- *  Send a Scene Remove ALL Response Command - COMMAND_SCENE_STORE_RSP
+ *  Send a Scene Store Response Command - COMMAND_SCENE_STORE_RSP
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneStoreResponse( uint16 srcEP, afAddrType_t *dstAddr, uint8 status, uint16 groupID, uint8 sceneID, uint8 disableDefaultRsp, uint8 seqNum );
  */
 #define zclGeneral_SendSceneStoreResponse(a,b,c,d,e,f,g) zclGeneral_SendSceneResponse( (a), (b), COMMAND_SCENE_STORE_RSP, (c), (d), (e), (f), (g) )
+
+#ifdef ZCL_LIGHT_LINK_ENHANCE
+/*
+ *  Send a Scene Enhanced Add Request
+ *  Use like:
+ *      ZStatus_t zclGeneral_SendEnhancedAddScene( uint8 srcEP, afAddrType_t *dstAddr, zclGeneral_Scene_t *scene, uint8 disableDefaultRsp, uint8 seqNum )
+ */
+#define zclGeneral_SendEnhancedAddScene(a,b,c,d,e) zclGeneral_SendAddSceneRequest( (a), (b), COMMAND_SCENE_ENHANCED_ADD, (c), (d), (e) )
+
+/*
+ *  Send a Scene Enahnced View Command
+ *  Use like:
+ *      ZStatus_t zclGeneral_SendSceneEnhancedView( uint8 srcEP, afAddrType_t *dstAddr, uint16 groupID, uint8 sceneID, uint8 disableDefaultRsp, uint8 seqNum );
+ */
+#define zclGeneral_SendSceneEnhancedView(a,b,c,d,e,f) zclGeneral_SendSceneRequest( (a), (b), COMMAND_SCENE_ENHANCED_VIEW, (c), (d), (e), (f) )
+
+/*
+ *  Send a Scene Enhanced Add Response Command - COMMAND_SCENE_ADD_RSP
+ *  Use like:
+ *      ZStatus_t zclGeneral_SendSceneAddResponse( uint16 srcEP, afAddrType_t *dstAddr, uint8 status, uint16 groupID, uint8 sceneID, uint8 disableDefaultRsp, uint8 seqNum );
+ */
+#define zclGeneral_SendSceneEnhancedAddResponse(a,b,c,d,e,f,g) zclGeneral_SendSceneResponse( (a), (b), COMMAND_SCENE_ENHANCED_ADD_RSP, (c), (d), (e), (f), (g) )
+
+/*
+ *  Send a Scene Enhanced View Response Command - COMMAND_SCENE_ENHANCED_VIEW_RSP
+ *  Use like:
+ *      ZStatus_t zclGeneral_SendSceneEnhancedViewResponse( uint16 srcEP, afAddrType_t *dstAddr, uint8 status, zclGeneral_Scene_t *scene, uint8 disableDefaultRsp, uint8 seqNum );
+ */
+#define zclGeneral_SendSceneEnhancedViewResponse(a,b,c,d,e,f) zclGeneral_SendSceneViewRsp( (a), (b), COMMAND_SCENE_ENHANCED_VIEW_RSP, (c), (d), (e), (f) )
+#endif // ZCL_LIGHT_LINK_ENHANCE
 #endif // ZCL_SCENES
 
 #ifdef ZCL_ON_OFF
@@ -1470,6 +1628,22 @@ typedef struct
  *      ZStatus_t zclGeneral_SendOnOff_CmdToggle( uint16 srcEP, afAddrType_t *dstAddr, uint8 disableDefaultRsp, uint8 seqNum );
  */
 #define zclGeneral_SendOnOff_CmdToggle(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GEN_ON_OFF, COMMAND_TOGGLE, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+
+/*
+ *  Send an On Off Command - COMMAND_ONOFF_ONDURATION
+ *  Use like:
+ *      ZStatus_t zclGeneral_SendOnOff_CmdOnDuration( uint16 srcEP, afAddrType_t *dstAddr, uint16 onDuration, uint8 disableDefaultRsp, uint8 seqNum );
+ */
+#define zclGeneral_SendOnOff_CmdOnDuration(a,b,c,d,e) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GEN_ON_OFF, COMMAND_ON_DURATION, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (d), 0, (e), 2, (c) )
+
+#ifdef ZCL_LIGHT_LINK_ENHANCE
+/*
+ *  Send an On With Recall Global Scene Command - COMMAND_ON_WITH_RECALL_GLOBAL_SCENE
+ *  Use like:
+ *      ZStatus_t zclGeneral_SendOnOff_CmdOnWithRecallGlobalScene( uint16 srcEP, afAddrType_t *dstAddr, uint8 disableDefaultRsp, uint8 seqNum );
+ */
+#define zclGeneral_SendOnOff_CmdOnWithRecallGlobalScene(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GEN_ON_OFF, COMMAND_ON_WITH_RECALL_GLOBAL_SCENE, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#endif // ZCL_LIGHT_LINK_ENHANCE
 #endif // ZCL_ON_OFF
 
 #ifdef ZCL_LEVEL_CTRL
@@ -1534,13 +1708,6 @@ typedef struct
 
 #ifdef ZCL_ALARMS
 /*
- *  Send an Alarm Reset  Command - COMMAND_ALARMS_RESET
- *  Use like:
- *      ZStatus_t zclGeneral_SendAlarmReset( uint16 srcEP, afAddrType_t *dstAddr, uint8 alarmCode, uint16 clusterID, uint8 disableDefaultRsp, uint8 seqNum );
- */
-#define zclGeneral_SendAlarmReset(a,b,c,d,e,f) zclGeneral_SendAlarmRequest( (a), (b), COMMAND_ALARMS_RESET, (c), (d), (e), (f) )
-
-/*
  *  Send an Alarm Reset ALL Command - COMMAND_ALARMS_RESET_ALL
  *  Use like:
  *      ZStatus_t zclGeneral_SendAlarmResetAll( uint16 srcEP, afAddrType_t *dstAddr, uint8 disableDefaultRsp, uint8 seqNum );
@@ -1561,13 +1728,6 @@ typedef struct
  *      ZStatus_t zclGeneral_SendAlarmResetLog( uint16 srcEP, afAddrType_t *dstAddr, uint8 disableDefaultRsp, uint8 seqNum );
  */
 #define zclGeneral_SendAlarmResetLog(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GEN_ALARMS, COMMAND_ALARMS_RESET_LOG, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
-
-/*
- *  Send an Alarm Command - COMMAND_ALARMS_ALARM
- *  Use like:
- *      ZStatus_t zclGeneral_SendAlarm( uint16 srcEP, afAddrType_t *dstAddr, uint8 alarmCode, uint16 clusterID, uint8 disableDefaultRsp, uint8 seqNum );
- */
-#define zclGeneral_SendAlarm(a,b,c,d,e,f) zclGeneral_SendAlarmRequest( (a), (b), COMMAND_ALARMS_ALARM, (c), (d), (e), (f) )
 #endif // ZCL_ALARMS
 
 #ifdef ZCL_LOCATION
@@ -1609,6 +1769,27 @@ typedef struct
  */
 extern ZStatus_t zclGeneral_RegisterCmdCallbacks( uint8 endpoint, zclGeneral_AppCallbacks_t *callbacks );
 
+#ifdef ZCL_ON_OFF
+/*
+ * Call to send out an Off with Effect Command
+ *      effectId - fading effect to use when switching light off
+ *      effectVariant - which variant of effect to be triggered
+ */
+extern ZStatus_t zclGeneral_SendOnOff_CmdOffWithEffect( uint8 srcEP, afAddrType_t *dstAddr,
+                                                        uint8 effectId, uint8 effectVariant,
+                                                        uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ * Call to send out an On with Timed Off Command
+ *      onOffCtrl - how the lamp is to be operated
+ *      onTime - the length of time (in 1/10ths second) that the lamp is to remain on, before automatically turning off
+ *      offWaitTime - the length of time (in 1/10ths second) that the lamp shall remain off, and guarded to prevent an on command turning the light back on.
+ */
+extern ZStatus_t zclGeneral_SendOnOff_CmdOnWithTimedOff ( uint8 srcEP, afAddrType_t *dstAddr,
+                                                          zclOnOffCtrl_t onOffCtrl, uint16 onTime, uint16 offWaitTime,
+                                                          uint8 disableDefaultRsp, uint8 seqNum );
+#endif // ZCL_ON_OFF
+
 #ifdef ZCL_LEVEL_CTRL
 /*
  * Call to send out a Level Control Move to Level Request
@@ -1617,8 +1798,8 @@ extern ZStatus_t zclGeneral_RegisterCmdCallbacks( uint8 endpoint, zclGeneral_App
  *      transitionTime - how long to take to get to the level (in seconds).
  */
 extern ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequest( uint8 srcEP, afAddrType_t *dstAddr,
-                                                         uint8 cmd, uint8 level, uint16 transTime,
-                                                         uint8 disableDefaultRsp, uint8 seqNum );
+                                                                uint8 cmd, uint8 level, uint16 transTime,
+                                                                uint8 disableDefaultRsp, uint8 seqNum );
 
 /*
  * Call to send out a Level Control Move Request
@@ -1628,8 +1809,8 @@ extern ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequest( uint8 srcEP, afA
  *      rate - number of steps to take per second
  */
 extern ZStatus_t zclGeneral_SendLevelControlMoveRequest( uint8 srcEP, afAddrType_t *dstAddr,
-                                                  uint8 cmd, uint8 moveMode, uint8 rate,
-                                                  uint8 disableDefaultRsp, uint8 seqNum );
+                                                         uint8 cmd, uint8 moveMode, uint8 rate,
+                                                         uint8 disableDefaultRsp, uint8 seqNum );
 
 /*
  * Call to send out a Level Control Step Request
@@ -1640,8 +1821,17 @@ extern ZStatus_t zclGeneral_SendLevelControlMoveRequest( uint8 srcEP, afAddrType
  *      transitionTime - time to take to perform a single step
  */
 extern ZStatus_t zclGeneral_SendLevelControlStepRequest( uint8 srcEP, afAddrType_t *dstAddr,
-                                uint8 cmd, uint8 stepMode, uint8 stepSize, uint16 transTime,
-                                uint8 disableDefaultRsp, uint8 seqNum );
+                                                         uint8 cmd, uint8 stepMode, uint8 stepSize, uint16 transTime,
+                                                         uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ * Call to send out a Level Control Stop Command
+ *
+ *      this command has no parameters
+ */
+extern ZStatus_t zclGeneral_SendLevelControlStopRequest( uint8 srcEP, afAddrType_t *dstAddr,
+                                                         uint8 cmd,
+                                                         uint8 disableDefaultRsp, uint8 seqNum );
 #endif // ZCL_LEVEL_CTRL
 
 #ifdef ZCL_GROUPS
@@ -1665,8 +1855,8 @@ extern ZStatus_t zclGeneral_SendGroupViewResponse( uint8 srcEP, afAddrType_t *ds
  * Call to send Group Membership Command
  */
 extern ZStatus_t zclGeneral_SendGroupGetMembershipRequest( uint8 srcEP, afAddrType_t *dstAddr,
-                                     uint8 cmd, uint8 rspCmd, uint8 direction, uint8 capacity,
-                                     uint8 grpCnt, uint16 *grpList, uint8 disableDefaultRsp, uint8 seqNum );
+                                                           uint8 cmd, uint8 rspCmd, uint8 direction, uint8 capacity,
+                                                           uint8 grpCnt, uint16 *grpList, uint8 disableDefaultRsp, uint8 seqNum );
 #endif // ZCL_GROUPS
 
 #ifdef ZCL_SCENES
@@ -1708,14 +1898,14 @@ extern uint8 zclGeneral_CountAllScenes( void );
 /*
  * Read callback function for the Scene Count attribute.
  */
-extern ZStatus_t zclGeneral_ReadSceneCountCB( uint16 clusterId, uint16 attrId, 
+extern ZStatus_t zclGeneral_ReadSceneCountCB( uint16 clusterId, uint16 attrId,
                                               uint8 oper, uint8 *pValue, uint16 *pLen );
 /*
- * Add Scene Request message
+ * Send an (Enhanced) Add Scene Request message
  */
-extern ZStatus_t zclGeneral_SendAddScene( uint8 srcEP, afAddrType_t *dstAddr,
-                                          zclGeneral_Scene_t *scene,
-                                          uint8 disableDefaultRsp, uint8 seqNum );
+extern ZStatus_t zclGeneral_SendAddSceneRequest( uint8 srcEP, afAddrType_t *dstAddr,
+                                                 uint8 cmd, zclGeneral_Scene_t *scene,
+                                                 uint8 disableDefaultRsp, uint8 seqNum );
 /*
  * Send a Scene command (request) - not Scene Add
  */
@@ -1728,22 +1918,50 @@ extern ZStatus_t zclGeneral_SendSceneRequest( uint8 srcEP, afAddrType_t *dstAddr
  *         COMMAND_SCENE_REMOVE_RSP or COMMAND_SCENE_STORE_RSP
  */
 extern ZStatus_t zclGeneral_SendSceneResponse( uint8 srcEP, afAddrType_t *dstAddr,
-                                          uint8 cmd, uint8 status, uint16 groupID,
-                                          uint8 sceneID, uint8 disableDefaultRsp, uint8 seqNum );
+                                               uint8 cmd, uint8 status, uint16 groupID,
+                                               uint8 sceneID, uint8 disableDefaultRsp, uint8 seqNum );
 
 /*
- * Send Scene View response message
+ * Send Scene (Enhanced) View response message
  */
-extern ZStatus_t zclGeneral_SendSceneViewResponse( uint8 srcEP, afAddrType_t *dstAddr,
-                                                   uint8 status, zclGeneral_Scene_t *scene,
-                                                   uint8 disableDefaultRsp, uint8 seqNum );
+extern ZStatus_t zclGeneral_SendSceneViewRsp( uint8 srcEP, afAddrType_t *dstAddr,
+                                              uint8 cmd, uint8 status, zclGeneral_Scene_t *scene,
+                                              uint8 disableDefaultRsp, uint8 seqNum );
 
 /*
  * Send Scene Get Membership response message
  */
 extern ZStatus_t zclGeneral_SendSceneGetMembershipResponse( uint8 srcEP, afAddrType_t *dstAddr,
-                              uint8 sceneStatus, uint8 capacity, uint8 sceneCnt, uint8 *sceneList,
-                              uint16 groupID, uint8 disableDefaultRsp, uint8 seqNum );
+                                                            uint8 sceneStatus, uint8 capacity, uint8 sceneCnt, uint8 *sceneList,
+                                                            uint16 groupID, uint8 disableDefaultRsp, uint8 seqNum );
+
+#ifdef ZCL_LIGHT_LINK_ENHANCE
+/*
+ * Send a Scene Copy Request
+ */
+extern ZStatus_t zclGeneral_SendSceneCopy( uint8 srcEP, afAddrType_t *dstAddr,
+                                           uint8 mode, uint16 groupIDFrom, uint8 sceneIDFrom,
+                                           uint16 groupIDTo, uint8 sceneIDTo,
+                                           uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ * Send Scene Copy Response message
+ */
+extern ZStatus_t zclGeneral_SendSceneCopyResponse( uint8 srcEP, afAddrType_t *dstAddr,
+                                                   uint8 status, uint16 groupIDFrom, uint8 sceneIDFrom,
+                                                   uint8 disableDefaultRsp, uint8 seqNum );
+#endif //ZCL_LIGHT_LINK_ENHANCE
+
+/*
+ * Initialize the Scenes Table
+ */
+extern void zclGeneral_ScenesInit( void );
+
+/*
+ * Save the Scenes Table - Something has changed
+ */
+extern void zclGeneral_ScenesSave( void );
+
 #endif // ZCL_SCENES
 
 #ifdef ZCL_GROUPS
@@ -1761,8 +1979,8 @@ extern ZStatus_t zclGeneral_SendGroupRequest( uint8 srcEP, afAddrType_t *dstAddr
  *          name (in bytes), then the name.
  */
 extern ZStatus_t zclGeneral_SendAddGroupRequest( uint8 srcEP, afAddrType_t *dstAddr,
-                                        uint8 cmd, uint16 groupID, uint8 *groupName,
-                                        uint8 disableDefaultRsp, uint8 seqNum );
+                                                 uint8 cmd, uint16 groupID, uint8 *groupName,
+                                                 uint8 disableDefaultRsp, uint8 seqNum );
 #endif // ZCL_GROUPS
 
 #ifdef ZCL_IDENTIFY
@@ -1770,28 +1988,57 @@ extern ZStatus_t zclGeneral_SendAddGroupRequest( uint8 srcEP, afAddrType_t *dstA
  * Send a Identify message
  */
 extern ZStatus_t zclGeneral_SendIdentify( uint8 srcEP, afAddrType_t *dstAddr,
-                               uint16 identifyTime, uint8 disableDefaultRsp, uint8 seqNum );
+                                          uint16 identifyTime, uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ * Send an Identify EZ-Mode Invoke message
+ */
+extern ZStatus_t zclGeneral_SendIdentifyEZModeInvoke( uint8 srcEP, afAddrType_t *dstAddr,
+                                                      uint8 action, uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ * Send an Identify Update Commission State message
+ */
+extern ZStatus_t zclGeneral_SendIdentifyUpdateCommState( uint8 srcEP, afAddrType_t *dstAddr,
+                                                         uint8 action, uint8 commissionStateMask,
+                                                         uint8 disableDefaultRsp, uint8 seqNum );
+
+#ifdef ZCL_LIGHT_LINK_ENHANCE
+/*
+ * Send a Trigger Effect message
+ */
+extern ZStatus_t zclGeneral_SendIdentifyTriggerEffect( uint8 srcEP, afAddrType_t *dstAddr,
+                                                       uint8 effectId, uint8 effectVariant,
+                                                       uint8 disableDefaultRsp, uint8 seqNum );
+#endif //ZCL_LIGHT_LINK_ENHANCE
 /*
  * Send a Identify Query Response message
  */
 extern ZStatus_t zclGeneral_SendIdentifyQueryResponse( uint8 srcEP, afAddrType_t *dstAddr,
-                                    uint16 timeout, uint8 disableDefaultRsp, uint8 seqNum );
+                                                       uint16 timeout, uint8 disableDefaultRsp, uint8 seqNum );
 #endif // ZCL_IDENTIFY
 
 #ifdef ZCL_ALARMS
 /*
- * Send out an Alarm Request Command
+ * Send out an Alarm Command
  */
-extern ZStatus_t zclGeneral_SendAlarmRequest( uint8 srcEP, afAddrType_t *dstAddr,
-                                              uint8 cmd, uint8 alarmCode, uint16 clusterID,
-                                              uint8 disableDefaultRsp, uint8 seqNum );
+extern ZStatus_t zclGeneral_SendAlarm( uint8 srcEP, afAddrType_t *dstAddr,
+                                       uint8 alarmCode, uint16 clusterID,
+                                       uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ * Send out an Alarm Reset Command
+ */
+extern ZStatus_t zclGeneral_SendAlarmReset( uint8 srcEP, afAddrType_t *dstAddr,
+                                            uint8 alarmCode, uint16 clusterID,
+                                            uint8 disableDefaultRsp, uint8 seqNum );
 
 /*
  * Send out an Alarm Get Response Command
  */
 extern ZStatus_t zclGeneral_SendAlarmGetRespnose( uint8 srcEP, afAddrType_t *dstAddr,
-                                     uint8 status, uint8 alarmCode, uint16 clusterID,
-                                     uint32 timeStamp, uint8 disableDefaultRsp, uint8 seqNum );
+                                                  uint8 status, uint8 alarmCode, uint16 clusterID,
+                                                  uint32 timeStamp, uint8 disableDefaultRsp, uint8 seqNum );
 /*
  * Send out an Alarm Get Event Log Command
  */
@@ -1825,7 +2072,7 @@ extern ZStatus_t zclGeneral_SendLocationSetDevCfg( uint8 srcEP, afAddrType_t *ds
  * Send a Get Device Configuration message
  */
 extern ZStatus_t zclGeneral_SendLocationGetDevCfg( uint8 srcEP, afAddrType_t *dstAddr,
-                             uint8 *targetAddr, uint8 disableDefaultRsp, uint8 seqNum );
+                                                   uint8 *targetAddr, uint8 disableDefaultRsp, uint8 seqNum );
 
 /*
  * Send a Get Location Data message

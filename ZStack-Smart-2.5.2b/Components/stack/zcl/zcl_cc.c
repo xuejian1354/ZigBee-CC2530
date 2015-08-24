@@ -1,7 +1,7 @@
 /**************************************************************************************************
   Filename:       zcl_cc.c
-  Revised:        $Date: 2011-04-13 10:27:39 -0700 (Wed, 13 Apr 2011) $
-  Revision:       $Revision: 25679 $
+  Revised:        $Date: 2013-06-11 13:53:09 -0700 (Tue, 11 Jun 2013) $
+  Revision:       $Revision: 34523 $
 
   Description:    Zigbee Cluster Library - Commissioning Cluster
 
@@ -41,8 +41,6 @@
 /*********************************************************************
  * INCLUDES
  */
-#include "ZComDef.h"
-#include "OSAL.h"
 #include "zcl.h"
 #include "zcl_general.h"
 #include "zcl_cc.h"
@@ -163,7 +161,7 @@ ZStatus_t zclCC_RegisterCmdCallbacks( uint8 endpoint, zclCC_AppCallbacks_t *call
   }
 
   // Fill in the new profile list
-  pNewItem = osal_mem_alloc( sizeof( zclCCCBRec_t ) );
+  pNewItem = zcl_mem_alloc( sizeof( zclCCCBRec_t ) );
   if ( pNewItem == NULL )
   {
     return ( ZMemError );

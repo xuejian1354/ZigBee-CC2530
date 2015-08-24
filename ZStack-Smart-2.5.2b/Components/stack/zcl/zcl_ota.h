@@ -1,12 +1,12 @@
 /******************************************************************************
   Filename:       zcl_ota.h
-  Revised:        $Date: 2012-03-05 15:03:17 -0800 (Mon, 05 Mar 2012) $
-  Revision:       $Revision: 29627 $
+  Revised:        $Date: 2013-11-08 17:13:05 -0800 (Fri, 08 Nov 2013) $
+  Revision:       $Revision: 35983 $
 
   Description:    ZCL Over-the-Air Upgrade Cluster definitions.
 
 
-  Copyright 2010-2012 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2010-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -78,8 +78,12 @@ extern "C"
 #define ZCL_OTA_FLAGS                                 0
 
 // OTA Device ID values
+#if !defined OTA_MANUFACTURER_ID
 #define OTA_MANUFACTURER_ID                           0x5678
+#endif
+#if !defined OTA_TYPE_ID
 #define OTA_TYPE_ID                                   0x1234
+#endif
 
 // OTA Header Version
 #define OTA_HDR_VERSION                               0x0100
@@ -120,6 +124,10 @@ extern "C"
 #define ATTRID_DOWNLOADED_FILE_VERSION                0x0004
 #define ATTRID_DOWNLOADED_ZIGBEE_STACK_VERSION        0x0005
 #define ATTRID_IMAGE_UPGRADE_STATUS                   0x0006
+#define ATTRID_MANUFACTURER_ID                        0x0007  // UINT16, R, O
+#define ATTRID_IMAGE_TYPE_ID                          0x0008  // UINT16, R, O
+#define ATTRID_MINIMUM_BLOCK_REQ_DELAY                0x0009  // UINT16, R, O
+#define ATTRID_IMAGE_STAMP                            0x000A  // UINT32, R, O
 
 // OTA Upgrade Status
 #define OTA_STATUS_NORMAL                             0x00
@@ -148,7 +156,7 @@ extern "C"
 #define PAYLOAD_MAX_LEN_IMAGE_NOTIFY                  10
 #define PAYLOAD_MAX_LEN_QUERY_NEXT_IMAGE_REQ          11
 #define PAYLOAD_MAX_LEN_QUERY_NEXT_IMAGE_RSP          13
-#define PAYLOAD_MAX_LEN_IMAGE_BLOCK_REQ               22
+#define PAYLOAD_MAX_LEN_IMAGE_BLOCK_REQ               24
 #define PAYLOAD_MAX_LEN_IMAGE_PAGE_REQ                26
 #define PAYLOAD_MAX_LEN_IMAGE_BLOCK_RSP               14
 #define PAYLOAD_MAX_LEN_UPGRADE_END_REQ               9
@@ -162,11 +170,16 @@ extern "C"
 #define PAYLOAD_MIN_LEN_IMAGE_BLOCK_REQ               14
 #define PAYLOAD_MIN_LEN_IMAGE_PAGE_REQ                18
 #define PAYLOAD_MIN_LEN_IMAGE_BLOCK_RSP               14
-#define PAYLOAD_MIN_LEN_IMAGE_BLOCK_WAIT              9
+#define PAYLOAD_MIN_LEN_IMAGE_BLOCK_WAIT              11
 #define PAYLOAD_MIN_LEN_UPGRADE_END_REQ               1
 #define PAYLOAD_MIN_LEN_UPGRADE_END_RSP               16
 #define PAYLOAD_MIN_LEN_QUERY_SPECIFIC_FILE_REQ       18
 #define PAYLOAD_MIN_LEN_QUERY_SPECIFIC_FILE_RSP       1
+
+// Image Block Request Field Control Bitmask
+#define OTA_BLOCK_FC_GENERIC                          0x00
+#define OTA_BLOCK_FC_NODES_IEEE_PRESENT               0x01
+#define OTA_BLOCK_FC_REQ_DELAY_PRESENT                0x02
 
 //  Image Notify Command Payload Type
 #define NOTIFY_PAYLOAD_JITTER                         0x00
@@ -180,11 +193,12 @@ extern "C"
 #define ZCL_OTA_QUERY_SERVER_EVT                      0x0004
 #define ZCL_OTA_BLOCK_RSP_TO_EVT                      0x0008
 #define ZCL_OTA_IMAGE_QUERY_TO_EVT                    0x0010
+#define ZCL_OTA_IMAGE_BLOCK_REQ_DELAY_EVT             0x0020
 
 // The OTA Upgrade delay is the number of seconds before the client
 // should wait before switching to the upgrade image
 #define OTA_UPGRADE_DELAY                             60
-#define OTA_SEND_BLOCK_WAIT                           5
+#define OTA_SEND_BLOCK_WAIT                           0 // use blockReqDelay for rate limiting
 
 // Callback events to application from OTA
 #define ZCL_OTA_START_CALLBACK                        0
@@ -245,6 +259,7 @@ typedef struct
   uint32 fileOffset;
   uint8 maxDataSize;
   uint8 nodeAddr[Z_EXTADDR_LEN];
+  uint16 blockReqDelay;
 } zclOTA_ImageBlockReqParams_t;
 
 typedef struct
@@ -270,6 +285,7 @@ typedef struct
 {
   uint32 currentTime;
   uint32 requestTime;
+  uint16 blockReqDelay;
 } imageBlockRspWait_t;
 
 typedef union
@@ -331,6 +347,7 @@ extern uint16 zclOTA_DownloadedZigBeeStackVersion;
 extern uint8 zclOTA_ImageUpgradeStatus;
 extern uint16 zclOTA_ManufacturerId;
 extern uint16 zclOTA_ImageType;
+extern uint16 zclOTA_MinBlockReqDelay;
 
 /******************************************************************************
  * FUNCTIONS
@@ -394,6 +411,17 @@ extern void zclOTA_Init( uint8 task_id );
  * @return      Unprocessed event bits
  */
 extern uint16 zclOTA_event_loop( uint8 task_id, uint16 events );
+
+/******************************************************************************
+ * @fn          zclOTA_getStatus
+ *
+ * @brief       Retrieves current ZCL OTA Status
+ *
+ * @param       none
+ *
+ * @return      ZCL OTA Status
+ */
+extern uint8 zclOTA_getStatus( void );
 
 #if defined(OTA_SERVER) && (OTA_SERVER == TRUE)
 /******************************************************************************

@@ -1,7 +1,7 @@
 /******************************************************************************
   Filename:       zcl_key_establish.c
-  Revised:        $Date: 2012-04-02 17:02:19 -0700 (Mon, 02 Apr 2012) $
-  Revision:       $Revision: 29996 $
+  Revised:        $Date: 2013-08-16 11:56:16 -0700 (Fri, 16 Aug 2013) $
+  Revision:       $Revision: 35001 $
 
   Description:    Zigbee Cluster Library - General Function Domain - key
                   establishment cluster.
@@ -9,7 +9,7 @@
                   within the ZCL layer, without passing to application.
 
 
-  Copyright 2007-2012 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2007-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -210,6 +210,7 @@ static ZStatus_t zclGeneral_InitiateKeyEstablish_Rsp_CalculateKey(void);
 
 // Key establishment rec table management function
 static void zclGeneral_InitKeyEstablishRecTable( void );
+static uint8 zclGeneral_OpenKeyEstablishRec( void );
 static uint8 zclGeneral_GetKeyEstablishRecIndex( uint16 partnerAddress );
 static uint8 zclGeneral_GetKeyEstablishRecIndex_State( KeyEstablishState_t state );
 static uint8 zclGeneral_AddKeyEstablishRec( afAddrType_t *addr );
@@ -312,6 +313,7 @@ uint16 zclKeyEstablish_event_loop( uint8 task_id, uint16 events )
   if ( events & KEY_ESTABLISHMENT_RSP_PROCESS_EVT )
   {
     zclGeneral_InitiateKeyEstablish_Rsp_CalculateKey();
+
     return ( events ^ KEY_ESTABLISHMENT_RSP_PROCESS_EVT );
   }
   // Discard unknown events
@@ -795,6 +797,8 @@ static ZStatus_t zclGeneral_ProcessInCmd_InitiateKeyEstablish( zclIncoming_t *pI
   uint16 remoteKeyEstablishmentSuite;
   uint8 *implicitCert = NULL;
   uint8 index = MAX_KEY_ESTABLISHMENT_REC_ENTRY;  // set to non valid value
+  uint8 recvExtAddr[Z_EXTADDR_LEN];
+  uint8 valid;
 
   // Check the incoming packet length
   if ( pInMsg->pDataLen < PACKET_LEN_INITIATE_KEY_EST_REQ )
@@ -847,21 +851,36 @@ static ZStatus_t zclGeneral_ProcessInCmd_InitiateKeyEstablish( zclIncoming_t *pI
             // continue parsing message
             keyEstablishRec[index].remoteConfKeyGenTime = pInMsg->pData[3];
 
-            if ((implicitCert = osal_mem_alloc(ZCL_KE_IMPLICIT_CERTIFICATE_LEN)) == NULL)
-            {
-              // Reset the entry
-              zclGeneral_ResetKeyEstablishRec( index );
+            // Fill in partner's extended address
+            SSP_MemCpyReverse( keyEstablishRec[index].partnerExtAddr,
+                               &(keyEstablishRec[index].pRemoteCertificate[KEY_ESTABLISH_CERT_EXT_ADDR_IDX]),
+                               Z_EXTADDR_LEN);
 
-              return ZCL_STATUS_SOFTWARE_FAILURE;  // Memory allocation failure.
+            valid = AddrMgrExtAddrLookup( pInMsg->msg->srcAddr.addr.shortAddr, recvExtAddr );
+
+            if ( valid != TRUE ||
+                 !osal_memcmp( keyEstablishRec[index].partnerExtAddr, recvExtAddr, Z_EXTADDR_LEN ) )
+            {
+              status = TermKeyStatus_BadMessage;
             }
-
-            osal_nv_read(ZCD_NV_IMPLICIT_CERTIFICATE, 0, ZCL_KE_IMPLICIT_CERTIFICATE_LEN, implicitCert);
-
-            if ( !osal_memcmp( &(keyEstablishRec[index].pRemoteCertificate[KEY_ESTABLISH_CERT_ISSUER_IDX]),
-                               &(implicitCert[KEY_ESTABLISH_CERT_ISSUER_IDX]),
-                               KEY_ESTABLISH_CERT_ISSUER_LENTGH ) )
+            else
             {
-              status = TermKeyStatus_UnknowIssuer;
+              if ((implicitCert = osal_mem_alloc(ZCL_KE_IMPLICIT_CERTIFICATE_LEN)) == NULL)
+              {
+                // Reset the entry
+                zclGeneral_ResetKeyEstablishRec( index );
+
+                return ZCL_STATUS_SOFTWARE_FAILURE;  // Memory allocation failure.
+              }
+
+              osal_nv_read(ZCD_NV_IMPLICIT_CERTIFICATE, 0, ZCL_KE_IMPLICIT_CERTIFICATE_LEN, implicitCert);
+
+              if ( !osal_memcmp( &(keyEstablishRec[index].pRemoteCertificate[KEY_ESTABLISH_CERT_ISSUER_IDX]),
+                                 &(implicitCert[KEY_ESTABLISH_CERT_ISSUER_IDX]),
+                                 KEY_ESTABLISH_CERT_ISSUER_LENTGH ) )
+              {
+                status = TermKeyStatus_UnknowIssuer;
+              }
             }
           }
         }
@@ -891,11 +910,6 @@ static ZStatus_t zclGeneral_ProcessInCmd_InitiateKeyEstablish( zclIncoming_t *pI
 
     return ZCL_STATUS_CMD_HAS_RSP;
   }
-
-  // Fill in partner's extended address
-  SSP_MemCpyReverse( keyEstablishRec[index].partnerExtAddr,
-                    &(keyEstablishRec[index].pRemoteCertificate[KEY_ESTABLISH_CERT_EXT_ADDR_IDX]),
-                    Z_EXTADDR_LEN); // ID(L)
 
   // Change the state and wait for the Ephemeral Data Request
   keyEstablishRec[index].lastSeqNum = pInMsg->hdr.transSeqNum;
@@ -1355,15 +1369,14 @@ static ZStatus_t zclGeneral_ProcessInCmd_ConfirmKey( zclIncoming_t *pInMsg )
  *
  * @param   pInMsg - pointer to the incoming message
  *
- * @return  ZStatus_t - ZFailure @ Unsupported
- *                      ZCL_STATUS_MALFORMED_COMMAND
+ * @return  ZStatus_t - ZCL_STATUS_SUCCESS
  *                      ZCL_STATUS_CMD_HAS_RSP
- *                      ZCL_STATUS_SOFTWARE_FAILURE
  */
 static ZStatus_t zclGeneral_ProcessInCmd_ConfirmKeyRsp( zclIncoming_t *pInMsg )
 {
   uint8 index;
-  uint8 status = ZFailure;
+  uint8 status;
+  TermKeyStatus_t keyStatus = TermKeyStatus_BadMessage;
   uint8 MACv[KEY_ESTABLISH_MAC_LENGTH];
 
   // Stop the Config Key Generate aging timer because the message has been received
@@ -1376,7 +1389,7 @@ static ZStatus_t zclGeneral_ProcessInCmd_ConfirmKeyRsp( zclIncoming_t *pInMsg )
     if ( keyEstablishRec[index].role == KEY_ESTABLISHMENT_INITIATOR &&
          keyEstablishRec[index].state == KeyEstablishState_ConfirmPending )
     {
-      status = ZSuccess;
+      keyStatus = TermKeyStatus_Success;
     }
     else
     {
@@ -1385,11 +1398,7 @@ static ZStatus_t zclGeneral_ProcessInCmd_ConfirmKeyRsp( zclIncoming_t *pInMsg )
     }
   }
 
-  if ( status == ZFailure )
-  {
-    status = TermKeyStatus_BadMessage;
-  }
-  else
+  if ( keyStatus == TermKeyStatus_Success )
   {
     // Calculate MAC(V)
     zclGeneral_KeyEstablishment_GenerateMAC( index, FALSE, MACv);
@@ -1397,8 +1406,6 @@ static ZStatus_t zclGeneral_ProcessInCmd_ConfirmKeyRsp( zclIncoming_t *pInMsg )
     // Compare M(U) with M(V)
     if ( osal_memcmp( MACv, pInMsg->pData, KEY_ESTABLISH_MAC_LENGTH ) == TRUE )
     {
-      status = TermKeyStatus_Success;
-
       // Store the link key
       ZDSecMgrAddLinkKey( pInMsg->msg->srcAddr.addr.shortAddr,
                      keyEstablishRec[index].partnerExtAddr,
@@ -1407,19 +1414,28 @@ static ZStatus_t zclGeneral_ProcessInCmd_ConfirmKeyRsp( zclIncoming_t *pInMsg )
     else
     {
       // If MAC(U) does not match MAC(V), send response with failure
-      status = TermKeyStatus_BadKeyConfirm;
+      keyStatus = TermKeyStatus_BadKeyConfirm;
     }
   }
 
-  if( status != TermKeyStatus_Success )
+  if( keyStatus != TermKeyStatus_Success )
   {
     zclGeneral_KeyEstablish_Send_TerminateKeyEstablishment( ZCL_KEY_ESTABLISHMENT_ENDPOINT,
                                                             &pInMsg->msg->srcAddr,
-                                                            (TermKeyStatus_t)status,
+                                                            keyStatus,
                                                             KEY_ESTABLISHMENT_AVG_TIMEOUT,
                                                             KEY_ESTABLISHMENT_SUITE,
                                                             ZCL_FRAME_CLIENT_SERVER_DIR,
                                                             FALSE, zcl_SeqNum++ );
+
+    // Failure status is returned via COMMAND_TERMINATE_KEY_ESTABLISHMENT
+    // This will suppress the "Default Response"
+    status = ZCL_STATUS_CMD_HAS_RSP;
+  }
+  else
+  {
+    // Return success -- allow for "Default Response"
+    status = ZCL_STATUS_SUCCESS;
   }
 
   // Send Osal message to the application to indicate the completion
@@ -1431,7 +1447,7 @@ static ZStatus_t zclGeneral_ProcessInCmd_ConfirmKeyRsp( zclIncoming_t *pInMsg )
     if ( ind )
     {
       ind->hdr.event = ZCL_KEY_ESTABLISH_IND;
-      ind->hdr.status = status;
+      ind->hdr.status = keyStatus;
 
       // Clear remaining fields
       ind->waitTime = 0;
@@ -1448,7 +1464,7 @@ static ZStatus_t zclGeneral_ProcessInCmd_ConfirmKeyRsp( zclIncoming_t *pInMsg )
   // Key Establishment Procedure complete. Restore the saved poll rate for end device
   NLME_SetPollRate(zclSavedPollRate);
 #endif
-  return ZCL_STATUS_CMD_HAS_RSP;
+  return status;
 }
 
 /*********************************************************************
@@ -1768,11 +1784,62 @@ static ZStatus_t zclGeneral_InitiateKeyEstablish_Rsp_CalculateKey( void )
 static void zclGeneral_InitKeyEstablishRecTable( void )
 {
   uint8 i;
+  uint8 max = MAX_KEY_ESTABLISHMENT_REC_ENTRY;  
+
+  osal_nv_item_init( ZCD_NV_KE_MAX_DEVICES, 
+                     sizeof(uint8),
+                     &max );
 
   for ( i = 0; i < MAX_KEY_ESTABLISHMENT_REC_ENTRY; i++ )
   {
     zclGeneral_ResetKeyEstablishRec(i);
   }
+}
+
+/*********************************************************************
+ * @fn      zclGeneral_OpenKeyEstablishRec
+ *
+ * @brief   Find an index of an open key establishment record. A 
+ *          record with short address(INVALID_PARTNER_ADDR) indicates
+ *          an empty slot.
+ *
+ * @param   none
+ *
+ * @return   index of the record
+ */
+static uint8 zclGeneral_OpenKeyEstablishRec( void )
+{
+  uint8 i;
+  uint8 max;
+
+  // Set the maximum to zero in case NV read fails
+  max = 0;
+
+  osal_nv_read( ZCD_NV_KE_MAX_DEVICES, 0, sizeof(uint8), &max );
+
+  // The maximum can not exceed the total number of available records
+  if ( max > MAX_KEY_ESTABLISHMENT_REC_ENTRY )
+  {
+    max = MAX_KEY_ESTABLISHMENT_REC_ENTRY;
+  }
+
+  // Find a vacant entry
+  for ( i = 0; i < max ; i++ )
+  {
+    if ( keyEstablishRec[i].dstAddr.addr.shortAddr == INVALID_PARTNER_ADDR )
+    {
+      // entry found
+      break;
+    }
+  }
+
+  if ( i == max )
+  {
+    // No vacant records were found
+    i =  MAX_KEY_ESTABLISHMENT_REC_ENTRY;
+  }
+
+  return i;
 }
 
 /*********************************************************************
@@ -1858,7 +1925,7 @@ static uint8 zclGeneral_AddKeyEstablishRec( afAddrType_t *addr )
   }
 
   // Create a new Entry
-  if ( (index = zclGeneral_GetKeyEstablishRecIndex(INVALID_PARTNER_ADDR))
+  if ( (index = zclGeneral_OpenKeyEstablishRec())
       < MAX_KEY_ESTABLISHMENT_REC_ENTRY )
   {
     // Allocate memory for the rest of the fields
@@ -1999,7 +2066,7 @@ static int zclGeneral_KeyEstablishment_GetRandom(unsigned char *buffer, unsigned
     len -= SEC_KEY_LEN;
     pBuf += SEC_KEY_LEN;
   }
-  SSP_GetTrueRandAES( len, pBuf );
+  SSP_GetTrueRandAES( (uint8)len, pBuf );
   return MCE_SUCCESS;
 }
 

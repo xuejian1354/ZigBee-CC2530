@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-21
+Date:2015-08-24
 **************************************************************************************************/
 
 
@@ -47,19 +47,40 @@ extern "C"
 #define LED1_BV           BV(0)
 #define LED1_SBIT         P1_0
 #define LED1_DDR          P1DIR
-#define LED1_POLARITY     ACTIVE_LOW
+#define LED1_POLARITY     ACTIVE_HIGH
 
 /* 2 - Red */
-#define LED2_BV           BV(0)
-#define LED2_SBIT         P1_0
+#define LED2_BV           BV(1)
+#define LED2_SBIT         P1_1
 #define LED2_DDR          P1DIR
-#define LED2_POLARITY     ACTIVE_LOW
+#define LED2_POLARITY     ACTIVE_HIGH
 
 /* 3 - Yellow */
-#define LED3_BV           BV(0)
-#define LED3_SBIT         P1_0
+#define LED3_BV           BV(4)
+#define LED3_SBIT         P1_4
 #define LED3_DDR          P1DIR
-#define LED3_POLARITY     ACTIVE_LOW
+#define LED3_POLARITY     ACTIVE_HIGH
+
+#if defined (PWM_ALT2)
+
+#define GREEN_LED HAL_T1_CH2
+#define RED_LED   HAL_T1_CH1
+#define BLUE_LED  HAL_T1_CH4 //Not connected on SmartRF05
+#define WHITE_LED HAL_T1_CH4
+#define ENABLE_LAMP   P1SEL |= ( 0x1 | 0x2 );
+
+#define DISABLE_LAMP  P1SEL &= ~( 0x1 | 0x2 );\
+                      P1    &= ~( 0x1 | 0x2 ); /* P0.3:6 */
+#else
+#define GREEN_LED HAL_T1_CH3
+#define RED_LED   HAL_T1_CH1
+#define BLUE_LED  HAL_T1_CH2
+#define WHITE_LED HAL_T1_CH4
+#define ENABLE_LAMP   P0SEL |= ( 0x08 | 0x10 | 0x20 | 0x40); /* P0.3:6 */\
+
+#define DISABLE_LAMP  P0SEL &= ~( 0x08 | 0x10 | 0x20 | 0x40); /* P0.3:6 */\
+                      P0    &= ~( 0x08 | 0x10 | 0x20 | 0x40); /* P0.3:6 */
+#endif
 
 #define HAL_TURN_OFF_LED1()       st( LED1_SBIT = LED1_POLARITY (0); )
 #define HAL_TURN_ON_LED1()        st( LED1_SBIT = LED1_POLARITY (1); )
@@ -83,8 +104,8 @@ extern "C"
 #define HAL_STATE_LED4()          HAL_STATE_LED1()
 
 /* S1 */
-#define PUSH1_BV          BV(1)
-#define PUSH1_SBIT        P0_1
+#define PUSH1_BV          BV(5)
+#define PUSH1_SBIT        P0_5
 #define PUSH1_POLARITY    ACTIVE_LOW
 
 
@@ -95,8 +116,8 @@ extern "C"
 #define HAL_PUSH_BUTTON5()        (0)
 #define HAL_PUSH_BUTTON6()        (0)
 
-#define HAL_LED FALSE
-//#define BLINK_LEDS
+#define HAL_LED TRUE
+#define BLINK_LEDS
 
 #define HAL_KEY TRUE
 

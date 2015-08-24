@@ -393,8 +393,10 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 		{
 			CommonApp_ProcessZDOStates(DEV_ZB_COORD);
 		}
-		
-		CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
+		else
+		{
+			CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
+		}
 	}
 	else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
 		&& (!memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)

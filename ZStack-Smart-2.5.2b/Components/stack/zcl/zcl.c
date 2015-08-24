@@ -1,12 +1,12 @@
 /**************************************************************************************************
   Filename:       zcl.c
-  Revised:        $Date: 2012-01-30 10:40:08 -0800 (Mon, 30 Jan 2012) $
-  Revision:       $Revision: 29096 $
+  Revised:        $Date: 2013-11-22 17:43:52 -0800 (Fri, 22 Nov 2013) $
+  Revision:       $Revision: 36225 $
 
   Description:    This file contains the Zigbee Cluster Library Foundation functions.
 
 
-  Copyright 2006-2012 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2006-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -41,10 +41,7 @@
  * INCLUDES
  */
 #include "ZComDef.h"
-#include "OSAL.h"
-#include "OSAL_Tasks.h"
 #include "AF.h"
-#include "ZDConfig.h"
 
 #include "zcl.h"
 #include "zcl_general.h"
@@ -77,12 +74,15 @@
                                         (zclHdr).commandID == ZCL_CMD_DEFAULT_RSP )
 
 // Commands that have corresponding responses
-#define CMD_HAS_RSP( cmd )            ( (cmd) == ZCL_CMD_READ            || \
-                                        (cmd) == ZCL_CMD_WRITE           || \
-                                        (cmd) == ZCL_CMD_WRITE_UNDIVIDED || \
-                                        (cmd) == ZCL_CMD_CONFIG_REPORT   || \
-                                        (cmd) == ZCL_CMD_READ_REPORT_CFG || \
-                                        (cmd) == ZCL_CMD_DISCOVER        || \
+#define CMD_HAS_RSP( cmd )            ( (cmd) == ZCL_CMD_READ                   || \
+                                        (cmd) == ZCL_CMD_WRITE                  || \
+                                        (cmd) == ZCL_CMD_WRITE_UNDIVIDED        || \
+                                        (cmd) == ZCL_CMD_CONFIG_REPORT          || \
+                                        (cmd) == ZCL_CMD_READ_REPORT_CFG        || \
+                                        (cmd) == ZCL_CMD_DISCOVER_ATTRS         || \
+                                        (cmd) == ZCL_CMD_DISCOVER_CMDS_RECEIVED || \
+                                        (cmd) == ZCL_CMD_DISCOVER_CMDS_GEN      || \
+                                        (cmd) == ZCL_CMD_DISCOVER_ATTRS_EXT     || \
                                         (cmd) == ZCL_CMD_DEFAULT_RSP ) // exception
 
 /*********************************************************************
@@ -99,6 +99,15 @@ typedef struct zclLibPlugin
   uint16              endClusterID;      // ending cluster ID
   zclInHdlr_t         pfnIncomingHdlr;    // function to handle incoming message
 } zclLibPlugin_t;
+
+// Command record list
+typedef struct zclCmdRecsList
+{
+  struct zclCmdRecsList *pNext;
+  uint8                 endpoint;
+  uint8                 numCommands;
+  CONST zclCommandRec_t *pCmdRecs;
+} zclCmdRecsList_t;
 
 // Attribute record list item
 typedef struct zclAttrRecsList
@@ -133,14 +142,17 @@ typedef struct
 /*********************************************************************
  * GLOBAL VARIABLES
  */
-uint8 zcl_TaskID;
 
-// The task Id of the Application where the unprocessed Foundation
-// Command/Response messages will be sent to.
-uint8 zcl_RegisteredMsgTaskID = TASK_NO_TASK;
+#if !defined ( ZCL_STANDALONE )
+  uint8 zcl_TaskID;
+
+  // The task Id of the Application where the unprocessed Foundation
+  // Command/Response messages will be sent to.
+  uint8 zcl_RegisteredMsgTaskID = TASK_NO_TASK;
+#endif
 
 // The Application should register its attribute data validation function
-zclValidateAttrData_t zcl_ValidateAttrDataCB = NULL;
+zclValidateAttrData_t zcl_ValidateAttrDataCB = (zclValidateAttrData_t)NULL;
 
 // ZCL Sequence number
 uint8 zcl_SeqNum = 0x00;
@@ -156,20 +168,30 @@ uint8 zcl_SeqNum = 0x00;
 /*********************************************************************
  * LOCAL VARIABLES
  */
-static zclLibPlugin_t *plugins;
-static zclAttrRecsList *attrList;
-static zclClusterOptionList *clusterOptionList;
+static zclLibPlugin_t *plugins = (zclLibPlugin_t *)NULL;
+
+#if defined ( ZCL_DISCOVER )
+  static zclCmdRecsList_t *gpCmdList = (zclCmdRecsList_t *)NULL;
+#endif
+
+static zclAttrRecsList *attrList = (zclAttrRecsList *)NULL;
+static zclClusterOptionList *clusterOptionList = (zclClusterOptionList *)NULL;
 static uint8 zcl_TransID = 0;  // This is the unique message ID (counter)
 
-static afIncomingMSGPacket_t *rawAFMsg = NULL;
+static afIncomingMSGPacket_t *rawAFMsg = (afIncomingMSGPacket_t *)NULL;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt );  // Not static for ZNP build.
+void zcl_ProcessMessageMSG( afIncomingMSGPacket_t *pkt );  // Not static for ZNP build.
 static uint8 *zclBuildHdr( zclFrameHdr_t *hdr, uint8 *pData );
 static uint8 zclCalcHdrSize( zclFrameHdr_t *hdr );
 static zclLibPlugin_t *zclFindPlugin( uint16 clusterID, uint16 profileID );
+
+#if defined ( ZCL_DISCOVER )
+  static zclCmdRecsList_t *zclFindCmdRecsList( uint8 endpoint );
+#endif
+
 static zclAttrRecsList *zclFindAttrRecsList( uint8 endpoint );
 static zclOptionRec_t *zclFindClusterOption( uint8 endpoint, uint16 clusterID );
 static uint8 zclGetClusterOption( uint8 endpoint, uint16 clusterID );
@@ -183,6 +205,7 @@ static zclAuthorizeCB_t zclGetAuthorizeCB( uint8 endpoint );
 #endif // ZCL_READ || ZCL_WRITE
 
 #ifdef ZCL_READ
+ZStatus_t zclReadAttrData( uint8 *pAttrData, zclAttrRec_t *pAttr, uint16 *pDataLen );
 static uint16 zclGetAttrDataLengthUsingCB( uint8 endpoint, uint16 clusterID, uint16 attrId );
 static ZStatus_t zclReadAttrDataUsingCB( uint8 endpoint, uint16 clusterId, uint16 attrId,
                                          uint8 *pAttrData, uint16 *pDataLen );
@@ -210,60 +233,83 @@ static void *zclParseInReadReportCfgRspCmd( zclParseCmd_t *pCmd );
 static void *zclParseInDefaultRspCmd( zclParseCmd_t *pCmd );
 
 #ifdef ZCL_DISCOVER
-static uint8 zclFindNextAttrRec( uint8 endpoint, uint16 clusterID, uint16 *attrId, zclAttrRec_t *pAttr );
-static void *zclParseInDiscRspCmd( zclParseCmd_t *pCmd );
+static uint8 zclFindNextCmdRec( uint8 endpoint, uint16 clusterID, uint8 commandID, uint8 direction, uint8 *pCmdID, zclCommandRec_t *pCmd );
+static uint8 zclFindNextAttrRec( uint8 endpoint, uint16 clusterID, uint8 direction, uint16 *attrId, zclAttrRec_t *pAttr );
+static void *zclParseInDiscCmdsRspCmd( zclParseCmd_t *pCmd );
+static void *zclParseInDiscAttrsRspCmd( zclParseCmd_t *pCmd );
+static void *zclParseInDiscAttrsExtRspCmd( zclParseCmd_t *pCmd );
 static uint8 zclProcessInDiscCmd( zclIncoming_t *pInMsg );
+static uint8 zclProcessInDiscAttrs( zclIncoming_t *pInMsg );
+static void zclProcessInDiscAttrsCmd( zclIncoming_t *pInMsg, zclDiscoverAttrsCmd_t *pDiscoverCmd, uint8 attrLenBuf );
+static void zclProcessInDiscAttrsExtCmd( zclIncoming_t *pInMsg, zclDiscoverAttrsCmd_t *pDiscoverCmd, uint8 attrLenBuf );
 #endif // ZCL_DISCOVER
-
-static uint8 zclSendMsg( zclIncoming_t *pInMsg );
 
 /*********************************************************************
  * Parse Profile Command Function Table
  */
+
 static CONST zclCmdItems_t zclCmdTable[] =
 {
 #ifdef ZCL_READ
   /* ZCL_CMD_READ */                { zclParseInReadCmd,             zclProcessInReadCmd             },
-  /* ZCL_CMD_READ_RSP */            { zclParseInReadRspCmd,          zclSendMsg                      },
+  /* ZCL_CMD_READ_RSP */            { zclParseInReadRspCmd,          zcl_HandleExternal              },
 #else
-  /* ZCL_CMD_READ */                { NULL,                          NULL                            },
-  /* ZCL_CMD_READ_RSP */            { NULL,                          NULL                            },
+  /* ZCL_CMD_READ */                { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_READ_RSP */            { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
 #endif // ZCL_READ
 
 #ifdef ZCL_WRITE
   /* ZCL_CMD_WRITE */               { zclParseInWriteCmd,            zclProcessInWriteCmd            },
   /* ZCL_CMD_WRITE_UNDIVIDED */     { zclParseInWriteCmd,            zclProcessInWriteUndividedCmd   },
-  /* ZCL_CMD_WRITE_RSP */           { zclParseInWriteRspCmd,         zclSendMsg                      },
+  /* ZCL_CMD_WRITE_RSP */           { zclParseInWriteRspCmd,         zcl_HandleExternal              },
   /* ZCL_CMD_WRITE_NO_RSP */        { zclParseInWriteCmd,            zclProcessInWriteCmd            },
 #else
-  /* ZCL_CMD_WRITE */               { NULL,                          NULL                            },
-  /* ZCL_CMD_WRITE_UNDIVIDED */     { NULL,                          NULL                            },
-  /* ZCL_CMD_WRITE_RSP */           { NULL,                          NULL                            },
-  /* ZCL_CMD_WRITE_NO_RSP */        { NULL,                          NULL                            },
+  /* ZCL_CMD_WRITE */               { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_WRITE_UNDIVIDED */     { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_WRITE_RSP */           { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_WRITE_NO_RSP */        { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
 #endif // ZCL_WRITE
 
 #ifdef ZCL_REPORT
-  /* ZCL_CMD_CONFIG_REPORT */       { zclParseInConfigReportCmd,     zclSendMsg                      },
-  /* ZCL_CMD_CONFIG_REPORT_RSP */   { zclParseInConfigReportRspCmd,  zclSendMsg                      },
-  /* ZCL_CMD_READ_REPORT_CFG */     { zclParseInReadReportCfgCmd,    zclSendMsg                      },
-  /* ZCL_CMD_READ_REPORT_CFG_RSP */ { zclParseInReadReportCfgRspCmd, zclSendMsg                      },
-  /* ZCL_CMD_REPORT */              { zclParseInReportCmd,           zclSendMsg                      },
+  /* ZCL_CMD_CONFIG_REPORT */       { zclParseInConfigReportCmd,     zcl_HandleExternal              },
+  /* ZCL_CMD_CONFIG_REPORT_RSP */   { zclParseInConfigReportRspCmd,  zcl_HandleExternal              },
+  /* ZCL_CMD_READ_REPORT_CFG */     { zclParseInReadReportCfgCmd,    zcl_HandleExternal              },
+  /* ZCL_CMD_READ_REPORT_CFG_RSP */ { zclParseInReadReportCfgRspCmd, zcl_HandleExternal              },
+  /* ZCL_CMD_REPORT */              { zclParseInReportCmd,           zcl_HandleExternal              },
 #else
-  /* ZCL_CMD_CONFIG_REPORT */       { NULL,                          NULL                            },
-  /* ZCL_CMD_CONFIG_REPORT_RSP */   { NULL,                          NULL                            },
-  /* ZCL_CMD_READ_REPORT_CFG */     { NULL,                          NULL                            },
-  /* ZCL_CMD_READ_REPORT_CFG_RSP */ { NULL,                          NULL                            },
-  /* ZCL_CMD_REPORT */              { NULL,                          NULL                            },
+  /* ZCL_CMD_CONFIG_REPORT */       { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_CONFIG_REPORT_RSP */   { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_READ_REPORT_CFG */     { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_READ_REPORT_CFG_RSP */ { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_REPORT */              { (zclParseInProfileCmd_t)NULL,  (zclProcessInProfileCmd_t)NULL  },
 #endif // ZCL_REPORT
 
-  /* ZCL_CMD_DEFAULT_RSP */         { zclParseInDefaultRspCmd,       zclSendMsg                      },
+  /* ZCL_CMD_DEFAULT_RSP */         { zclParseInDefaultRspCmd,       zcl_HandleExternal              },
 
 #ifdef ZCL_DISCOVER
-  /* ZCL_CMD_DISCOVER */            { zclParseInDiscCmd,             zclProcessInDiscCmd             },
-  /* ZCL_CMD_DISCOVER_RSP */        { zclParseInDiscRspCmd,          zclSendMsg                      }
+  /* ZCL_CMD_DISCOVER_ATTRS */                { zclParseInDiscAttrsCmd,         zclProcessInDiscAttrs           },
+  /* ZCL_CMD_DISCOVER_ATTRS_RSP */            { zclParseInDiscAttrsRspCmd,      zcl_HandleExternal              },
+  /* *not supported* READ_ATTRS_STRCT */      { NULL,                           (zclProcessInProfileCmd_t)NULL  },
+  /* *not supported* WRITE_ATTRS_STRCT */     { NULL,                           (zclProcessInProfileCmd_t)NULL  },
+  /* *not supported* WRITE_ATTRS_STRCT_RSP */ { NULL,                           (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_DISCOVER_CMDS_RECEIVED */        { zclParseInDiscCmdsCmd,          zclProcessInDiscCmd             },
+  /* ZCL_CMD_DISCOVER_CMDS_RECEIVED_RSP */    { zclParseInDiscCmdsRspCmd,       zcl_HandleExternal              },
+  /* ZCL_CMD_DISCOVER_CMDS_GEN */             { zclParseInDiscCmdsCmd,          zclProcessInDiscCmd             },
+  /* ZCL_CMD_DISCOVER_CMDS_GEN_RSP */         { zclParseInDiscCmdsRspCmd,       zcl_HandleExternal              },
+  /* ZCL_CMD_DISCOVER_ATTRS_EXT */            { zclParseInDiscAttrsCmd,         zclProcessInDiscAttrs           },
+  /* ZCL_CMD_DISCOVER_ATTRS_EXT_RSP */        { zclParseInDiscAttrsExtRspCmd,   zcl_HandleExternal              },
 #else
-  /* ZCL_CMD_DISCOVER */            { NULL,                          NULL                            },
-  /* ZCL_CMD_DISCOVER_RSP */        { NULL,                          NULL                            }
+  /* ZCL_CMD_DISCOVER_ATTRS */                { (zclParseInProfileCmd_t)NULL,    (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_DISCOVER_ATTRS_RSP */            { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* *not supported* READ_ATTRS_STRCT */      { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* *not supported* WRITE_ATTRS_STRCT */     { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* *not supported* WRITE_ATTRS_STRCT_RSP */ { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_DISCOVER_CMDS_RECEIVED */        { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_DISCOVER_CMDS_RECEIVED_RSP */    { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_DISCOVER_CMDS_GEN */             { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_DISCOVER_CMDS_GEN_RSP */         { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_DISCOVER_ATTRS_EXT */            { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
+  /* ZCL_CMD_DISCOVER_ATTRS_EXT_RSP */        { (zclParseInProfileCmd_t)NULL,   (zclProcessInProfileCmd_t)NULL  },
 #endif // ZCL_DISCOVER
 };
 
@@ -271,6 +317,7 @@ static CONST zclCmdItems_t zclCmdTable[] =
  * PUBLIC FUNCTIONS
  *********************************************************************/
 
+#if !defined ( ZCL_STANDALONE )
 /*********************************************************************
  * @fn          zcl_Init
  *
@@ -283,12 +330,10 @@ static CONST zclCmdItems_t zclCmdTable[] =
 void zcl_Init( uint8 task_id )
 {
   zcl_TaskID = task_id;
-
-  plugins = (zclLibPlugin_t  *)NULL;
-  attrList = (zclAttrRecsList *)NULL;
-  clusterOptionList = (zclClusterOptionList *)NULL;
 }
+#endif
 
+#if !defined ( ZCL_STANDALONE )
 /*********************************************************************
  * @fn          zcl_event_loop
  *
@@ -314,9 +359,7 @@ uint16 zcl_event_loop( uint8 task_id, uint16 events )
 
       if ( *msgPtr == AF_INCOMING_MSG_CMD )
       {
-        rawAFMsg = (afIncomingMSGPacket_t *)msgPtr;
-        zclProcessMessageMSG( rawAFMsg );
-        rawAFMsg = NULL;
+        zcl_ProcessMessageMSG( (afIncomingMSGPacket_t *)msgPtr );
       }
       else if ( zcl_RegisteredMsgTaskID != TASK_NO_TASK )
       {
@@ -342,6 +385,75 @@ uint16 zcl_event_loop( uint8 task_id, uint16 events )
   // Discard unknown events
   return 0;
 }
+#endif
+
+#if !defined ( ZCL_STANDALONE )
+/*********************************************************************
+ * @fn      zcl_registerForMsg
+ *
+ * @brief   The ZCL is setup to send all incoming Foundation Command/Response
+ *          messages that aren't processed to one task (if a task is
+ *          registered).
+ *
+ * @param   taskId - task Id of the Application where commands will be sent to
+ *
+ * @return  TRUE if task registeration successful, FALSE otherwise
+ *********************************************************************/
+uint8 zcl_registerForMsg( uint8 taskId )
+{
+  // Allow only the first task
+  if ( zcl_RegisteredMsgTaskID == TASK_NO_TASK )
+  {
+    zcl_RegisteredMsgTaskID = taskId;
+
+    return ( true );
+  }
+
+  return ( false );
+}
+#endif
+
+#if !defined ( ZCL_STANDALONE )
+/*********************************************************************
+ * @fn      zcl_HandleExternal
+ *
+ * @brief
+ *
+ * @param   pInMsg - incoming message to process
+ *
+ * @return  TRUE
+ */
+uint8 zcl_HandleExternal( zclIncoming_t *pInMsg )
+{
+  zclIncomingMsg_t *pCmd;
+
+  if ( zcl_RegisteredMsgTaskID == TASK_NO_TASK )
+  {
+    return ( TRUE );
+  }
+
+  pCmd = (zclIncomingMsg_t *)osal_msg_allocate( sizeof ( zclIncomingMsg_t ) );
+  if ( pCmd != NULL )
+  {
+    // fill in the message
+    pCmd->hdr.event = ZCL_INCOMING_MSG;
+    pCmd->zclHdr    = pInMsg->hdr;
+    pCmd->clusterId = pInMsg->msg->clusterId;
+    pCmd->srcAddr   = pInMsg->msg->srcAddr;
+    pCmd->endPoint  = pInMsg->msg->endPoint;
+    pCmd->attrCmd   = pInMsg->attrCmd;
+
+    // Application will free the attrCmd buffer
+    pInMsg->attrCmd = NULL;
+
+    /* send message through task message */
+    osal_msg_send( zcl_RegisteredMsgTaskID, (uint8 *)pCmd );
+  }
+
+  return ( TRUE );
+}
+#endif
+
 
 /*********************************************************************
  * @fn          zcl_getRawAFMsg
@@ -380,7 +492,7 @@ ZStatus_t zcl_registerPlugin( uint16 startClusterID,
   zclLibPlugin_t *pLoop;
 
   // Fill in the new profile list
-  pNewItem = osal_mem_alloc( sizeof( zclLibPlugin_t ) );
+  pNewItem = zcl_mem_alloc( sizeof( zclLibPlugin_t ) );
   if ( pNewItem == NULL )
   {
     return (ZMemError);
@@ -413,6 +525,57 @@ ZStatus_t zcl_registerPlugin( uint16 startClusterID,
   return ( ZSuccess );
 }
 
+#ifdef ZCL_DISCOVER
+/*********************************************************************
+ * @fn          zcl_registerCmdList
+ *
+ * @brief       Register a Command List with ZCL Foundation
+ *
+ * @param       endpoint - endpoint the attribute list belongs to
+ * @param       newCmdList - array of command records
+ *
+ * @return      ZSuccess if OK
+ */
+ZStatus_t zcl_registerCmdList( uint8 endpoint, CONST uint8 numAttrs, CONST zclCommandRec_t zclTestApp_Cmds[] );
+ZStatus_t zcl_registerCmdList( uint8 endpoint, uint8 zclCmdsArraySize, CONST zclCommandRec_t newCmdList[] )
+{
+  zclCmdRecsList_t *pNewItem;
+  zclCmdRecsList_t *pLoop;
+
+  // Fill in the new profile list
+  pNewItem = zcl_mem_alloc( sizeof( zclCmdRecsList_t ) );
+  if ( pNewItem == NULL )
+  {
+    return (ZMemError);
+  }
+
+  pNewItem->pNext = (zclCmdRecsList_t *)NULL;
+  pNewItem->endpoint = endpoint;
+  pNewItem->numCommands = zclCmdsArraySize;
+  pNewItem->pCmdRecs = newCmdList;
+
+  // Find spot in list
+  if ( gpCmdList == NULL )
+  {
+    gpCmdList = pNewItem;
+  }
+  else
+  {
+    // Look for end of list
+    pLoop = gpCmdList;
+    while ( pLoop->pNext != NULL )
+    {
+      pLoop = pLoop->pNext;
+    }
+
+    // Put new item at end of list
+    pLoop->pNext = pNewItem;
+  }
+
+  return ( ZSuccess );
+}
+#endif  // ZCL_DISCOVER
+
 /*********************************************************************
  * @fn          zcl_registerAttrList
  *
@@ -433,7 +596,7 @@ ZStatus_t zcl_registerAttrList( uint8 endpoint, uint8 numAttr, CONST zclAttrRec_
   zclAttrRecsList *pLoop;
 
   // Fill in the new profile list
-  pNewItem = osal_mem_alloc( sizeof( zclAttrRecsList ) );
+  pNewItem = zcl_mem_alloc( sizeof( zclAttrRecsList ) );
   if ( pNewItem == NULL )
   {
     return (ZMemError);
@@ -490,7 +653,7 @@ ZStatus_t zcl_registerClusterOptionList( uint8 endpoint, uint8 numOption, zclOpt
   zclClusterOptionList *pLoop;
 
   // Fill in the new profile list
-  pNewItem = osal_mem_alloc( sizeof( zclClusterOptionList ) );
+  pNewItem = zcl_mem_alloc( sizeof( zclClusterOptionList ) );
   if ( pNewItem == NULL )
   {
     return (ZMemError);
@@ -578,30 +741,6 @@ ZStatus_t zcl_registerReadWriteCB( uint8 endpoint, zclReadWriteCB_t pfnReadWrite
 }
 
 /*********************************************************************
- * @fn      zcl_registerForMsg
- *
- * @brief   The ZCL is setup to send all incoming Foundation Command/Response
- *          messages that aren't processed to one task (if a task is
- *          registered).
- *
- * @param   taskId - task Id of the Application where commands will be sent to
- *
- * @return  TRUE if task registeration successful, FALSE otherwise
- *********************************************************************/
-uint8 zcl_registerForMsg( uint8 taskId )
-{
-  // Allow only the first task
-  if ( zcl_RegisteredMsgTaskID == TASK_NO_TASK )
-  {
-    zcl_RegisteredMsgTaskID = taskId;
-
-    return ( true );
-  }
-
-  return ( false );
-}
-
-/*********************************************************************
  * @fn      zcl_DeviceOperational
  *
  * @brief   Used to see whether or not the device can send or respond
@@ -640,7 +779,9 @@ static uint8 zcl_DeviceOperational( uint8 srcEP, uint16 clusterID,
   if ( zclFindAttrRec( srcEP, ZCL_CLUSTER_ID_GEN_BASIC,
                        ATTRID_BASIC_DEVICE_ENABLED, &attrRec ) )
   {
+#ifdef ZCL_READ
     zclReadAttrData( &deviceEnabled, &attrRec, NULL );
+#endif
   }
 
   return ( deviceEnabled == DEVICE_ENABLED ? TRUE : FALSE );
@@ -696,9 +837,22 @@ ZStatus_t zcl_SendCommand( uint8 srcEP, afAddrType_t *destAddr,
 #endif
   {
     options = zclGetClusterOption( srcEP, clusterID );
+
+    // The cluster might not have been defined to use security but if this message
+    // is in response to another message that was using APS security this message
+    // will be sent with APS security
+    if ( !( options & AF_EN_SECURITY ) )
+    {
+      afIncomingMSGPacket_t *origPkt = zcl_getRawAFMsg();
+
+      if ( ( origPkt != NULL ) && ( origPkt->SecurityUse == TRUE ) )
+      {
+        options |= AF_EN_SECURITY;
+      }
+    }
   }
 
-  osal_memset( &hdr, 0, sizeof( zclFrameHdr_t ) );
+  zcl_memset( &hdr, 0, sizeof( zclFrameHdr_t ) );
 
   // Not Profile wide command (like READ, WRITE)
   if ( specific )
@@ -755,18 +909,18 @@ ZStatus_t zcl_SendCommand( uint8 srcEP, afAddrType_t *destAddr,
   msgLen += cmdFormatLen;
 
   // Allocate the buffer needed
-  msgBuf = osal_mem_alloc( msgLen );
+  msgBuf = zcl_mem_alloc( msgLen );
   if ( msgBuf != NULL )
   {
     // Fill in the ZCL Header
     pBuf = zclBuildHdr( &hdr, msgBuf );
 
     // Fill in the command frame
-    osal_memcpy( pBuf, cmdFormat, cmdFormatLen );
+    zcl_memcpy( pBuf, cmdFormat, cmdFormatLen );
 
     status = AF_DataRequest( destAddr, epDesc, clusterID, msgLen, msgBuf,
                              &zcl_TransID, options, AF_DEFAULT_RADIUS );
-    osal_mem_free ( msgBuf );
+    zcl_mem_free ( msgBuf );
   }
   else
   {
@@ -802,7 +956,7 @@ ZStatus_t zcl_SendRead( uint8 srcEP, afAddrType_t *dstAddr,
 
   dataLen = readCmd->numAttr * 2; // Attribute ID
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     uint8 i;
@@ -817,7 +971,7 @@ ZStatus_t zcl_SendRead( uint8 srcEP, afAddrType_t *dstAddr,
 
     status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_READ, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -848,9 +1002,10 @@ ZStatus_t zcl_SendReadRsp( uint8 srcEP, afAddrType_t *dstAddr,
   uint8 *buf;
   uint16 len = 0;
   ZStatus_t status;
+  uint8 i;
 
   // calculate the size of the command
-  for ( uint8 i = 0; i < readRspCmd->numAttr; i++ )
+  for ( i = 0; i < readRspCmd->numAttr; i++ )
   {
     zclReadRspStatus_t *statusRec = &(readRspCmd->attrList[i]);
 
@@ -872,12 +1027,13 @@ ZStatus_t zcl_SendReadRsp( uint8 srcEP, afAddrType_t *dstAddr,
     }
   }
 
-  buf = osal_mem_alloc( len );
+  buf = zcl_mem_alloc( len );
   if ( buf != NULL )
   {
     // Load the buffer - serially
     uint8 *pBuf = buf;
-    for ( uint8 i = 0; i < readRspCmd->numAttr; i++ )
+
+    for ( i = 0; i < readRspCmd->numAttr; i++ )
     {
       zclReadRspStatus_t *statusRec = &(readRspCmd->attrList[i]);
 
@@ -907,7 +1063,7 @@ ZStatus_t zcl_SendReadRsp( uint8 srcEP, afAddrType_t *dstAddr,
 
     status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_READ_RSP, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, len, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -940,8 +1096,9 @@ ZStatus_t zcl_SendWriteRequest( uint8 srcEP, afAddrType_t *dstAddr, uint16 clust
   uint8 *buf;
   uint16 dataLen = 0;
   ZStatus_t status;
+  uint8 i;
 
-  for ( uint8 i = 0; i < writeCmd->numAttr; i++ )
+  for ( i = 0; i < writeCmd->numAttr; i++ )
   {
     zclWriteRec_t *statusRec = &(writeCmd->attrList[i]);
 
@@ -951,12 +1108,12 @@ ZStatus_t zcl_SendWriteRequest( uint8 srcEP, afAddrType_t *dstAddr, uint16 clust
     dataLen += zclGetAttrDataLength( statusRec->dataType, statusRec->attrData );
   }
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     // Load the buffer - serially
     uint8 *pBuf = buf;
-    for ( uint8 i = 0; i < writeCmd->numAttr; i++ )
+    for ( i = 0; i < writeCmd->numAttr; i++ )
     {
       zclWriteRec_t *statusRec = &(writeCmd->attrList[i]);
 
@@ -969,7 +1126,7 @@ ZStatus_t zcl_SendWriteRequest( uint8 srcEP, afAddrType_t *dstAddr, uint16 clust
 
     status = zcl_SendCommand( srcEP, dstAddr, clusterID, cmd, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -1002,12 +1159,13 @@ ZStatus_t zcl_SendWriteRsp( uint8 srcEP, afAddrType_t *dstAddr,
 
   dataLen = writeRspCmd->numAttr * ( 1 + 2 ); // status + attribute id
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     // Load the buffer - serially
+    uint8 i;
     uint8 *pBuf = buf;
-    for ( uint8 i = 0; i < writeRspCmd->numAttr; i++ )
+    for ( i = 0; i < writeRspCmd->numAttr; i++ )
     {
       *pBuf++ = writeRspCmd->attrList[i].status;
       *pBuf++ = LO_UINT16( writeRspCmd->attrList[i].attrID );
@@ -1023,7 +1181,7 @@ ZStatus_t zcl_SendWriteRsp( uint8 srcEP, afAddrType_t *dstAddr,
 
     status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_WRITE_RSP, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -1055,9 +1213,10 @@ ZStatus_t zcl_SendConfigReportCmd( uint8 srcEP, afAddrType_t *dstAddr,
   uint8 *buf;
   uint16 dataLen = 0;
   ZStatus_t status;
+  uint8 i;
 
   // Find out the data length
-  for ( uint8 i = 0; i < cfgReportCmd->numAttr; i++ )
+  for ( i = 0; i < cfgReportCmd->numAttr; i++ )
   {
     zclCfgReportRec_t *reportRec = &(cfgReportCmd->attrList[i]);
 
@@ -1079,12 +1238,13 @@ ZStatus_t zcl_SendConfigReportCmd( uint8 srcEP, afAddrType_t *dstAddr,
     }
   }
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     // Load the buffer - serially
     uint8 *pBuf = buf;
-    for ( uint8 i = 0; i < cfgReportCmd->numAttr; i++ )
+
+    for ( i = 0; i < cfgReportCmd->numAttr; i++ )
     {
       zclCfgReportRec_t *reportRec = &(cfgReportCmd->attrList[i]);
 
@@ -1114,7 +1274,7 @@ ZStatus_t zcl_SendConfigReportCmd( uint8 srcEP, afAddrType_t *dstAddr,
 
     status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_CONFIG_REPORT, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -1148,12 +1308,14 @@ ZStatus_t zcl_SendConfigReportRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
   // Atrribute list (Status, Direction and Attribute ID)
   dataLen = cfgReportRspCmd->numAttr * ( 1 + 1 + 2 );
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     // Load the buffer - serially
     uint8 *pBuf = buf;
-    for ( uint8 i = 0; i < cfgReportRspCmd->numAttr; i++ )
+    uint8 i;
+
+    for ( i = 0; i < cfgReportRspCmd->numAttr; i++ )
     {
       *pBuf++ = cfgReportRspCmd->attrList[i].status;
       *pBuf++ = cfgReportRspCmd->attrList[i].direction;
@@ -1171,7 +1333,7 @@ ZStatus_t zcl_SendConfigReportRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
     status = zcl_SendCommand( srcEP, dstAddr, clusterID,
                               ZCL_CMD_CONFIG_REPORT_RSP, FALSE, direction,
                               disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -1204,12 +1366,14 @@ ZStatus_t zcl_SendReadReportCfgCmd( uint8 srcEP, afAddrType_t *dstAddr,
 
   dataLen = readReportCfgCmd->numAttr * ( 1 + 2 ); // Direction + Atrribute ID
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     // Load the buffer - serially
     uint8 *pBuf = buf;
-    for ( uint8 i = 0; i < readReportCfgCmd->numAttr; i++ )
+    uint8 i;
+
+    for ( i = 0; i < readReportCfgCmd->numAttr; i++ )
     {
       *pBuf++ = readReportCfgCmd->attrList[i].direction;
       *pBuf++ = LO_UINT16( readReportCfgCmd->attrList[i].attrID );
@@ -1218,7 +1382,7 @@ ZStatus_t zcl_SendReadReportCfgCmd( uint8 srcEP, afAddrType_t *dstAddr,
 
     status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_READ_REPORT_CFG, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -1248,9 +1412,10 @@ ZStatus_t zcl_SendReadReportCfgRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
   uint8 *buf;
   uint16 dataLen = 0;
   ZStatus_t status;
+  uint8 i;
 
   // Find out the data length
-  for ( uint8 i = 0; i < readReportCfgRspCmd->numAttr; i++ )
+  for ( i = 0; i < readReportCfgRspCmd->numAttr; i++ )
   {
     zclReportCfgRspRec_t *reportRspRec = &(readReportCfgRspCmd->attrList[i]);
 
@@ -1275,12 +1440,13 @@ ZStatus_t zcl_SendReadReportCfgRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
     }
   }
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     // Load the buffer - serially
     uint8 *pBuf = buf;
-    for ( uint8 i = 0; i < readReportCfgRspCmd->numAttr; i++ )
+
+    for ( i = 0; i < readReportCfgRspCmd->numAttr; i++ )
     {
       zclReportCfgRspRec_t *reportRspRec = &(readReportCfgRspCmd->attrList[i]);
 
@@ -1316,7 +1482,7 @@ ZStatus_t zcl_SendReadReportCfgRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
     status = zcl_SendCommand( srcEP, dstAddr, clusterID,
                               ZCL_CMD_READ_REPORT_CFG_RSP, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -1346,9 +1512,10 @@ ZStatus_t zcl_SendReportCmd( uint8 srcEP, afAddrType_t *dstAddr,
   uint16 dataLen = 0;
   uint8 *buf;
   ZStatus_t status;
+  uint8 i;
 
   // calculate the size of the command
-  for ( uint8 i = 0; i < reportCmd->numAttr; i++ )
+  for ( i = 0; i < reportCmd->numAttr; i++ )
   {
     zclReport_t *reportRec = &(reportCmd->attrList[i]);
 
@@ -1358,12 +1525,13 @@ ZStatus_t zcl_SendReportCmd( uint8 srcEP, afAddrType_t *dstAddr,
     dataLen += zclGetAttrDataLength( reportRec->dataType, reportRec->attrData );
   }
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     // Load the buffer - serially
     uint8 *pBuf = buf;
-    for ( uint8 i = 0; i < reportCmd->numAttr; i++ )
+
+    for ( i = 0; i < reportCmd->numAttr; i++ )
     {
       zclReport_t *reportRec = &(reportCmd->attrList[i]);
 
@@ -1376,7 +1544,7 @@ ZStatus_t zcl_SendReportCmd( uint8 srcEP, afAddrType_t *dstAddr,
 
     status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_REPORT, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -1421,38 +1589,92 @@ ZStatus_t zcl_SendDefaultRspCmd( uint8 srcEP, afAddrType_t *dstAddr, uint16 clus
 
 #ifdef ZCL_DISCOVER
 /*********************************************************************
- * @fn      zcl_SendDiscoverCmd
+ * @fn      zcl_SendDiscoverCmdsCmd
  *
- * @brief   Send a Discover command
+ * @brief   Send a Discover Commands command
  *
  * @param   dstAddr - destination address
  * @param   clusterID - cluster ID
- * @param   discoverCmd - discover command to be sent
+ * @param   cmdType - requesting command ID
+ * @param   pDiscoverCmd - discover command to be sent
  * @param   direction - direction of the command
  * @param   seqNum - transaction sequence number
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendDiscoverCmd( uint8 srcEP, afAddrType_t *dstAddr,
-                            uint16 clusterID, zclDiscoverCmd_t *discoverCmd,
-                            uint8 direction, uint8 disableDefaultRsp, uint8 seqNum )
+ZStatus_t zcl_SendDiscoverCmdsCmd( uint8 srcEP, afAddrType_t *dstAddr, uint16 clusterID,
+                                  uint8 cmdType, zclDiscoverCmdsCmd_t *pDiscoverCmd,
+                                  uint8 direction, uint8 disableDefaultRsp, uint8 seqNum )
 {
-  uint16 dataLen = 2 + 1; // Start Attribute ID and Max Attribute IDs
-  uint8 *buf;
+  uint8 payload[2]; // size of startCmdID and maxCmdID
   ZStatus_t status;
 
-  buf = osal_mem_alloc( dataLen );
-  if ( buf != NULL )
-  {
-    // Load the buffer - serially
-    uint8 *pBuf = buf;
-    *pBuf++ = LO_UINT16(discoverCmd->startAttr);
-    *pBuf++ = HI_UINT16(discoverCmd->startAttr);
-    *pBuf++ = discoverCmd->maxAttrIDs;
+  payload[0] = pDiscoverCmd->startCmdID;
+  payload[1] = pDiscoverCmd->maxCmdID;
 
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER, FALSE,
-                              direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+  // Send message for either commands received or generated
+  if ( cmdType == ZCL_CMD_DISCOVER_CMDS_RECEIVED )
+  {
+    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_CMDS_RECEIVED, FALSE,
+                                direction, disableDefaultRsp, 0, seqNum, sizeof(payload), payload );
+  }
+  else  // generated
+  {
+    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_CMDS_GEN, FALSE,
+                                direction, disableDefaultRsp, 0, seqNum, sizeof(payload), payload );
+  }
+
+  return ( status );
+}
+
+/*********************************************************************
+ * @fn      zcl_SendDiscoverCmdsRspCmd
+ *
+ * @brief   Send a Discover Commands Response command
+ *
+ * @param   dstAddr - destination address
+ * @param   clusterID - cluster ID
+ * @param   pDiscoverRspCmd - response command to be sent
+ * @param   direction - direction of the command
+ * @param   seqNum - transaction sequence number
+ *
+ * @return  ZSuccess if OK
+ */
+ZStatus_t zcl_SendDiscoverCmdsRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
+                                      uint16 clusterID, zclDiscoverCmdsCmdRsp_t *pDiscoverRspCmd,
+                                      uint8 direction, uint8 disableDefaultRsp, uint8 seqNum )
+{
+  uint8 payloadSize = ( 1 + pDiscoverRspCmd->numCmd );  // size of discovery complete field plus cmds
+  uint8 *pCmdBuf;
+  uint8 i;
+  ZStatus_t status = ZSuccess;
+
+  // allocate memory
+  pCmdBuf = zcl_mem_alloc( payloadSize );
+  if ( pCmdBuf != NULL )
+  {
+    uint8 *pBuf = pCmdBuf;
+
+    // Load the buffer - serially
+    *pBuf++ = pDiscoverRspCmd->discComplete;
+    for ( i = 0; i < pDiscoverRspCmd->numCmd; i++ )
+    {
+      *pBuf++ = pDiscoverRspCmd->pCmdID[i];
+    }
+
+    // Send response message for either commands received or generated
+    if( pDiscoverRspCmd->cmdType == ZCL_CMD_DISCOVER_CMDS_RECEIVED )
+    {
+      status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_CMDS_RECEIVED_RSP, FALSE,
+                                direction, disableDefaultRsp, 0, seqNum, payloadSize, pCmdBuf );
+    }
+    else if ( pDiscoverRspCmd->cmdType == ZCL_CMD_DISCOVER_CMDS_GEN )
+    {
+      status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_CMDS_GEN_RSP, FALSE,
+                                direction, disableDefaultRsp, 0, seqNum, payloadSize, pCmdBuf );
+    }
+
+    zcl_mem_free( pCmdBuf );
   }
   else
   {
@@ -1463,9 +1685,51 @@ ZStatus_t zcl_SendDiscoverCmd( uint8 srcEP, afAddrType_t *dstAddr,
 }
 
 /*********************************************************************
- * @fn      zcl_SendDiscoverRspCmd
+ * @fn      zcl_SendDiscoverAttrsCmd
  *
- * @brief   Send a Discover Response command
+ * @brief   Send a Discover Attributes command
+ *
+ * @param   dstAddr - destination address
+ * @param   clusterID - cluster ID
+ * @param   pDiscoverCmd - discover command to be sent
+ * @param   direction - direction of the command
+ * @param   seqNum - transaction sequence number
+ *
+ * @return  ZSuccess if OK
+ */
+ZStatus_t zcl_SendDiscoverAttrsCmd( uint8 srcEP, afAddrType_t *dstAddr,
+                            uint16 clusterID, zclDiscoverAttrsCmd_t *pDiscoverCmd,
+                            uint8 direction, uint8 disableDefaultRsp, uint8 seqNum )
+{
+  uint8 dataLen = 2 + 1; // Start Attribute ID and Max Attribute IDs
+  uint8 *buf;
+  ZStatus_t status;
+
+  buf = zcl_mem_alloc( dataLen );
+  if ( buf != NULL )
+  {
+    // Load the buffer - serially
+    uint8 *pBuf = buf;
+    *pBuf++ = LO_UINT16(pDiscoverCmd->startAttr);
+    *pBuf++ = HI_UINT16(pDiscoverCmd->startAttr);
+    *pBuf++ = pDiscoverCmd->maxAttrIDs;
+
+    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_ATTRS, FALSE,
+                              direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
+    zcl_mem_free( buf );
+  }
+  else
+  {
+    status = ZMemError;
+  }
+
+  return ( status );
+}
+
+/*********************************************************************
+ * @fn      zcl_SendDiscoverAttrsRspCmd
+ *
+ * @brief   Send a Discover Attributes Response command
  *
  * @param   dstAddr - destination address
  * @param   clusterID - cluster ID
@@ -1475,33 +1739,124 @@ ZStatus_t zcl_SendDiscoverCmd( uint8 srcEP, afAddrType_t *dstAddr,
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendDiscoverRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
-                      uint16 clusterID, zclDiscoverRspCmd_t *discoverRspCmd,
-                      uint8 direction, uint8 disableDefaultRsp, uint8 seqNum )
+ZStatus_t zcl_SendDiscoverAttrsRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
+                          uint16 clusterID, zclDiscoverAttrsRspCmd_t *pDiscoverRspCmd,
+                          uint8 direction, uint8 disableDefaultRsp, uint8 seqNum )
 {
   uint16 dataLen = 1; // Discovery complete
   uint8 *buf;
   ZStatus_t status;
 
   // calculate the size of the command
-  dataLen += discoverRspCmd->numAttr * (2 + 1); // Attribute ID and Data Type
+  dataLen += pDiscoverRspCmd->numAttr * (2 + 1); // Attribute ID and Data Type
 
-  buf = osal_mem_alloc( dataLen );
+  buf = zcl_mem_alloc( dataLen );
+  if ( buf != NULL )
+  {
+    // Load the buffer - serially
+    uint8 i;
+    uint8 *pBuf = buf;
+
+    *pBuf++ = pDiscoverRspCmd->discComplete;
+
+    for ( i = 0; i < pDiscoverRspCmd->numAttr; i++ )
+    {
+      *pBuf++ = LO_UINT16(pDiscoverRspCmd->attrList[i].attrID);
+      *pBuf++ = HI_UINT16(pDiscoverRspCmd->attrList[i].attrID);
+      *pBuf++ = pDiscoverRspCmd->attrList[i].dataType;
+    }
+
+    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_ATTRS_RSP, FALSE,
+                              direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
+    zcl_mem_free( buf );
+  }
+  else
+  {
+    status = ZMemError;
+  }
+
+  return ( status );
+}
+
+/*********************************************************************
+ * @fn      zcl_SendDiscoverAttrsExt
+ *
+ * @brief   Send a Discover Attributes Extended command
+ *
+ * @param   dstAddr - destination address
+ * @param   clusterID - cluster ID
+ * @param   pDiscoverAttrsExt:
+ *            - startAttrID: the first attribute to be selected
+ *            - maxAttrIDs: maximum number of returned attributes
+ * @param   direction - direction of the command
+ * @param   seqNum - transaction sequence number
+ *
+ * @return  ZSuccess if OK
+ */
+ZStatus_t zcl_SendDiscoverAttrsExt( uint8 srcEP, afAddrType_t *dstAddr,
+                            uint16 clusterID, zclDiscoverAttrsCmd_t *pDiscoverAttrsExt,
+                            uint8 direction, uint8 disableDefaultRsp, uint8 seqNum )
+{
+  uint8 buf[3];  // Buffer size equal to Start Attribute ID and Max Attribute IDs
+  ZStatus_t status;
+
+  // Load the buffer - serially
+  buf[0] = LO_UINT16(pDiscoverAttrsExt->startAttr);
+  buf[1] = HI_UINT16(pDiscoverAttrsExt->startAttr);
+  buf[2] = pDiscoverAttrsExt->maxAttrIDs;
+
+  status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_ATTRS_EXT, FALSE,
+                            direction, disableDefaultRsp, 0, seqNum, sizeof( buf ), buf );
+
+  return ( status );
+}
+
+/*********************************************************************
+ * @fn      zcl_SendDiscoverAttrsExtRsp
+ *
+ * @brief   Send a Discover Attributes Extended Response command
+ *
+ * @param   dstAddr - destination address
+ * @param   clusterID - cluster ID
+ * @param   pDiscoverRspCmd:
+ *            - discComplete: indicates whether all requested attributes returned
+ *            - attrID: attribute ID
+ *            - attrDataType: data type of the given attribute
+ *            - attrAccessControl: access control of the given attribute
+ * @param   direction - direction of the command
+ * @param   seqNum - transaction sequence number
+ *
+ * @return  ZSuccess if OK
+ */
+ZStatus_t zcl_SendDiscoverAttrsExtRsp( uint8 srcEP, afAddrType_t *dstAddr,
+                                      uint16 clusterID, zclDiscoverAttrsExtRsp_t *pDiscoverRspCmd,
+                                      uint8 direction, uint8 disableDefaultRsp, uint8 seqNum )
+{
+  uint8 *buf;
+  uint8 i;
+  uint16 dataLen = 1; // Discovery complete
+  ZStatus_t status;
+
+  // calculate the size of the command
+  dataLen += pDiscoverRspCmd->numAttr * (2 + 1 + 1); // Attribute ID, Data Type, and Access Control
+
+  buf = zcl_mem_alloc( dataLen );
   if ( buf != NULL )
   {
     // Load the buffer - serially
     uint8 *pBuf = buf;
-    *pBuf++ = discoverRspCmd->discComplete;
-    for ( uint8 i = 0; i < discoverRspCmd->numAttr; i++ )
+    *pBuf++ = pDiscoverRspCmd->discComplete;
+    for ( i = 0; i < pDiscoverRspCmd->numAttr; i++ )
     {
-      *pBuf++ = LO_UINT16(discoverRspCmd->attrList[i].attrID);
-      *pBuf++ = HI_UINT16(discoverRspCmd->attrList[i].attrID);
-      *pBuf++ = discoverRspCmd->attrList[i].dataType;
+      *pBuf++ = LO_UINT16(pDiscoverRspCmd->aExtAttrInfo[i].attrID);
+      *pBuf++ = HI_UINT16(pDiscoverRspCmd->aExtAttrInfo[i].attrID);
+      *pBuf++ = pDiscoverRspCmd->aExtAttrInfo[i].attrDataType;
+      *pBuf++ = pDiscoverRspCmd->aExtAttrInfo[i].attrAccessControl;
     }
 
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_RSP, FALSE,
+    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_ATTRS_EXT_RSP, FALSE,
                               direction, disableDefaultRsp, 0, seqNum, dataLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -1513,11 +1868,7 @@ ZStatus_t zcl_SendDiscoverRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
 #endif // ZCL_DISCOVER
 
 /*********************************************************************
- * PRIVATE FUNCTIONS
- *********************************************************************/
-
-/*********************************************************************
- * @fn      zclProcessMessageMSG
+ * @fn      zcl_ProcessMessageMSG
  *
  * @brief   Data message processor callback.  This function processes
  *          any incoming data - probably from other devices.  So, based
@@ -1527,7 +1878,7 @@ ZStatus_t zcl_SendDiscoverRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
  *
  * @return  none
  */
-void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
+void zcl_ProcessMessageMSG( afIncomingMSGPacket_t *pkt )
 {
   endPointDesc_t *epDesc;
   zclIncoming_t inMsg;
@@ -1544,6 +1895,7 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
   }
 
   // Initialize
+  rawAFMsg = (afIncomingMSGPacket_t *)pkt;
   inMsg.msg = pkt;
   inMsg.attrCmd = NULL;
   inMsg.pData = NULL;
@@ -1557,6 +1909,7 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
   epDesc = afFindEndPointDesc( pkt->endPoint );
   if ( epDesc == NULL )
   {
+    rawAFMsg = NULL;
     return;   // Error, ignore the message
   }
 
@@ -1564,6 +1917,7 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
        ( zcl_DeviceOperational( pkt->endPoint, pkt->clusterId, inMsg.hdr.fc.type,
                                 inMsg.hdr.commandID, epDesc->simpleDesc->AppProfId ) == FALSE ) )
   {
+    rawAFMsg = NULL;
     return; // Error, ignore the message
   }
 
@@ -1571,11 +1925,12 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
   if ( StubAPS_InterPan( pkt->srcAddr.panId, pkt->srcAddr.endPoint ) )
   {
     // No foundation command is supported thru Inter-PAN communication.
-    // But the Smart Light cluster uses a different Frame Control format
+    // But the Light Link cluster uses a different Frame Control format
     // for it's Inter-PAN messages, where the messages could be confused
     // with the foundation commands.
-    if ( !ZCL_CLUSTER_ID_SL( pkt->clusterId ) && zcl_ProfileCmd( inMsg.hdr.fc.type ) )
+    if ( zcl_ProfileCmd( inMsg.hdr.fc.type ) )
     {
+      rawAFMsg = NULL;
       return;
     }
 
@@ -1596,28 +1951,27 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
   if ( ( pInPlugin != NULL ) && !zcl_DefaultRspCmd( inMsg.hdr ) )
   {
     securityEnable = ( options & AF_EN_SECURITY ) ? TRUE : FALSE;
-    if ( pkt->SecurityUse != securityEnable )
+
+    // Make sure that Clusters specifically defined to use security are received secure,
+    // any other cluster that wants to use APS security will be allowed
+    if ( ( securityEnable == TRUE ) && ( pkt->SecurityUse == FALSE ) )
     {
       if ( UNICAST_MSG( inMsg.msg ) )
       {
         // Send a Default Response command back with no Application Link Key security
-        if ( securityEnable )
-        {
-          zclSetSecurityOption( pkt->endPoint, pkt->clusterId, FALSE );
-        }
+        zclSetSecurityOption( pkt->endPoint, pkt->clusterId, FALSE );
 
         defautlRspCmd.statusCode = status;
         defautlRspCmd.commandID = inMsg.hdr.commandID;
         zcl_SendDefaultRspCmd( inMsg.msg->endPoint, &(inMsg.msg->srcAddr),
                                inMsg.msg->clusterId, &defautlRspCmd,
-                               ZCL_FRAME_SERVER_CLIENT_DIR, true,
+                               !inMsg.hdr.fc.direction, true,
                                inMsg.hdr.manuCode, inMsg.hdr.transSeqNum );
-        if ( securityEnable )
-        {
-          zclSetSecurityOption( pkt->endPoint, pkt->clusterId, TRUE );
-        }
+
+        zclSetSecurityOption( pkt->endPoint, pkt->clusterId, TRUE );
       }
 
+      rawAFMsg = NULL;
       return;   // Error, ignore the message
     }
   }
@@ -1653,11 +2007,12 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
       // Free the buffer
       if ( inMsg.attrCmd )
       {
-        osal_mem_free( inMsg.attrCmd );
+        zcl_mem_free( inMsg.attrCmd );
       }
 
       if ( CMD_HAS_RSP( inMsg.hdr.commandID ) )
       {
+        rawAFMsg = NULL;
         return; // We're done
       }
 
@@ -1683,6 +2038,7 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
       status = pInPlugin->pfnIncomingHdlr( &inMsg );
       if ( status == ZCL_STATUS_CMD_HAS_RSP || ( interPanMsg && status == ZSuccess ) )
       {
+        rawAFMsg = NULL;
         return; // We're done
       }
     }
@@ -1708,10 +2064,16 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
     defautlRspCmd.commandID = inMsg.hdr.commandID;
     zcl_SendDefaultRspCmd( inMsg.msg->endPoint, &(inMsg.msg->srcAddr),
                            inMsg.msg->clusterId, &defautlRspCmd,
-                           ZCL_FRAME_SERVER_CLIENT_DIR, true,
+                           !inMsg.hdr.fc.direction, true,
                            inMsg.hdr.manuCode, inMsg.hdr.transSeqNum );
   }
+
+  rawAFMsg = NULL;
 }
+
+/*********************************************************************
+ * PRIVATE FUNCTIONS
+ *********************************************************************/
 
 /*********************************************************************
  * @fn      zclParseHdr
@@ -1726,7 +2088,7 @@ void zclProcessMessageMSG( afIncomingMSGPacket_t *pkt )
 uint8 *zclParseHdr( zclFrameHdr_t *hdr, uint8 *pData )
 {
   // Clear the header
-  osal_memset( (uint8 *)hdr, 0, sizeof ( zclFrameHdr_t ) );
+  zcl_memset( (uint8 *)hdr, 0, sizeof ( zclFrameHdr_t ) );
 
   // Parse the Frame Control
   hdr->fc.type = zcl_FCType( *pData );
@@ -1831,9 +2193,9 @@ static uint8 zclCalcHdrSize( zclFrameHdr_t *hdr )
  */
 static zclLibPlugin_t *zclFindPlugin( uint16 clusterID, uint16 profileID )
 {
-  (void)profileID;  // Intentionally unreferenced parameter
-
   zclLibPlugin_t *pLoop = plugins;
+
+  (void)profileID;  // Intentionally unreferenced parameter
 
   while ( pLoop != NULL )
   {
@@ -1847,6 +2209,67 @@ static zclLibPlugin_t *zclFindPlugin( uint16 clusterID, uint16 profileID )
 
   return ( (zclLibPlugin_t *)NULL );
 }
+
+#ifdef ZCL_DISCOVER
+/*********************************************************************
+ * @fn      zclFindCmdRecsList
+ *
+ * @brief   Find the right command record list for an endpoint
+ *
+ * @param   endpoint - endpoint to look for
+ *
+ * @return  pointer to record list, NULL if not found
+ */
+static zclCmdRecsList_t *zclFindCmdRecsList( uint8 endpoint )
+{
+  zclCmdRecsList_t *pLoop = gpCmdList;
+
+  while ( pLoop != NULL )
+  {
+    if ( pLoop->endpoint == endpoint )
+    {
+      return ( pLoop );
+    }
+
+    pLoop = pLoop->pNext;
+  }
+
+  return ( NULL );
+}
+
+/*********************************************************************
+ * @fn      zclFindCmdRec
+ *
+ * @brief   Find the command record that matchs the parameters
+ *
+ * @param   endpoint - Application's endpoint
+ * @param   clusterID - cluster ID
+ * @param   attrId - attribute looking for
+ * @param   pAttr - attribute record to be returned
+ *
+ * @return  TRUE if record found. FALSE, otherwise.
+ */
+uint8 zclFindCmdRec( uint8 endpoint, uint16 clusterID, uint8 cmdID, zclCommandRec_t *pCmd )
+{
+  uint8 i;
+  zclCmdRecsList_t *pRec = zclFindCmdRecsList( endpoint );
+
+  if ( pRec != NULL )
+  {
+    for ( i = 0; i < pRec->numCommands; i++ )
+    {
+      if ( pRec->pCmdRecs[i].clusterID == clusterID && pRec->pCmdRecs[i].cmdID == cmdID )
+      {
+        *pCmd = pRec->pCmdRecs[i];
+
+        return ( TRUE ); // EMBEDDED RETURN
+      }
+    }
+  }
+
+  return ( FALSE );
+}
+#endif // ZCL_DISCOVER
 
 /*********************************************************************
  * @fn      zclFindAttrRecsList
@@ -1971,7 +2394,8 @@ static zclOptionRec_t *zclFindClusterOption( uint8 endpoint, uint16 clusterID )
   {
     if ( pLoop->endpoint == endpoint )
     {
-      for ( uint8 x = 0; x < pLoop->numOptions; x++ )
+      uint8 x;
+      for ( x = 0; x < pLoop->numOptions; x++ )
       {
         if ( pLoop->options[x].clusterID == clusterID )
         {
@@ -2047,6 +2471,86 @@ static void zclSetSecurityOption( uint8 endpoint, uint16 clusterID, uint8 enable
 
 #ifdef ZCL_DISCOVER
 /*********************************************************************
+ * @fn      zclFindNextCmdRec
+ *
+ * @brief   Find the command (or next) record that matchs the parameters
+ *
+ * @param   endpoint - Application's endpoint
+ * @param   clusterID - cluster ID
+ * @param   commandID - command ID from requesting command
+ * @param   direction- direction of received command
+ * @param   pCmdID - command looking for
+ * @param   pCmd - command information within command record list
+ *
+ * @return  pointer to command record, NULL no more records of this cluster
+ */
+static uint8 zclFindNextCmdRec( uint8 endpoint, uint16 clusterID, uint8 commandID,
+                                uint8 direction, uint8 *pCmdID, zclCommandRec_t *pCmd )
+{
+  zclCmdRecsList_t *pRec = zclFindCmdRecsList( endpoint );
+  uint8 i;
+
+  if ( pRec != NULL )
+  {
+    for ( i = 0; i < pRec->numCommands; i++ )
+    {
+      if ( ( pRec->pCmdRecs[i].clusterID == clusterID ) &&
+          ( pRec->pCmdRecs[i].cmdID >= *pCmdID ) )
+      {
+        if ( commandID == ZCL_CMD_DISCOVER_CMDS_RECEIVED )
+        {
+          if ( ( direction == ZCL_FRAME_SERVER_CLIENT_DIR ) && ( pRec->pCmdRecs[i].flag & CMD_DIR_CLIENT_RECEIVED ) )
+          {
+            *pCmd = pRec->pCmdRecs[i];
+
+            // Update command ID
+            *pCmdID = pCmd->cmdID;
+
+            return ( TRUE ); // EMBEDDED RETURN
+          }
+          else if ( ( direction == ZCL_FRAME_CLIENT_SERVER_DIR ) && ( pRec->pCmdRecs[i].flag & CMD_DIR_SERVER_RECEIVED ) )
+          {
+            *pCmd = pRec->pCmdRecs[i];
+
+            // Update command ID
+            *pCmdID = pCmd->cmdID;
+
+            return ( TRUE ); // EMBEDDED RETURN
+          }
+        }
+        else if ( commandID == ZCL_CMD_DISCOVER_CMDS_GEN )
+        {
+          if ( ( direction == ZCL_FRAME_CLIENT_SERVER_DIR ) && ( pRec->pCmdRecs[i].flag & CMD_DIR_SERVER_GENERATED ) )
+          {
+            *pCmd = pRec->pCmdRecs[i];
+
+            // Update command ID
+            *pCmdID = pCmd->cmdID;
+
+            return ( TRUE ); // EMBEDDED RETURN
+          }
+          else if ( ( direction == ZCL_FRAME_SERVER_CLIENT_DIR ) && ( pRec->pCmdRecs[i].flag & CMD_DIR_CLIENT_GENERATED ) )
+          {
+            *pCmd = pRec->pCmdRecs[i];
+
+            // Update command ID
+            *pCmdID = pCmd->cmdID;
+
+            return ( TRUE ); // EMBEDDED RETURN
+          }
+        }
+        else
+        {
+          return ( FALSE ); // Incorrect Command ID
+        }
+      }
+    }
+  }
+
+  return ( FALSE );
+}
+
+/*********************************************************************
  * @fn      zclFindNextAttrRec
  *
  * @brief   Find the attribute (or next) record that matchs the parameters
@@ -2057,10 +2561,11 @@ static void zclSetSecurityOption( uint8 endpoint, uint16 clusterID, uint8 enable
  *
  * @return  pointer to attribute record, NULL if not found
  */
-static uint8 zclFindNextAttrRec( uint8 endpoint, uint16 clusterID,
+static uint8 zclFindNextAttrRec( uint8 endpoint, uint16 clusterID, uint8 direction,
                                  uint16 *attrId, zclAttrRec_t *pAttr )
 {
   zclAttrRecsList *pRec = zclFindAttrRecsList( endpoint );
+  uint8 attrDir;
 
   if ( pRec != NULL )
   {
@@ -2069,12 +2574,16 @@ static uint8 zclFindNextAttrRec( uint8 endpoint, uint16 clusterID,
       if ( ( pRec->attrs[x].clusterID == clusterID ) &&
            ( pRec->attrs[x].attr.attrId >= *attrId ) )
       {
-        *pAttr = pRec->attrs[x];
+        // also make sure direction is right
+        attrDir = (pRec->attrs[x].attr.accessControl & ACCESS_CLIENT) ? 1 : 0;
+        if ( attrDir == direction )
+        {
+          // return attribute and found attribute ID
+          *pAttr = pRec->attrs[x];
+          *attrId = pAttr->attr.attrId;
 
-        // Update attribute ID
-        *attrId = pAttr->attr.attrId;
-
-        return ( TRUE ); // EMBEDDED RETURN
+          return ( TRUE ); // EMBEDDED RETURN
+        }
       }
     }
   }
@@ -2088,6 +2597,7 @@ static uint8 zclFindNextAttrRec( uint8 endpoint, uint16 clusterID,
  *
  * @brief   Builds a buffer from the attribute data to sent out over
  *          the air.
+ *          NOTE - Not compatible with application's attributes callbacks.
  *
  * @param   dataType - data types defined in zcl.h
  * @param   attrData - pointer to the attribute data
@@ -2099,6 +2609,11 @@ uint8 *zclSerializeData( uint8 dataType, void *attrData, uint8 *buf )
 {
   uint8 *pStr;
   uint16 len;
+
+  if ( attrData == NULL )
+  {
+    return ( buf );
+  }
 
   switch ( dataType )
   {
@@ -2141,41 +2656,41 @@ uint8 *zclSerializeData( uint8 dataType, void *attrData, uint8 *buf )
     case ZCL_DATATYPE_DATE:
     case ZCL_DATATYPE_UTC:
     case ZCL_DATATYPE_BAC_OID:
-      buf = osal_buffer_uint32( buf, *((uint32*)attrData) );
+      buf = zcl_buffer_uint32( buf, *((uint32*)attrData) );
       break;
 
     case ZCL_DATATYPE_UINT40:
       pStr = (uint8*)attrData;
-      buf = osal_memcpy( buf, pStr, 5 );
+      buf = zcl_memcpy( buf, pStr, 5 );
       break;
 
     case ZCL_DATATYPE_UINT48:
       pStr = (uint8*)attrData;
-      buf = osal_memcpy( buf, pStr, 6 );
+      buf = zcl_memcpy( buf, pStr, 6 );
       break;
 
     case ZCL_DATATYPE_IEEE_ADDR:
       pStr = (uint8*)attrData;
-      buf = osal_memcpy( buf, pStr, 8 );
+      buf = zcl_memcpy( buf, pStr, 8 );
       break;
 
     case ZCL_DATATYPE_CHAR_STR:
     case ZCL_DATATYPE_OCTET_STR:
       pStr = (uint8*)attrData;
       len = *pStr;
-      buf = osal_memcpy( buf, pStr, len+1 ); // Including length field
+      buf = zcl_memcpy( buf, pStr, len+1 ); // Including length field
       break;
 
     case ZCL_DATATYPE_LONG_CHAR_STR:
     case ZCL_DATATYPE_LONG_OCTET_STR:
       pStr = (uint8*)attrData;
       len = BUILD_UINT16( pStr[0], pStr[1] );
-      buf = osal_memcpy( buf, pStr, len+2 ); // Including length field
+      buf = zcl_memcpy( buf, pStr, len+2 ); // Including length field
       break;
 
     case ZCL_DATATYPE_128_BIT_SEC_KEY:
       pStr = (uint8*)attrData;
-      buf = osal_memcpy( buf, pStr, SEC_KEY_LEN );
+      buf = zcl_memcpy( buf, pStr, SEC_KEY_LEN );
       break;
 
     case ZCL_DATATYPE_NO_DATA:
@@ -2239,6 +2754,22 @@ uint8 zclAnalogDataType( uint8 dataType )
 }
 
 /*********************************************************************
+ * @fn      zclIsLittleEndianMachine
+ *
+ * @brief   Verifies endianness in system.
+ *
+ * @param   none
+ *
+ * @return  MSB-00 or LSB-01 depending on endianness in the system
+ */
+static int zclIsLittleEndianMachine(void)
+{
+  uint16 test = 0x0001;
+
+  return (*((uint8 *)(&test)));
+}
+
+/*********************************************************************
  * @fn      zcl_BuildAnalogData
  *
  * @brief   Build an analog arribute out of sequential bytes.
@@ -2249,50 +2780,30 @@ uint8 zclAnalogDataType( uint8 dataType )
  *
  * @return  none
  */
-static void zcl_BuildAnalogData( uint8 dataType, uint8 *pData, uint8 *pBuf)
+static void zcl_BuildAnalogData( uint8 dataType, uint8 *pData, uint8 *pBuf )
 {
-  switch ( dataType )
+  int current_byte_index;
+  int remaining_bytes;
+  int step;
+
+  remaining_bytes = zclGetAttrDataLength(dataType, pData);
+
+  // decide if move forward or backwards to copy data
+  if ( zclIsLittleEndianMachine() )
   {
-    case ZCL_DATATYPE_UINT8:
-    case ZCL_DATATYPE_INT8:
-      *pData = *pBuf;
-      break;
+    step = 1;
+    current_byte_index = 0;
+  }
+  else
+  {
+    step = -1;
+    current_byte_index = remaining_bytes - 1;
+  }
 
-    case ZCL_DATATYPE_UINT16:
-    case ZCL_DATATYPE_INT16:
-    case ZCL_DATATYPE_SEMI_PREC:
-      *((uint16*)pData) = BUILD_UINT16( pBuf[0], pBuf[1] );
-      break;
-
-    case ZCL_DATATYPE_UINT24:
-    case ZCL_DATATYPE_INT24:
-      *((uint32*)pData) = osal_build_uint32( pBuf, 3 );
-      break;
-
-    case ZCL_DATATYPE_UINT32:
-    case ZCL_DATATYPE_INT32:
-    case ZCL_DATATYPE_SINGLE_PREC:
-    case ZCL_DATATYPE_TOD:
-    case ZCL_DATATYPE_DATE:
-    case ZCL_DATATYPE_UTC:
-      *((uint32*)pData) = osal_build_uint32( pBuf, 4 );
-      break;
-
-    case ZCL_DATATYPE_UINT40:
-    case ZCL_DATATYPE_UINT48:
-    case ZCL_DATATYPE_UINT56:
-    case ZCL_DATATYPE_UINT64:
-    case ZCL_DATATYPE_INT40:
-    case ZCL_DATATYPE_INT48:
-    case ZCL_DATATYPE_INT56:
-    case ZCL_DATATYPE_INT64:
-    case ZCL_DATATYPE_DOUBLE_PREC:
-      *pData = 0;
-      break;
-
-    default:
-      *pData = 0;
-      break;
+  while ( remaining_bytes-- )
+  {
+    pData[current_byte_index] = *(pBuf++);
+    current_byte_index += step;
   }
 }
 #endif // ZCL_REPORT
@@ -2422,10 +2933,12 @@ uint16 zclGetAttrDataLength( uint8 dataType, uint8 *pData )
   return ( dataLen );
 }
 
+#ifdef ZCL_READ
 /*********************************************************************
  * @fn      zclReadAttrData
  *
  * @brief   Read the attribute's current value into pAttrData.
+ *          NOTE - Not compatible with application's attributes callbacks.
  *
  * @param   pAttrData - where to put attribute data
  * @param   pAttr - pointer to attribute
@@ -2433,12 +2946,17 @@ uint16 zclGetAttrDataLength( uint8 dataType, uint8 *pData )
  *
  * @return Success
  */
-uint8 zclReadAttrData( uint8 *pAttrData, zclAttrRec_t *pAttr, uint16 *pDataLen )
+ZStatus_t zclReadAttrData( uint8 *pAttrData, zclAttrRec_t *pAttr, uint16 *pDataLen )
 {
   uint16 dataLen;
 
+  if ( pAttr->attr.dataPtr == NULL )
+  {
+    return ( ZCL_STATUS_FAILURE );
+  }
+
   dataLen = zclGetAttrDataLength( pAttr->attr.dataType, (uint8*)(pAttr->attr.dataPtr) );
-  osal_memcpy( pAttrData, pAttr->attr.dataPtr, dataLen );
+  zcl_memcpy( pAttrData, pAttr->attr.dataPtr, dataLen );
 
   if ( pDataLen != NULL )
   {
@@ -2448,7 +2966,40 @@ uint8 zclReadAttrData( uint8 *pAttrData, zclAttrRec_t *pAttr, uint16 *pDataLen )
   return ( ZCL_STATUS_SUCCESS );
 }
 
-#ifdef ZCL_READ
+/*********************************************************************
+ * @fn      zcl_ReadAttrData
+ *
+ * @brief   Read the attribute's current value into pAttrData.
+ *          Use application's callback function if assigned to this attribute.
+ *
+ * @param   endpoint - application's endpoint
+ * @param   clusterId - cluster that attribute belongs to
+ * @param   attrId - attribute id
+ * @param   pAttrData - where to put attribute data
+ * @param   pDataLen - where to put attribute data length
+ *
+ * @return  Successful if data was read
+ */
+ZStatus_t zcl_ReadAttrData( uint8 endpoint, uint16 clusterId, uint16 attrId,
+                                         uint8 *pAttrData, uint16 *pDataLen )
+{
+  zclAttrRec_t attrRec;
+
+  if ( zclFindAttrRec( endpoint, clusterId, attrId, &attrRec ) == FALSE )
+  {
+    return ( ZCL_STATUS_FAILURE );
+  }
+
+  if ( attrRec.attr.dataPtr != NULL )
+  {
+    return zclReadAttrData( pAttrData, &attrRec, pDataLen );
+  }
+  else
+  {
+    return zclReadAttrDataUsingCB( endpoint, clusterId, attrId, pAttrData, pDataLen );
+  }
+}
+
 /*********************************************************************
  * @fn      zclGetAttrDataLengthUsingCB
  *
@@ -2563,7 +3114,7 @@ static ZStatus_t zclWriteAttrData( uint8 endpoint, afAddrType_t *srcAddr,
       {
         // Write the attribute value
         uint16 len = zclGetAttrDataLength( pAttr->attr.dataType, pWriteRec->attrData );
-        osal_memcpy( pAttr->attr.dataPtr, pWriteRec->attrData, len );
+        zcl_memcpy( pAttr->attr.dataPtr, pWriteRec->attrData, len );
 
         status = ZCL_STATUS_SUCCESS;
       }
@@ -2671,11 +3222,12 @@ void *zclParseInReadCmd( zclParseCmd_t *pCmd )
   zclReadCmd_t *readCmd;
   uint8 *pBuf = pCmd->pData;
 
-  readCmd = (zclReadCmd_t *)osal_mem_alloc( sizeof ( zclReadCmd_t ) + pCmd->dataLen );
+  readCmd = (zclReadCmd_t *)zcl_mem_alloc( sizeof ( zclReadCmd_t ) + pCmd->dataLen );
   if ( readCmd != NULL )
   {
+    uint8 i;
     readCmd->numAttr = pCmd->dataLen / 2; // Atrribute ID
-    for ( uint8 i = 0; i < readCmd->numAttr; i++ )
+    for ( i = 0; i < readCmd->numAttr; i++ )
     {
       readCmd->attrID[i] = BUILD_UINT16( pBuf[0], pBuf[1] );
       pBuf += 2;
@@ -2736,14 +3288,15 @@ static void *zclParseInReadRspCmd( zclParseCmd_t *pCmd )
   // calculate the length of the response header
   hdrLen = sizeof( zclReadRspCmd_t ) + ( numAttr * sizeof( zclReadRspStatus_t ) );
 
-  readRspCmd = (zclReadRspCmd_t *)osal_mem_alloc( hdrLen + dataLen );
+  readRspCmd = (zclReadRspCmd_t *)zcl_mem_alloc( hdrLen + dataLen );
   if ( readRspCmd != NULL )
   {
+    uint8 i;
     pBuf = pCmd->pData;
     dataPtr = (uint8 *)( (uint8 *)readRspCmd + hdrLen );
 
     readRspCmd->numAttr = numAttr;
-    for ( uint8 i = 0; i < numAttr; i++ )
+    for ( i = 0; i < numAttr; i++ )
     {
       zclReadRspStatus_t *statusRec = &(readRspCmd->attrList[i]);
 
@@ -2756,7 +3309,7 @@ static void *zclParseInReadRspCmd( zclParseCmd_t *pCmd )
         statusRec->dataType = *pBuf++;
 
         attrDataLen = zclGetAttrDataLength( statusRec->dataType, pBuf );
-        osal_memcpy( dataPtr, pBuf, attrDataLen);
+        zcl_memcpy( dataPtr, pBuf, attrDataLen);
         statusRec->data = dataPtr;
 
         pBuf += attrDataLen; // move pass attribute data
@@ -2825,14 +3378,15 @@ void *zclParseInWriteCmd( zclParseCmd_t *pCmd )
   // calculate the length of the response header
   hdrLen = sizeof( zclWriteCmd_t ) + ( numAttr * sizeof( zclWriteRec_t ) );
 
-  writeCmd = (zclWriteCmd_t *)osal_mem_alloc( hdrLen + dataLen );
+  writeCmd = (zclWriteCmd_t *)zcl_mem_alloc( hdrLen + dataLen );
   if ( writeCmd != NULL )
   {
+    uint8 i;
     pBuf = pCmd->pData;
     dataPtr = (uint8 *)( (uint8 *)writeCmd + hdrLen );
 
     writeCmd->numAttr = numAttr;
-    for ( uint8 i = 0; i < numAttr; i++ )
+    for ( i = 0; i < numAttr; i++ )
     {
       zclWriteRec_t *statusRec = &(writeCmd->attrList[i]);
 
@@ -2841,7 +3395,7 @@ void *zclParseInWriteCmd( zclParseCmd_t *pCmd )
       statusRec->dataType = *pBuf++;
 
       attrDataLen = zclGetAttrDataLength( statusRec->dataType, pBuf );
-      osal_memcpy( dataPtr, pBuf, attrDataLen);
+      zcl_memcpy( dataPtr, pBuf, attrDataLen);
       statusRec->attrData = dataPtr;
 
       pBuf += attrDataLen; // move pass attribute data
@@ -2877,7 +3431,7 @@ static void *zclParseInWriteRspCmd( zclParseCmd_t *pCmd )
   uint8 *pBuf = pCmd->pData;
   uint8 i = 0;
 
-  writeRspCmd = (zclWriteRspCmd_t *)osal_mem_alloc( sizeof ( zclWriteRspCmd_t ) + pCmd->dataLen );
+  writeRspCmd = (zclWriteRspCmd_t *)zcl_mem_alloc( sizeof ( zclWriteRspCmd_t ) + pCmd->dataLen );
   if ( writeRspCmd != NULL )
   {
     if ( pCmd->dataLen == 1 )
@@ -2955,6 +3509,10 @@ void *zclParseInConfigReportCmd( zclParseCmd_t *pCmd )
 
         dataLen += reportChangeLen;
       }
+      else
+      {
+        pBuf++; // move past reportable change field
+      }
     }
     else
     {
@@ -2964,18 +3522,19 @@ void *zclParseInConfigReportCmd( zclParseCmd_t *pCmd )
 
   hdrLen = sizeof( zclCfgReportCmd_t ) + ( numAttr * sizeof( zclCfgReportRec_t ) );
 
-  cfgReportCmd = (zclCfgReportCmd_t *)osal_mem_alloc( hdrLen + dataLen );
+  cfgReportCmd = (zclCfgReportCmd_t *)zcl_mem_alloc( hdrLen + dataLen );
   if ( cfgReportCmd != NULL )
   {
+    uint8 i;
     pBuf = pCmd->pData;
     dataPtr = (uint8 *)( (uint8 *)cfgReportCmd + hdrLen );
 
     cfgReportCmd->numAttr = numAttr;
-    for ( uint8 i = 0; i < numAttr; i++ )
+    for ( i = 0; i < numAttr; i++ )
     {
       zclCfgReportRec_t *reportRec = &(cfgReportCmd->attrList[i]);
 
-      osal_memset( reportRec, 0, sizeof( zclCfgReportRec_t ) );
+      zcl_memset( reportRec, 0, sizeof( zclCfgReportRec_t ) );
 
       reportRec->direction = *pBuf++;
       reportRec->attrID = BUILD_UINT16( pBuf[0], pBuf[1] );
@@ -3039,12 +3598,13 @@ static void *zclParseInConfigReportRspCmd( zclParseCmd_t *pCmd )
 
   numAttr = pCmd->dataLen / ( 1 + 1 + 2 ); // Status + Direction + Attribute ID
 
-  cfgReportRspCmd = (zclCfgReportRspCmd_t *)osal_mem_alloc( sizeof( zclCfgReportRspCmd_t )
+  cfgReportRspCmd = (zclCfgReportRspCmd_t *)zcl_mem_alloc( sizeof( zclCfgReportRspCmd_t )
                                             + ( numAttr * sizeof( zclCfgReportStatus_t ) ) );
   if ( cfgReportRspCmd != NULL )
   {
+    uint8 i;
     cfgReportRspCmd->numAttr = numAttr;
-    for ( uint8 i = 0; i < cfgReportRspCmd->numAttr; i++ )
+    for ( i = 0; i < cfgReportRspCmd->numAttr; i++ )
     {
       cfgReportRspCmd->attrList[i].status = *pBuf++;
       cfgReportRspCmd->attrList[i].direction = *pBuf++;
@@ -3076,12 +3636,13 @@ void *zclParseInReadReportCfgCmd( zclParseCmd_t *pCmd )
 
   numAttr = pCmd->dataLen / ( 1 + 2 ); // Direction + Attribute ID
 
-  readReportCfgCmd = (zclReadReportCfgCmd_t *)osal_mem_alloc( sizeof( zclReadReportCfgCmd_t )
+  readReportCfgCmd = (zclReadReportCfgCmd_t *)zcl_mem_alloc( sizeof( zclReadReportCfgCmd_t )
                                                   + ( numAttr * sizeof( zclReadReportCfgRec_t ) ) );
   if ( readReportCfgCmd != NULL )
   {
+    uint8 i;
     readReportCfgCmd->numAttr = numAttr;
-    for ( uint8 i = 0; i < readReportCfgCmd->numAttr; i++)
+    for ( i = 0; i < readReportCfgCmd->numAttr; i++)
     {
       readReportCfgCmd->attrList[i].direction = *pBuf++;;
       readReportCfgCmd->attrList[i].attrID = BUILD_UINT16( pBuf[0], pBuf[1] );
@@ -3156,14 +3717,15 @@ static void *zclParseInReadReportCfgRspCmd( zclParseCmd_t *pCmd )
 
   hdrLen = sizeof( zclReadReportCfgRspCmd_t ) + ( numAttr * sizeof( zclReportCfgRspRec_t ) );
 
-  readReportCfgRspCmd = (zclReadReportCfgRspCmd_t *)osal_mem_alloc( hdrLen + dataLen );
+  readReportCfgRspCmd = (zclReadReportCfgRspCmd_t *)zcl_mem_alloc( hdrLen + dataLen );
   if ( readReportCfgRspCmd != NULL )
   {
+    uint8 i;
     pBuf = pCmd->pData;
     dataPtr = (uint8 *)( (uint8 *)readReportCfgRspCmd + hdrLen );
 
     readReportCfgRspCmd->numAttr = numAttr;
-    for ( uint8 i = 0; i < numAttr; i++ )
+    for ( i = 0; i < numAttr; i++ )
     {
       zclReportCfgRspRec_t *reportRspRec = &(readReportCfgRspCmd->attrList[i]);
 
@@ -3257,14 +3819,15 @@ void *zclParseInReportCmd( zclParseCmd_t *pCmd )
 
   hdrLen = sizeof( zclReportCmd_t ) + ( numAttr * sizeof( zclReport_t ) );
 
-  reportCmd = (zclReportCmd_t *)osal_mem_alloc( hdrLen + dataLen );
+  reportCmd = (zclReportCmd_t *)zcl_mem_alloc( hdrLen + dataLen );
   if (reportCmd != NULL )
   {
+    uint8 i;
     pBuf = pCmd->pData;
     dataPtr = (uint8 *)( (uint8 *)reportCmd + hdrLen );
 
     reportCmd->numAttr = numAttr;
-    for ( uint8 i = 0; i < numAttr; i++ )
+    for ( i = 0; i < numAttr; i++ )
     {
       zclReport_t *reportRec = &(reportCmd->attrList[i]);
 
@@ -3273,7 +3836,7 @@ void *zclParseInReportCmd( zclParseCmd_t *pCmd )
       reportRec->dataType = *pBuf++;
 
       attrDataLen = zclGetAttrDataLength( reportRec->dataType, pBuf );
-      osal_memcpy( dataPtr, pBuf, attrDataLen );
+      zcl_memcpy( dataPtr, pBuf, attrDataLen );
       reportRec->attrData = dataPtr;
 
       pBuf += attrDataLen; // move pass attribute data
@@ -3309,7 +3872,7 @@ static void *zclParseInDefaultRspCmd( zclParseCmd_t *pCmd )
   zclDefaultRspCmd_t *defaultRspCmd;
   uint8 *pBuf = pCmd->pData;
 
-  defaultRspCmd = (zclDefaultRspCmd_t *)osal_mem_alloc( sizeof ( zclDefaultRspCmd_t ) );
+  defaultRspCmd = (zclDefaultRspCmd_t *)zcl_mem_alloc( sizeof ( zclDefaultRspCmd_t ) );
   if ( defaultRspCmd != NULL )
   {
     defaultRspCmd->commandID = *pBuf++;
@@ -3321,9 +3884,9 @@ static void *zclParseInDefaultRspCmd( zclParseCmd_t *pCmd )
 
 #ifdef ZCL_DISCOVER
 /*********************************************************************
- * @fn      zclParseInDiscCmd
+ * @fn      zclParseInDiscAttrsCmd
  *
- * @brief   Parse the "Profile" Discovery Commands
+ * @brief   Parse the "Profile" Discovery Attributes and Attributes Extended Commands
  *
  *      NOTE: THIS FUNCTION ALLOCATES THE RETURN BUFFER, SO THE CALLING
  *            FUNCTION IS RESPONSIBLE TO FREE THE MEMORY.
@@ -3332,24 +3895,24 @@ static void *zclParseInDefaultRspCmd( zclParseCmd_t *pCmd )
  *
  * @return  pointer to the parsed command structure
  */
-void *zclParseInDiscCmd( zclParseCmd_t *pCmd )
+void *zclParseInDiscAttrsCmd( zclParseCmd_t *pCmd )
 {
-  zclDiscoverCmd_t *discoverCmd;
+  zclDiscoverAttrsCmd_t *pDiscoverCmd;
   uint8 *pBuf = pCmd->pData;
 
-  discoverCmd = (zclDiscoverCmd_t *)osal_mem_alloc( sizeof ( zclDiscoverCmd_t ) );
-  if ( discoverCmd != NULL )
+  pDiscoverCmd = (zclDiscoverAttrsCmd_t *)zcl_mem_alloc( sizeof ( zclDiscoverAttrsCmd_t ) );
+  if ( pDiscoverCmd != NULL )
   {
-    discoverCmd->startAttr = BUILD_UINT16( pBuf[0], pBuf[1] );
+    pDiscoverCmd->startAttr = BUILD_UINT16( pBuf[0], pBuf[1] );
     pBuf += 2;
-    discoverCmd->maxAttrIDs = *pBuf;
+    pDiscoverCmd->maxAttrIDs = *pBuf;
   }
 
-  return ( (void *)discoverCmd );
+  return ( (void *)pDiscoverCmd );
 }
 
 /*********************************************************************
- * @fn      zclParseInDiscRspCmd
+ * @fn      zclParseInDiscAttrsRspCmd
  *
  * @brief   Parse the "Profile" Discovery Response Commands
  *
@@ -3361,28 +3924,132 @@ void *zclParseInDiscCmd( zclParseCmd_t *pCmd )
  * @return  pointer to the parsed command structure
  */
 #define ZCLDISCRSPCMD_DATALEN(a)  ((a)-1) // data len - Discovery Complete
-static void *zclParseInDiscRspCmd( zclParseCmd_t *pCmd )
+static void *zclParseInDiscAttrsRspCmd( zclParseCmd_t *pCmd )
 {
-  zclDiscoverRspCmd_t *discoverRspCmd;
+  zclDiscoverAttrsRspCmd_t *pDiscoverRspCmd;
   uint8 *pBuf = pCmd->pData;
   uint8 numAttr = ZCLDISCRSPCMD_DATALEN(pCmd->dataLen) / ( 2 + 1 ); // Attr ID + Data Type
 
-  discoverRspCmd = (zclDiscoverRspCmd_t *)osal_mem_alloc( sizeof ( zclDiscoverRspCmd_t )
-                                                 + ( numAttr * sizeof(zclDiscoverInfo_t) ) );
-  if ( discoverRspCmd != NULL )
+  pDiscoverRspCmd = (zclDiscoverAttrsRspCmd_t *)zcl_mem_alloc( sizeof ( zclDiscoverAttrsRspCmd_t ) +
+                    ( numAttr * sizeof(zclDiscoverAttrInfo_t) ) );
+
+  if ( pDiscoverRspCmd != NULL )
   {
-    discoverRspCmd->discComplete = *pBuf++;
-    discoverRspCmd->numAttr = numAttr;
+    pDiscoverRspCmd->discComplete = *pBuf++;
+    pDiscoverRspCmd->numAttr = numAttr;
 
     for ( uint8 i = 0; i < numAttr; i++ )
     {
-      discoverRspCmd->attrList[i].attrID = BUILD_UINT16( pBuf[0], pBuf[1] );
+      pDiscoverRspCmd->attrList[i].attrID = BUILD_UINT16( pBuf[0], pBuf[1] );
       pBuf += 2;
-      discoverRspCmd->attrList[i].dataType = *pBuf++;;
+      pDiscoverRspCmd->attrList[i].dataType = *pBuf++;
     }
   }
 
-  return ( (void *)discoverRspCmd );
+  return ( (void *)pDiscoverRspCmd );
+}
+
+/*********************************************************************
+ * @fn      zclParseInDiscCmdsCmd
+ *
+ * @brief   Parse the "Profile" Discovery Commands
+ *
+ *      NOTE: THIS FUNCTION ALLOCATES THE RETURN BUFFER, SO THE CALLING
+ *            FUNCTION IS RESPONSIBLE TO FREE THE MEMORY.
+ *
+ * @param   pCmd - pointer to incoming data to parse
+ *
+ * @return  pointer to the parsed command structure
+ */
+void *zclParseInDiscCmdsCmd( zclParseCmd_t *pCmd )
+{
+  zclDiscoverCmdsCmd_t *pDiscoverCmd;
+  uint8 *pBuf = pCmd->pData;
+
+  pDiscoverCmd = (zclDiscoverCmdsCmd_t *)zcl_mem_alloc( sizeof ( zclDiscoverCmdsCmd_t ) );
+  if ( pDiscoverCmd != NULL )
+  {
+    pDiscoverCmd->startCmdID = *pBuf++;
+    pDiscoverCmd->maxCmdID = *pBuf++;
+  }
+
+  return ( (void *)pDiscoverCmd );
+}
+
+/*********************************************************************
+ * @fn      zclParseInDiscCmdsRspCmd
+ *
+ * @brief   Parse the Discover Commands Response Command
+ *
+ *      NOTE: THIS FUNCTION ALLOCATES THE RETURN BUFFER, SO THE CALLING
+ *            FUNCTION IS RESPONSIBLE TO FREE THE MEMORY.
+ *
+ * @param   pCmd - pointer to incoming data to parse
+ *
+ * @return  pointer to the parsed command structure
+ */
+#define ZCLDISCRSPCMD_DATALEN(a)  ((a)-1) // data len - Discovery Complete
+static void *zclParseInDiscCmdsRspCmd( zclParseCmd_t *pCmd )
+{
+  zclDiscoverCmdsCmdRsp_t *pDiscoverRspCmd;
+  uint8 *pBuf = pCmd->pData;
+  uint8 i;
+  uint8 numCmds = ZCLDISCRSPCMD_DATALEN(pCmd->dataLen);  // determine length of command ID variable array
+
+  // allocate memory for size of structure plus variable array
+  pDiscoverRspCmd = (zclDiscoverCmdsCmdRsp_t *)zcl_mem_alloc( 1 + numCmds );
+  if ( pDiscoverRspCmd != NULL )
+  {
+    pDiscoverRspCmd->discComplete = *pBuf++;
+    pDiscoverRspCmd->numCmd = numCmds;
+
+    for ( i = 0; i < numCmds; i++ )
+    {
+      pDiscoverRspCmd->pCmdID[i] = *pBuf++;
+    }
+  }
+
+  return ( (void *)pDiscoverRspCmd );
+}
+
+/*********************************************************************
+ * @fn      zclParseInDiscAttrsExtRspCmd
+ *
+ * @brief   Parse the "Profile" Discovery Extended Attributes Response Commands
+ *
+ *      NOTE: THIS FUNCTION ALLOCATES THE RETURN BUFFER, SO THE CALLING
+ *            FUNCTION IS RESPONSIBLE TO FREE THE MEMORY.
+ *
+ * @param   pCmd - pointer to incoming data to parse
+ *
+ * @return  pointer to the parsed command structure
+ */
+#define ZCLDISCRSPCMD_DATALEN(a)  ((a)-1) // data len - Discovery Complete
+static void *zclParseInDiscAttrsExtRspCmd( zclParseCmd_t *pCmd )
+{
+  zclDiscoverAttrsExtRsp_t *pDiscoverRspCmd;
+  uint8 i;
+  uint8 *pBuf = pCmd->pData;
+  uint8 numAttrs = ZCLDISCRSPCMD_DATALEN(pCmd->dataLen) / ( 2 + 1 + 1 ); // Attr ID + Data Type + Access Control
+
+  pDiscoverRspCmd = (zclDiscoverAttrsExtRsp_t *)zcl_mem_alloc( sizeof ( zclDiscoverAttrsExtRsp_t ) +
+                    ( numAttrs * sizeof(zclDiscoverAttrsExtRsp_t) ) );
+
+  if ( pDiscoverRspCmd != NULL )
+  {
+    pDiscoverRspCmd->discComplete = *pBuf++;
+    pDiscoverRspCmd->numAttr = numAttrs;
+
+    for ( i = 0; i < numAttrs; i++ )
+    {
+      pDiscoverRspCmd->aExtAttrInfo[i].attrID = BUILD_UINT16( pBuf[0], pBuf[1] );
+      pBuf += 2;
+      pDiscoverRspCmd->aExtAttrInfo[i].attrDataType = *pBuf++;
+      pDiscoverRspCmd->aExtAttrInfo[i].attrAccessControl = *pBuf++;
+    }
+  }
+
+  return ( (void *)pDiscoverRspCmd );
 }
 #endif // ZCL_DISCOVER
 
@@ -3402,20 +4069,21 @@ static uint8 zclProcessInReadCmd( zclIncoming_t *pInMsg )
   zclReadRspCmd_t *readRspCmd;
   zclAttrRec_t attrRec;
   uint16 len;
+  uint8 i;
 
   readCmd = (zclReadCmd_t *)pInMsg->attrCmd;
 
   // calculate the length of the response status record
   len = sizeof( zclReadRspCmd_t ) + (readCmd->numAttr * sizeof( zclReadRspStatus_t ));
 
-  readRspCmd = osal_mem_alloc( len );
+  readRspCmd = zcl_mem_alloc( len );
   if ( readRspCmd == NULL )
   {
     return FALSE; // EMBEDDED RETURN
   }
 
   readRspCmd->numAttr = readCmd->numAttr;
-  for ( uint8 i = 0; i < readCmd->numAttr; i++ )
+  for ( i = 0; i < readCmd->numAttr; i++ )
   {
     zclReadRspStatus_t *statusRec = &(readRspCmd->attrList[i]);
 
@@ -3447,9 +4115,9 @@ static uint8 zclProcessInReadCmd( zclIncoming_t *pInMsg )
 
   // Build and send Read Response command
   zcl_SendReadRsp( pInMsg->msg->endPoint, &(pInMsg->msg->srcAddr), pInMsg->msg->clusterId,
-                   readRspCmd, ZCL_FRAME_SERVER_CLIENT_DIR,
+                   readRspCmd, !pInMsg->hdr.fc.direction,
                    true, pInMsg->hdr.transSeqNum );
-  osal_mem_free( readRspCmd );
+  zcl_mem_free( readRspCmd );
 
   return TRUE;
 }
@@ -3471,12 +4139,13 @@ static uint8 zclProcessInWriteCmd( zclIncoming_t *pInMsg )
   zclWriteRspCmd_t *writeRspCmd;
   uint8 sendRsp = FALSE;
   uint8 j = 0;
+  uint8 i;
 
   writeCmd = (zclWriteCmd_t *)pInMsg->attrCmd;
   if ( pInMsg->hdr.commandID == ZCL_CMD_WRITE )
   {
     // We need to send a response back - allocate space for it
-    writeRspCmd = (zclWriteRspCmd_t *)osal_mem_alloc( sizeof( zclWriteRspCmd_t )
+    writeRspCmd = (zclWriteRspCmd_t *)zcl_mem_alloc( sizeof( zclWriteRspCmd_t )
             + sizeof( zclWriteRspStatus_t ) * writeCmd->numAttr );
     if ( writeRspCmd == NULL )
     {
@@ -3486,7 +4155,7 @@ static uint8 zclProcessInWriteCmd( zclIncoming_t *pInMsg )
     sendRsp = TRUE;
   }
 
-  for ( uint8 i = 0; i < writeCmd->numAttr; i++ )
+  for ( i = 0; i < writeCmd->numAttr; i++ )
   {
     zclAttrRec_t attrRec;
     zclWriteRec_t *statusRec = &(writeCmd->attrList[i]);
@@ -3552,9 +4221,9 @@ static uint8 zclProcessInWriteCmd( zclIncoming_t *pInMsg )
     }
 
     zcl_SendWriteRsp( pInMsg->msg->endPoint, &(pInMsg->msg->srcAddr),
-                      pInMsg->msg->clusterId, writeRspCmd, ZCL_FRAME_SERVER_CLIENT_DIR,
+                      pInMsg->msg->clusterId, writeRspCmd, !pInMsg->hdr.fc.direction,
                       true, pInMsg->hdr.transSeqNum );
-    osal_mem_free( writeRspCmd );
+    zcl_mem_free( writeRspCmd );
   }
 
   return TRUE;
@@ -3574,7 +4243,9 @@ static uint8 zclProcessInWriteCmd( zclIncoming_t *pInMsg )
 static void zclRevertWriteUndividedCmd( zclIncoming_t *pInMsg,
                                     zclWriteRec_t *curWriteRec, uint16 numAttr )
 {
-  for ( uint8 i = 0; i < numAttr; i++ )
+  uint8 i;
+
+  for ( i = 0; i < numAttr; i++ )
   {
     zclAttrRec_t attrRec;
     zclWriteRec_t *statusRec = &(curWriteRec[i]);
@@ -3589,7 +4260,7 @@ static void zclRevertWriteUndividedCmd( zclIncoming_t *pInMsg,
     {
       // Just copy the old data back - no need to validate the data
       uint16 dataLen = zclGetAttrDataLength( attrRec.attr.dataType, statusRec->attrData );
-      osal_memcpy( attrRec.attr.dataPtr, statusRec->attrData, dataLen );
+      zcl_memcpy( attrRec.attr.dataPtr, statusRec->attrData, dataLen );
     }
     else // Use CB
     {
@@ -3617,11 +4288,12 @@ static uint8 zclProcessInWriteUndividedCmd( zclIncoming_t *pInMsg )
   uint16 dataLen;
   uint16 curLen = 0;
   uint8 j = 0;
+  uint8 i;
 
   writeCmd = (zclWriteCmd_t *)pInMsg->attrCmd;
 
   // Allocate space for Write Response Command
-  writeRspCmd = (zclWriteRspCmd_t *)osal_mem_alloc( sizeof( zclWriteRspCmd_t )
+  writeRspCmd = (zclWriteRspCmd_t *)zcl_mem_alloc( sizeof( zclWriteRspCmd_t )
                    + sizeof( zclWriteRspStatus_t )* writeCmd->numAttr );
   if ( writeRspCmd == NULL )
   {
@@ -3630,7 +4302,7 @@ static uint8 zclProcessInWriteUndividedCmd( zclIncoming_t *pInMsg )
 
   // If any attribute cannot be written, no attribute values are changed. Hence,
   // make sure all the attributes are supported and writable
-  for ( uint8 i = 0; i < writeCmd->numAttr; i++ )
+  for ( i = 0; i < writeCmd->numAttr; i++ )
   {
     zclWriteRec_t *statusRec = &(writeCmd->attrList[i]);
 
@@ -3697,17 +4369,17 @@ static uint8 zclProcessInWriteUndividedCmd( zclIncoming_t *pInMsg )
     uint8 hdrLen = j * sizeof( zclWriteRec_t );
 
     // Allocate space to keep a copy of the current data
-    curWriteRec = (zclWriteRec_t *) osal_mem_alloc( hdrLen + curLen );
+    curWriteRec = (zclWriteRec_t *) zcl_mem_alloc( hdrLen + curLen );
     if ( curWriteRec == NULL )
     {
-      osal_mem_free(writeRspCmd );
+      zcl_mem_free(writeRspCmd );
       return FALSE; // EMBEDDED RETURN
     }
 
     curDataPtr = (uint8 *)((uint8 *)curWriteRec + hdrLen);
 
     // Write the new data over
-    for ( uint8 i = 0; i < writeCmd->numAttr; i++ )
+    for ( i = 0; i < writeCmd->numAttr; i++ )
     {
       uint8 status;
       zclWriteRec_t *statusRec = &(writeCmd->attrList[i]);
@@ -3772,19 +4444,187 @@ static uint8 zclProcessInWriteUndividedCmd( zclIncoming_t *pInMsg )
       writeRspCmd->numAttr = 1;
     }
 
-    osal_mem_free( curWriteRec );
+    zcl_mem_free( curWriteRec );
   }
 
   zcl_SendWriteRsp( pInMsg->msg->endPoint, &(pInMsg->msg->srcAddr),
-                    pInMsg->msg->clusterId, writeRspCmd, ZCL_FRAME_SERVER_CLIENT_DIR,
+                    pInMsg->msg->clusterId, writeRspCmd, !pInMsg->hdr.fc.direction,
                     true, pInMsg->hdr.transSeqNum );
-  osal_mem_free( writeRspCmd );
+  zcl_mem_free( writeRspCmd );
 
   return TRUE;
 }
 #endif // ZCL_WRITE
 
 #ifdef ZCL_DISCOVER
+/*********************************************************************
+ * @fn      zclProcessInDiscAttrs
+ *
+ * @brief   Process the "Profile" Discover Attributes Commands
+ *
+ * @param   pInMsg - incoming message to process
+ *
+ * @return  TRUE if command processed. FALSE, otherwise.
+ */
+static uint8 zclProcessInDiscAttrs( zclIncoming_t *pInMsg )
+{
+  zclDiscoverAttrsCmd_t *pDiscoverCmd;
+  zclAttrRec_t attrRec;
+  uint16 attrID;
+  uint8 numAttrs;
+  uint8 i;
+
+  pDiscoverCmd = (zclDiscoverAttrsCmd_t *)pInMsg->attrCmd;
+
+  // Find out the number of attributes supported within the specified range
+  for ( i = 0, attrID = pDiscoverCmd->startAttr; i < pDiscoverCmd->maxAttrIDs; i++, attrID++ )
+  {
+    // finds the next attribute on this endpoint/cluster after the range.
+    // attributes must be in numerical order in the list.
+    if ( !zclFindNextAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, pInMsg->hdr.fc.direction, &attrID, &attrRec ) )
+    {
+      break;
+    }
+  }
+
+  numAttrs = i;  // store range of attributes in buffer
+
+    // Process message for either attributes or extended attributes
+  if( pInMsg->hdr.commandID == ZCL_CMD_DISCOVER_ATTRS )
+  {
+    zclProcessInDiscAttrsCmd( pInMsg, pDiscoverCmd, numAttrs );
+  }
+  else if ( pInMsg->hdr.commandID == ZCL_CMD_DISCOVER_ATTRS_EXT )
+  {
+    zclProcessInDiscAttrsExtCmd( pInMsg, pDiscoverCmd, numAttrs );
+  }
+
+  return TRUE;
+}
+
+/*********************************************************************
+ * @fn      zclProcessInDiscAttrsCmd
+ *
+ * @brief   Process the Discover Attributes Command
+ *
+ * @param   pInMsg - incoming message to process
+ *
+ * @param   pDiscoverCmd - structure from requesting command
+ *
+ * @param   attrLenBuf - describes the amount of attributes to be processed
+ *
+ * @return  none
+ */
+static void zclProcessInDiscAttrsCmd( zclIncoming_t *pInMsg, zclDiscoverAttrsCmd_t *pDiscoverCmd, uint8 numAttrs )
+{
+  zclDiscoverAttrsRspCmd_t *pDiscoverRsp;
+  uint8 discComplete = TRUE;
+  zclAttrRec_t attrRec;
+  uint16 attrID;
+  uint8 i;
+
+  // Allocate space for the response command
+  pDiscoverRsp = (zclDiscoverAttrsRspCmd_t *)zcl_mem_alloc( sizeof (zclDiscoverAttrsRspCmd_t)
+                                                          + sizeof ( zclDiscoverAttrInfo_t ) * numAttrs );
+  if ( pDiscoverRsp == NULL )
+  {
+    return; // EMEDDED RETURN
+  }
+
+  if ( numAttrs != 0 )
+  {
+    for ( i = 0, attrID = pDiscoverCmd->startAttr; i < numAttrs; i++, attrID++ )
+    {
+      if ( !zclFindNextAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, pInMsg->hdr.fc.direction, &attrID, &attrRec ) )
+      {
+        break; // should not happen, as numAttrs already calculated
+      }
+
+      pDiscoverRsp->attrList[i].attrID = attrRec.attr.attrId;
+      pDiscoverRsp->attrList[i].dataType = attrRec.attr.dataType;
+    }
+
+    // Are there more attributes to be discovered?
+    if ( zclFindNextAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, pInMsg->hdr.fc.direction, &attrID, &attrRec ) )
+    {
+      discComplete = FALSE;
+    }
+  }
+
+  pDiscoverRsp->discComplete = discComplete;
+  pDiscoverRsp->numAttr = numAttrs;
+
+  zcl_SendDiscoverAttrsRspCmd( pInMsg->msg->endPoint, &pInMsg->msg->srcAddr,
+                               pInMsg->msg->clusterId, pDiscoverRsp, !(pInMsg->hdr.fc.direction),
+                               true, pInMsg->hdr.transSeqNum );
+  zcl_mem_free( pDiscoverRsp );
+
+  return;
+}
+
+/*********************************************************************
+ * @fn      zclProcessInDiscAttrsExtCmd
+ *
+ * @brief   Process the Discover Attributes Extended Command
+ *
+ * @param   pInMsg - incoming message to process
+ *
+ * @param   pDiscoverCmd - structure from requesting command
+ *
+ * @param   attrLenBuf - describes the amount of attributes to be processed
+ *
+ * @return  none
+ */
+static void zclProcessInDiscAttrsExtCmd( zclIncoming_t *pInMsg, zclDiscoverAttrsCmd_t *pDiscoverCmd, uint8 numAttrs )
+{
+  zclDiscoverAttrsExtRsp_t *pDiscoverExtRsp;
+  uint8 discComplete = TRUE;
+  zclAttrRec_t attrRec;
+  uint16 attrID;
+  uint8 i;
+
+    // Allocate space for the response command
+  pDiscoverExtRsp = (zclDiscoverAttrsExtRsp_t *)zcl_mem_alloc( sizeof (zclDiscoverAttrsExtRsp_t)
+                                                         + sizeof ( zclExtAttrInfo_t ) * numAttrs );
+  if ( pDiscoverExtRsp == NULL )
+  {
+    return; // EMEDDED RETURN
+  }
+
+
+  if ( numAttrs != 0 )
+  {
+    for ( i = 0, attrID = pDiscoverCmd->startAttr; i < numAttrs; i++, attrID++ )
+    {
+      if ( !zclFindNextAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, pInMsg->hdr.fc.direction, &attrID, &attrRec ) )
+      {
+        break; // Should not happen, as numAttrs already calculated
+      }
+
+      pDiscoverExtRsp->aExtAttrInfo[i].attrID = attrRec.attr.attrId;
+      pDiscoverExtRsp->aExtAttrInfo[i].attrDataType = attrRec.attr.dataType;
+      pDiscoverExtRsp->aExtAttrInfo[i].attrAccessControl = attrRec.attr.accessControl & ACCESS_CONTROLEXT_MASK;
+    }
+
+    // Are there more attributes to be discovered?
+    if ( zclFindNextAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, pInMsg->hdr.fc.direction, &attrID, &attrRec ) )
+    {
+      discComplete = FALSE;
+    }
+  }
+
+  pDiscoverExtRsp->discComplete = discComplete;
+  pDiscoverExtRsp->numAttr = numAttrs;
+
+  zcl_SendDiscoverAttrsExtRsp( pInMsg->msg->endPoint, &pInMsg->msg->srcAddr,
+                               pInMsg->msg->clusterId, pDiscoverExtRsp, !(pInMsg->hdr.fc.direction),
+                               true, pInMsg->hdr.transSeqNum );
+
+  zcl_mem_free( pDiscoverExtRsp );
+
+  return;
+}
+
 /*********************************************************************
  * @fn      zclProcessInDiscCmd
  *
@@ -3796,101 +4636,79 @@ static uint8 zclProcessInWriteUndividedCmd( zclIncoming_t *pInMsg )
  */
 static uint8 zclProcessInDiscCmd( zclIncoming_t *pInMsg )
 {
-  zclDiscoverCmd_t *discoverCmd;
-  zclDiscoverRspCmd_t *discoverRspCmd;
-  uint8 discComplete = TRUE;
-  zclAttrRec_t attrRec;
-  uint16 attrID;
+  zclDiscoverCmdsCmd_t *pDiscoverCmd;
+  zclDiscoverCmdsCmdRsp_t cmdRsp;
+  ZStatus_t status;
+  zclCommandRec_t cmdRec;
+  uint8 cmdID;
   uint8 i;
+  uint8 j;
 
-  discoverCmd = (zclDiscoverCmd_t *)pInMsg->attrCmd;
+  pDiscoverCmd = (zclDiscoverCmdsCmd_t *)pInMsg->attrCmd;
 
-  // Find out the number of attributes supported within the specified range
-  for ( i = 0, attrID = discoverCmd->startAttr; i < discoverCmd->maxAttrIDs; i++, attrID++ )
+  // Find out the number of commands supported within the specified range
+  for ( i = 0, cmdID = pDiscoverCmd->startCmdID; i < pDiscoverCmd->maxCmdID; i++, cmdID++ )
   {
-    if ( !zclFindNextAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, &attrID, &attrRec ) )
+    if ( !zclFindNextCmdRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, pInMsg->hdr.commandID, pInMsg->hdr.fc.direction, &cmdID, &cmdRec ) )
     {
-      break;
+      break;  // Command not supported
     }
   }
 
   // Allocate space for the response command
-  discoverRspCmd = (zclDiscoverRspCmd_t *)osal_mem_alloc( sizeof (zclDiscoverRspCmd_t)
-                                                         + sizeof ( zclDiscoverInfo_t ) * i );
-  if ( discoverRspCmd == NULL )
+  cmdRsp.pCmdID = zcl_mem_alloc( i ); // size of number of commands returned
+
+  if ( cmdRsp.pCmdID == NULL )
   {
     return FALSE; // EMEDDED RETURN
   }
 
-  discoverRspCmd->numAttr = i;
-  if ( discoverRspCmd->numAttr != 0 )
+  if ( i != 0 )
   {
-    for ( i = 0, attrID = discoverCmd->startAttr; i < discoverRspCmd->numAttr; i++, attrID++ )
+    for ( j = 0, cmdID = pDiscoverCmd->startCmdID; j < i; j++, cmdID++ )
     {
-      if ( !zclFindNextAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, &attrID, &attrRec ) )
+      if ( !zclFindNextCmdRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, pInMsg->hdr.commandID, pInMsg->hdr.fc.direction, &cmdID, &cmdRec ) )
       {
         break; // Attribute not supported
       }
 
-      discoverRspCmd->attrList[i].attrID = attrRec.attr.attrId;
-      discoverRspCmd->attrList[i].dataType = attrRec.attr.dataType;
-    }
-
-    // Are there more attributes to be discovered?
-    if ( zclFindNextAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, &attrID, &attrRec ) )
-    {
-      discComplete = FALSE;
+      cmdRsp.pCmdID[j] = cmdRec.cmdID;
     }
   }
 
-  discoverRspCmd->discComplete = discComplete;
-  zcl_SendDiscoverRspCmd( pInMsg->msg->endPoint, &pInMsg->msg->srcAddr,
-                          pInMsg->msg->clusterId, discoverRspCmd, ZCL_FRAME_SERVER_CLIENT_DIR,
-                          true, pInMsg->hdr.transSeqNum );
-  osal_mem_free( discoverRspCmd );
+  // Are there more commands to be discovered?
+  if ( zclFindNextCmdRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId, pInMsg->hdr.commandID, pInMsg->hdr.fc.direction, &cmdID, &cmdRec ) )
+  {
+    cmdRsp.discComplete = FALSE;
+  }
+  else
+  {
+    cmdRsp.discComplete = TRUE;
+  }
 
-  return TRUE;
+  // pass the command requested
+  cmdRsp.cmdType = pInMsg->hdr.commandID;
+
+  // store number of commands returned
+  cmdRsp.numCmd = j;
+
+  status = zcl_SendDiscoverCmdsRspCmd( pInMsg->msg->endPoint, &pInMsg->msg->srcAddr,
+                                      pInMsg->msg->clusterId, &cmdRsp, !(pInMsg->hdr.fc.direction),
+                                      true, pInMsg->hdr.transSeqNum );
+
+  zcl_mem_free( cmdRsp.pCmdID );
+
+  if ( status == ZSuccess )
+  {
+    return TRUE;
+  }
+  else
+  {
+    return FALSE;
+  }
 }
+
 #endif // ZCL_DISCOVER
-
-/*********************************************************************
- * @fn      zclSendMsg
- *
- * @brief   Send an incoming message to the Application
- *
- * @param   pInMsg - incoming message to process
- *
- * @return  TRUE
- */
-static uint8 zclSendMsg( zclIncoming_t *pInMsg )
-{
-  zclIncomingMsg_t *pCmd;
-
-  if ( zcl_RegisteredMsgTaskID == TASK_NO_TASK )
-  {
-    return ( TRUE );
-  }
-
-  pCmd = (zclIncomingMsg_t *)osal_msg_allocate( sizeof ( zclIncomingMsg_t ) );
-  if ( pCmd != NULL )
-  {
-    // fill in the message
-    pCmd->hdr.event = ZCL_INCOMING_MSG;
-    pCmd->zclHdr    = pInMsg->hdr;
-    pCmd->clusterId = pInMsg->msg->clusterId;
-    pCmd->srcAddr   = pInMsg->msg->srcAddr;
-    pCmd->endPoint  = pInMsg->msg->endPoint;
-    pCmd->attrCmd   = pInMsg->attrCmd;
-
-    // Application will free the attrCmd buffer
-    pInMsg->attrCmd = NULL;
-
-    /* send message through task message */
-    osal_msg_send( zcl_RegisteredMsgTaskID, (uint8 *)pCmd );
-  }
-
-  return ( TRUE );
-}
 
 /*********************************************************************
 *********************************************************************/

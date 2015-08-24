@@ -478,6 +478,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\sapi</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\sec</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\sys</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\zcl</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\zdo</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\zmac</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\zmac\f8w</state>
@@ -1552,6 +1553,7 @@
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\sapi</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\sec</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\sys</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\zcl</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\stack\zdo</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\zmac</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Components\zmac\f8w</state>
@@ -2210,6 +2212,12 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\hw_light_ctrl.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\hw_light_ctrl.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.c</name>

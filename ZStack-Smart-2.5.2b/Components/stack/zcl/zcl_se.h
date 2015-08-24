@@ -1,7 +1,7 @@
 /**************************************************************************************************
   Filename:       zcl_se.h
-  Revised:        $Date: 2012-03-13 01:09:38 -0700 (Tue, 13 Mar 2012) $
-  Revision:       $Revision: 29723 $
+  Revised:        $Date: 2013-11-06 11:29:52 -0800 (Wed, 06 Nov 2013) $
+  Revision:       $Revision: 35933 $
 
   Description:    This file contains the ZCL SE (Smart Energy) Profile definitions.
 
@@ -2045,8 +2045,9 @@ typedef struct
 
 typedef struct
 {
-  uint32  issuerEvent;
-  uint24  deviceGroupClass;
+  uint32  issuerEventId;
+  uint16  deviceClass;
+  uint8   utilityEnrollmentGroup;
   uint32  startTime;
   uint16  durationInMinutes;
   uint8   criticalityLevel;
@@ -2061,8 +2062,9 @@ typedef struct
 
 typedef struct
 {
-  uint32 issuerEventID;
-  uint24 deviceGroupClass;
+  uint32 issuerEventId;
+  uint16 deviceClass;
+  uint8  utilityEnrollmentGroup;
   uint8  cancelControl;
   uint32 effectiveTime;
 } zclCCCancelLoadControlEvent_t;

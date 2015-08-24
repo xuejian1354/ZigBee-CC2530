@@ -1,7 +1,7 @@
 /**************************************************************************************************
   Filename:       zcl_key_establish.h
-  Revised:        $Date: 2012-04-02 17:02:19 -0700 (Mon, 02 Apr 2012) $
-  Revision:       $Revision: 29996 $
+  Revised:        $Date: 2012-04-16 12:47:40 -0700 (Mon, 16 Apr 2012) $
+  Revision:       $Revision: 30210 $
 
   Description:    This file contains the ZCL General Function Domain, key
                   establishment cluster definitions.

@@ -1,12 +1,12 @@
 /**************************************************************************************************
   Filename:       zcl_se.c
-  Revised:        $Date: 2012-03-11 00:25:21 -0800 (Sun, 11 Mar 2012) $
-  Revision:       $Revision: 29708 $
+  Revised:        $Date: 2013-11-06 11:29:52 -0800 (Wed, 06 Nov 2013) $
+  Revision:       $Revision: 35933 $
 
   Description:    Zigbee Cluster Library - SE (Smart Energy) Profile.
 
 
-  Copyright 2007-2012 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2007-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -1673,8 +1673,10 @@ ZStatus_t zclSE_LoadControl_Send_LoadControlEvent( uint8 srcEP, afAddrType_t *ds
     return ( ZMemError );
   }
 
-  pBuf = osal_buffer_uint32( buf, pCmd->issuerEvent );
-  pBuf = osal_buffer_uint24( pBuf, pCmd->deviceGroupClass );
+  pBuf = osal_buffer_uint32( buf, pCmd->issuerEventId );
+  *pBuf++ = LO_UINT16( pCmd->deviceClass );
+  *pBuf++ = HI_UINT16( pCmd->deviceClass );
+  *pBuf++ = pCmd->utilityEnrollmentGroup;
   pBuf = osal_buffer_uint32( pBuf, pCmd->startTime );
   *pBuf++ = LO_UINT16( pCmd->durationInMinutes );
   *pBuf++ = HI_UINT16( pCmd->durationInMinutes );
@@ -1719,8 +1721,10 @@ ZStatus_t zclSE_LoadControl_Send_CancelLoadControlEvent( uint8 srcEP, afAddrType
   uint8 buf[PACKET_LEN_SE_CANCEL_LOAD_CONTROL_EVENT];
   uint8 *pBuf;
 
-  pBuf = osal_buffer_uint32( buf, pCmd->issuerEventID );
-  pBuf = osal_buffer_uint24( pBuf, pCmd->deviceGroupClass );
+  pBuf = osal_buffer_uint32( buf, pCmd->issuerEventId );
+  *pBuf++ = LO_UINT16( pCmd->deviceClass );
+  *pBuf++ = HI_UINT16( pCmd->deviceClass );
+  *pBuf++ = pCmd->utilityEnrollmentGroup;
   *pBuf++ = pCmd->cancelControl;
   pBuf = osal_buffer_uint32( pBuf, pCmd->effectiveTime );
 
@@ -1771,7 +1775,9 @@ ZStatus_t zclSE_LoadControl_Send_ReportEventStatus( uint8 srcEP, afAddrType_t *d
   *pBuf++ = pCmd->eventControl;
   *pBuf++ = pCmd->signatureType;
 
+#if defined( ZCL_KEY_ESTABLISH )
   zclGeneral_KeyEstablishment_ECDSASign( buf, PACKET_LEN_SE_REPORT_EVENT_STATUS_ONLY, pBuf);
+#endif
 
   status = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SE_LOAD_CONTROL,
                             COMMAND_SE_REPORT_EVENT_STATUS, TRUE,
@@ -3867,7 +3873,7 @@ static ZStatus_t zclSE_HdlIncoming(  zclIncoming_t *pInMsg )
 static ZStatus_t zclSE_HdlInSpecificCommands( zclIncoming_t *pInMsg )
 {
   ZStatus_t stat;
-  zclSE_AppCallbacks_t *pCBs;
+  zclSE_AppCallbacks_t *pCBs = NULL;
 
   // make sure endpoint exists
 
@@ -3883,7 +3889,7 @@ static ZStatus_t zclSE_HdlInSpecificCommands( zclIncoming_t *pInMsg )
   }
 
 #endif
-  switch ( pInMsg->msg->clusterId )			
+  switch ( pInMsg->msg->clusterId )
   {
 #ifdef ZCL_SIMPLE_METERING
     case ZCL_CLUSTER_ID_SE_SIMPLE_METERING:
@@ -3936,6 +3942,7 @@ static ZStatus_t zclSE_HdlInSpecificCommands( zclIncoming_t *pInMsg )
 #endif  // SE_UK_EXT
 
     default:
+      (void) pCBs;
       stat = ZFailure;
       break;
   }
@@ -4263,15 +4270,11 @@ static ZStatus_t zclSE_ProcessInCmd_SimpleMeter_ReqFastPollModeCmd( zclIncoming_
   if ( pCBs->pfnSimpleMeter_ReqFastPollModeCmd )
   {
     zclCCReqFastPollModeCmd_t cmd;
-    zclAttrRec_t attrRec;
     uint8 fastPollUpdatePeriodAttr = 0;
 
     // Retrieve Fast Poll Update Period Attribute Record and save value to local variable
-    if ( zclFindAttrRec( pInMsg->msg->endPoint, pInMsg->msg->clusterId,
-                         ATTRID_SE_FAST_POLL_UPDATE_PERIOD, &attrRec ) )
-    {
-      zclReadAttrData( (uint8 *)&fastPollUpdatePeriodAttr, &attrRec, NULL );
-    }
+    zcl_ReadAttrData( pInMsg->msg->endPoint, pInMsg->msg->clusterId,
+                      ATTRID_SE_FAST_POLL_UPDATE_PERIOD, &fastPollUpdatePeriodAttr, NULL );
 
     // Value has been set by application
     if (( fastPollUpdatePeriodAttr > 0 ) && (pInMsg->pData[0] < fastPollUpdatePeriodAttr))
@@ -4685,7 +4688,7 @@ static ZStatus_t zclSE_ProcessInCmd_Pricing_PublishPrice( zclIncoming_t *pInMsg,
 
     // Parse the command and do range check
     if ( zclSE_ParseInCmd_PublishPrice( &cmd, &(pInMsg->pData[0]),
-                                        pInMsg->pDataLen ) == ZSuccess )
+                                        (uint8)pInMsg->pDataLen ) == ZSuccess )
     {
       pCBs->pfnPricing_PublishPrice( &cmd, &(pInMsg->msg->srcAddr),
                                     pInMsg->hdr.transSeqNum );
@@ -4797,7 +4800,7 @@ static ZStatus_t zclSE_ProcessInCmd_Pricing_PublishBlockPeriod( zclIncoming_t *p
     zclCCPublishBlockPeriod_t cmd;
 
     // Parse the command and do range check
-    zclSE_ParseInCmd_PublishBlockPeriod( &cmd, &(pInMsg->pData[0]), pInMsg->pDataLen );
+    zclSE_ParseInCmd_PublishBlockPeriod( &cmd, &(pInMsg->pData[0]), (uint8)pInMsg->pDataLen );
 
     pCBs->pfnPricing_PublishBlockPeriod( &cmd, &(pInMsg->msg->srcAddr),
                                          pInMsg->hdr.transSeqNum );
@@ -5475,7 +5478,7 @@ static ZStatus_t zclSE_ProcessInCmd_Message_DisplayMessage( zclIncoming_t *pInMs
   {
     zclCCDisplayMessage_t cmd;
 
-    if ( zclSE_ParseInCmd_DisplayMessage( &cmd,  &(pInMsg->pData[0]), pInMsg->pDataLen ) == ZSuccess )
+    if ( zclSE_ParseInCmd_DisplayMessage( &cmd,  &(pInMsg->pData[0]), (uint8)pInMsg->pDataLen ) == ZSuccess )
     {
       pCBs->pfnMessage_DisplayMessage( &cmd, &(pInMsg->msg->srcAddr),
                                     pInMsg->hdr.transSeqNum );
@@ -5515,7 +5518,7 @@ static ZStatus_t zclSE_ProcessInCmd_Message_CancelMessage( zclIncoming_t *pInMsg
   {
     zclCCCancelMessage_t cmd;
 
-    zclSE_ParseInCmd_CancelMessage( &cmd,  &(pInMsg->pData[0]), pInMsg->pDataLen );
+    zclSE_ParseInCmd_CancelMessage( &cmd,  &(pInMsg->pData[0]), (uint8)pInMsg->pDataLen );
 
     pCBs->pfnMessage_CancelMessage( &cmd, &(pInMsg->msg->srcAddr),
                                    pInMsg->hdr.transSeqNum );
@@ -5568,7 +5571,7 @@ static ZStatus_t zclSE_ProcessInCmd_Message_MessageConfirmation( zclIncoming_t *
     zclCCMessageConfirmation_t cmd;
 
     zclSE_ParseInCmd_MessageConfirmation( &cmd, &(pInMsg->pData[0]),
-                                          pInMsg->pDataLen );
+                                          (uint8)pInMsg->pDataLen );
     pCBs->pfnMessage_MessageConfirmation( &cmd, &(pInMsg->msg->srcAddr),
                                           pInMsg->hdr.transSeqNum );
     return ZSuccess;
@@ -5662,7 +5665,7 @@ static ZStatus_t zclSE_ProcessInCmd_LoadControl_LoadControlEvent( zclIncoming_t 
   {
     zclCCLoadControlEvent_t cmd;
 
-    zclSE_ParseInCmd_LoadControlEvent( &cmd, &(pInMsg->pData[0]), pInMsg->pDataLen );
+    zclSE_ParseInCmd_LoadControlEvent( &cmd, &(pInMsg->pData[0]), (uint8)pInMsg->pDataLen );
 
     // Range checking
     if ( cmd.durationInMinutes > MAX_DURATION_IN_MINUTES_SE_LOAD_CONTROL )
@@ -5740,7 +5743,7 @@ static ZStatus_t zclSE_ProcessInCmd_LoadControl_CancelLoadControlEvent( zclIncom
   {
     zclCCCancelLoadControlEvent_t cmd;
 
-    zclSE_ParseInCmd_CancelLoadControlEvent( &cmd, &(pInMsg->pData[0]), pInMsg->pDataLen );
+    zclSE_ParseInCmd_CancelLoadControlEvent( &cmd, &(pInMsg->pData[0]), (uint8)pInMsg->pDataLen );
 
     pCBs->pfnLoadControl_CancelLoadControlEvent( &cmd, &(pInMsg->msg->srcAddr), pInMsg->hdr.transSeqNum );
     return ZSuccess;
@@ -5797,7 +5800,7 @@ static ZStatus_t zclSE_ProcessInCmd_LoadControl_ReportEventStatus( zclIncoming_t
 
     zclCCReportEventStatus_t cmd;
 
-    zclSE_ParseInCmd_ReportEventStatus( &cmd, &(pInMsg->pData[0]), pInMsg->pDataLen );
+    zclSE_ParseInCmd_ReportEventStatus( &cmd, &(pInMsg->pData[0]), (uint8)pInMsg->pDataLen );
 
     // Range Checking
     if ( cmd.eventStatus != EVENT_STATUS_LOAD_CONTROL_EVENT_REJECTED &&
@@ -6740,7 +6743,7 @@ static ZStatus_t zclSE_ProcessInCmd_Tunneling_TransferData( zclIncoming_t *pInMs
     zclCCTransferData_t cmd;
     uint16 dataLen = pInMsg->pDataLen - PACKET_LEN_SE_TUNNELING_TRANSFER_DATA;
 
-    zclSE_ParseInCmd_TransferData( &cmd, &(pInMsg->pData[0]), pInMsg->pDataLen );
+    zclSE_ParseInCmd_TransferData( &cmd, &(pInMsg->pData[0]), (uint8)pInMsg->pDataLen );
 
     pCBs->pfnTunneling_TransferData( &cmd, &(pInMsg->msg->srcAddr),
                                      pInMsg->hdr.commandID, dataLen,
@@ -8524,11 +8527,13 @@ void zclSE_ParseInCmd_LoadControlEvent( zclCCLoadControlEvent_t *pCmd,
   // Maybe add checking for buffer length later
   // Skipped right now to leave MT input to guarantee
   // proper buffer length
-  pCmd->issuerEvent = osal_build_uint32( buf, 4 );
+  pCmd->issuerEventId = osal_build_uint32( buf, 4 );
   buf += 4;
 
-  pCmd->deviceGroupClass = osal_build_uint32( buf, 3 );
-  buf += 3;
+  pCmd->deviceClass = BUILD_UINT16( buf[0], buf[1] );
+  buf += 2;
+
+  pCmd->utilityEnrollmentGroup = *buf++;
 
   pCmd->startTime = osal_build_uint32( buf, 4 );
   buf += 4;
@@ -8570,11 +8575,13 @@ void zclSE_ParseInCmd_CancelLoadControlEvent( zclCCCancelLoadControlEvent_t *pCm
   // Maybe add checking for buffer length later
   // Skipped right now to leave MT input to guarantee
   // proper buffer length
-  pCmd->issuerEventID = osal_build_uint32( buf, 4 );
+  pCmd->issuerEventId = osal_build_uint32( buf, 4 );
   buf += 4;
 
-  pCmd->deviceGroupClass = osal_build_uint32( buf, 3 );
-  buf += 3;
+  pCmd->deviceClass = BUILD_UINT16( buf[0], buf[1] );
+  buf += 2;
+
+  pCmd->utilityEnrollmentGroup = *buf++;
 
   pCmd->cancelControl = *buf++;
   pCmd->effectiveTime = osal_build_uint32( buf, 4 );

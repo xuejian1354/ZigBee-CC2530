@@ -1,12 +1,12 @@
 /******************************************************************************
   Filename:       zcl_ota.c
-  Revised:        $Date: 2011-07-18 05:10:28 -0700 (Mon, 18 Jul 2011) $
-  Revision:       $Revision: 26827 $
+  Revised:        $Date: 2013-11-26 13:28:16 -0800 (Tue, 26 Nov 2013) $
+  Revision:       $Revision: 36290 $
 
   Description:    Zigbee Cluster Library - Over-the-Air Upgrade Cluster ( OTA )
 
 
-  Copyright 2010-2011 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2010-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -87,7 +87,10 @@ uint16 zclOTA_CurrentZigBeeStackVersion;
 uint32 zclOTA_DownloadedFileVersion = 0xFFFFFFFF;
 uint16 zclOTA_DownloadedZigBeeStackVersion = 0xFFFF;
 uint8 zclOTA_ImageUpgradeStatus;
-
+uint16 zclOTA_ManufacturerID;
+uint16 zclOTA_ImageTypeID;
+uint16 zclOTA_MinBlockReqDelay = 0;
+uint32 zclOTA_ImageStamp;
 
 // Other OTA variables
 uint16 zclOTA_ManufacturerId;                           // Manufacturer ID
@@ -95,6 +98,9 @@ uint16 zclOTA_ImageType;                                // Image type
 afAddrType_t zclOTA_serverAddr;                         // Server address
 uint8 zclOTA_AppTask = 0xFF;                            // Callback Task ID
 zclOTA_QueryImageRspParams_t queryResponse;             // Global variable for sent query response
+
+// Image block command field control value
+uint8 zclOTA_ImageBlockFC = OTA_BLOCK_FC_REQ_DELAY_PRESENT; // set bitmask field control value(s) for device
 
 /******************************************************************************
  * LOCAL VARIABLES
@@ -177,12 +183,14 @@ static void zclOTA_ProcessFileReadRsp(uint8* pMSGpkt, zclOTA_FileID_t *pFileId, 
 static void zclOTA_ServerHandleFileSysCb(OTA_MtMsg_t* pMSGpkt);
 
 static ZStatus_t zclOTA_ServerHdlIncoming( zclIncoming_t *pInMsg );
+
+static void zclOTA_InitBlockReqDelay( void );
 #endif // OTA_SERVER
 
 /******************************************************************************
  * OTA ATTRIBUTE DEFINITIONS - Uses REAL cluster IDs
  */
-#define ZCL_OTA_MAX_ATTRIBUTES          7
+#define ZCL_OTA_MAX_ATTRIBUTES          11
 CONST zclAttrRec_t zclOTA_Attrs[ZCL_OTA_MAX_ATTRIBUTES] =
 {
   {
@@ -246,6 +254,42 @@ CONST zclAttrRec_t zclOTA_Attrs[ZCL_OTA_MAX_ATTRIBUTES] =
       ZCL_DATATYPE_UINT8,
       ACCESS_CONTROL_READ,
       (void *)&zclOTA_ImageUpgradeStatus
+    }
+  },
+  {
+    ZCL_CLUSTER_ID_OTA,
+    { // Attribute record
+      ATTRID_MANUFACTURER_ID,
+      ZCL_DATATYPE_UINT16,
+      ACCESS_CONTROL_READ,
+      (void *)&zclOTA_ManufacturerID
+    }
+  },
+  {
+    ZCL_CLUSTER_ID_OTA,
+    { // Attribute record
+      ATTRID_IMAGE_TYPE_ID,
+      ZCL_DATATYPE_UINT16,
+      ACCESS_CONTROL_READ,
+      (void *)&zclOTA_ImageTypeID
+    }
+  },
+  {
+    ZCL_CLUSTER_ID_OTA,
+    { // Attribute record
+      ATTRID_MINIMUM_BLOCK_REQ_DELAY,
+      ZCL_DATATYPE_UINT16,
+      ACCESS_CONTROL_READ,
+      (void *)&zclOTA_MinBlockReqDelay
+    }
+  },
+  {
+    ZCL_CLUSTER_ID_OTA,
+    { // Attribute record
+      ATTRID_IMAGE_STAMP,
+      ZCL_DATATYPE_UINT32,
+      ACCESS_CONTROL_READ,
+      (void *)&zclOTA_ImageStamp
     }
   }
 };
@@ -412,6 +456,9 @@ void zclOTA_Init( uint8 task_id )
 
   // Register with the files system
   MT_OtaRegister(task_id);
+
+    // Initialize rate to transfer file
+  zclOTA_InitBlockReqDelay();
 
 #endif // OTA_SERVER
 }
@@ -580,11 +627,35 @@ uint16 zclOTA_event_loop( uint8 task_id, uint16 events )
 
     return ( events ^ ZCL_OTA_QUERY_SERVER_EVT );
   }
+
+  if ( events & ZCL_OTA_IMAGE_BLOCK_REQ_DELAY_EVT )
+  {
+
+    sendImageBlockReq(&zclOTA_serverAddr);
+
+    return ( events ^ ZCL_OTA_IMAGE_BLOCK_REQ_DELAY_EVT );
+  }
 #endif // OTA_CLIENT
 
   // Discard unknown events
   return 0;
 }
+
+
+/******************************************************************************
+ * @fn          zclOTA_getStatus
+ *
+ * @brief       Retrieves current ZCL OTA Status
+ *
+ * @param       none
+ *
+ * @return      ZCL OTA Status
+ */
+uint8 zclOTA_getStatus( void ) 
+{
+  return zclOTA_ImageUpgradeStatus;
+}
+
 
 /******************************************************************************
  * @fn      zclOTA_HdlIncoming
@@ -774,6 +845,8 @@ ZStatus_t zclOTA_SendImageBlockRsp( afAddrType_t *dstAddr,
   {
     pBuf = osal_buffer_uint32(pBuf, pParams->rsp.wait.currentTime);
     pBuf = osal_buffer_uint32(pBuf, pParams->rsp.wait.requestTime);
+    *pBuf++ = LO_UINT16(pParams->rsp.wait.blockReqDelay);
+    *pBuf++ = HI_UINT16(pParams->rsp.wait.blockReqDelay);
   }
 
   status = zcl_SendCommand( ZCL_OTA_ENDPOINT, dstAddr, ZCL_CLUSTER_ID_OTA,
@@ -919,10 +992,17 @@ ZStatus_t zclOTA_SendImageBlockReq( afAddrType_t *dstAddr,
   pBuf = osal_buffer_uint32(pBuf, pParams->fileId.version);
   pBuf = osal_buffer_uint32(pBuf, pParams->fileOffset);
   *pBuf++ = pParams->maxDataSize;
-  if (pParams->fieldControl == 1)
+
+  if ( ( pParams->fieldControl & OTA_BLOCK_FC_NODES_IEEE_PRESENT ) != 0 )
   {
     osal_cpyExtAddr(pBuf, pParams->nodeAddr);
     pBuf += Z_EXTADDR_LEN;
+  }
+
+  if ( ( pParams->fieldControl & OTA_BLOCK_FC_REQ_DELAY_PRESENT ) != 0 )
+  {
+    *pBuf++ = LO_UINT16(pParams->blockReqDelay);
+    *pBuf++ = HI_UINT16(pParams->blockReqDelay);
   }
 
   status = zcl_SendCommand( ZCL_OTA_ENDPOINT, dstAddr, ZCL_CLUSTER_ID_OTA,
@@ -997,7 +1077,7 @@ static ZStatus_t sendImageBlockReq(afAddrType_t *dstAddr)
 {
   zclOTA_ImageBlockReqParams_t req;
 
-  req.fieldControl = 0;
+  req.fieldControl = zclOTA_ImageBlockFC; // Image block command field control value
   req.fileId.manufacturer = zclOTA_ManufacturerId;
   req.fileId.type = zclOTA_ImageType;
   req.fileId.version = zclOTA_DownloadedFileVersion;
@@ -1011,6 +1091,8 @@ static ZStatus_t sendImageBlockReq(afAddrType_t *dstAddr)
   {
     req.maxDataSize = OTA_MAX_MTU;
   }
+
+  req.blockReqDelay = zclOTA_MinBlockReqDelay;
 
   // Start a timer waiting for a response
   osal_start_timerEx(zclOTA_TaskID, ZCL_OTA_BLOCK_RSP_TO_EVT, OTA_MAX_BLOCK_RSP_WAIT_TIME);
@@ -1050,18 +1132,6 @@ uint8 zclOTA_ProcessImageData(uint8 *pData, uint8 len)
 
   for (i=0; i<len; i++)
   {
-#if defined OTA_MMO_SIGN
-    // Skip the hash if we are receiving the signature element
-    if ((zclOTA_ClientPdState >= ZCL_OTA_PD_ELEM_LEN1_STATE) &&
-        (zclOTA_ClientPdState <= ZCL_OTA_PD_ELEMENT_STATE))
-    {
-      if (zclOTA_ElementTag == OTA_ECDSA_SIGNATURE_TAG_ID)
-      {
-        skipHash = TRUE;
-      }
-    }
-#endif
-
     switch (zclOTA_ClientPdState)
     {
     // verify header magic number
@@ -1185,7 +1255,11 @@ uint8 zclOTA_ProcessImageData(uint8 *pData, uint8 len)
         if (zclOTA_ElementPos < Z_EXTADDR_LEN)
           zclOTA_SignerIEEE[zclOTA_ElementPos] = pData[i];
         else
+        {
           zclOTA_SignatureData[zclOTA_ElementPos - Z_EXTADDR_LEN] = pData[i];
+
+          skipHash = TRUE;
+        }
       }
       else if (zclOTA_ElementTag == OTA_ECDSA_CERT_TAG_ID)
       {
@@ -1224,34 +1298,6 @@ uint8 zclOTA_ProcessImageData(uint8 *pData, uint8 len)
     }
 
 #if defined OTA_MMO_SIGN
-    // We need to skip the hash calculation on the signature element.
-    // When receiving a tag, we wait to receive the entire tag before
-    // adding the byte to the hash buffer because it could be the tag
-    // for the signature
-    if (zclOTA_ClientPdState == ZCL_OTA_PD_ELEM_TAG2_STATE)
-    {
-      skipHash = TRUE;
-    }
-    else if (zclOTA_ClientPdState == ZCL_OTA_PD_ELEM_LEN1_STATE)
-    {
-      if (zclOTA_ElementTag != OTA_ECDSA_SIGNATURE_TAG_ID)
-      {
-        // This tag is not for the signature.
-        // Put the Lower byte of the tag into the hash buffer now
-        // The high byte will be processed as usual below
-        zclOTA_DataToHash[zclOTA_HashPos++] = LO_UINT16(zclOTA_ElementTag);
-
-        // When the buffer reaches OTA_MMO_HASH_SIZE, update the Hash
-        if (zclOTA_HashPos == OTA_MMO_HASH_SIZE)
-        {
-          OTA_CalculateMmoR3(&zclOTA_MmoHash, zclOTA_DataToHash, OTA_MMO_HASH_SIZE, FALSE);
-          zclOTA_HashPos = 0;
-        }
-
-        skipHash = FALSE;
-      }
-    }
-
     if (!skipHash)
     {
       // Maintain a buffer of data to hash
@@ -1435,9 +1481,9 @@ static ZStatus_t zclOTA_ProcessQueryNextImageRsp( zclIncoming_t *pInMsg )
 
       // Store the file ID
       osal_memcpy(&zclOTA_CurrentDlFileId, &param.fileId, sizeof(zclOTA_FileID_t));
-
-      // send image block request
-      sendImageBlockReq(&(pInMsg->msg->srcAddr));
+    
+      // send image block request     
+      osal_start_timerEx(zclOTA_TaskID, ZCL_OTA_IMAGE_BLOCK_REQ_DELAY_EVT, zclOTA_MinBlockReqDelay);
       status = ZCL_STATUS_CMD_HAS_RSP;
 
       // Request the IEEE address of the server to put into the
@@ -1548,7 +1594,8 @@ static ZStatus_t zclOTA_ProcessImageBlockRsp( zclIncoming_t *pInMsg )
         }
         else
         {
-          sendImageBlockReq(&(pInMsg->msg->srcAddr));
+          // send image block request using rate limiting
+          osal_start_timerEx(zclOTA_TaskID, ZCL_OTA_IMAGE_BLOCK_REQ_DELAY_EVT, zclOTA_MinBlockReqDelay);
         }
       }
     }
@@ -1567,14 +1614,41 @@ static ZStatus_t zclOTA_ProcessImageBlockRsp( zclIncoming_t *pInMsg )
     param.rsp.wait.currentTime = osal_build_uint32( pData, 4 );
     pData += 4;
     param.rsp.wait.requestTime = osal_build_uint32( pData, 4 );
+    pData += 4;
+    param.rsp.wait.blockReqDelay = BUILD_UINT16(pData[0], pData[1]);
 
-    // Stop the timer and clear the retry count
-    zclOTA_BlockRetry = 0;
-    osal_stop_timerEx(zclOTA_TaskID, ZCL_OTA_BLOCK_RSP_TO_EVT);
+    // check to see if device supports blockReqDelay rate limiting
+    if ( ( zclOTA_ImageBlockFC & OTA_BLOCK_FC_REQ_DELAY_PRESENT ) != 0 )
+    {
+      if ( ( param.rsp.wait.requestTime - param.rsp.wait.currentTime ) > 0 )
+      {
+        // Stop the timer and clear the retry count
+        zclOTA_BlockRetry = 0;
+        osal_stop_timerEx(zclOTA_TaskID, ZCL_OTA_BLOCK_RSP_TO_EVT);
 
-    // set timer for next image block req
-    zclOTA_StartTimer(ZCL_OTA_IMAGE_BLOCK_WAIT_EVT,
-                      (param.rsp.wait.requestTime - param.rsp.wait.currentTime));
+        // set timer for next image block req
+        zclOTA_StartTimer(ZCL_OTA_IMAGE_BLOCK_WAIT_EVT,
+                          (param.rsp.wait.requestTime - param.rsp.wait.currentTime));
+      }
+      else
+      {
+        // if wait timer delta is 0, then update device with blockReqDelay value and use rate limiting
+        zclOTA_MinBlockReqDelay = param.rsp.wait.blockReqDelay;
+
+
+        osal_start_timerEx(zclOTA_TaskID, ZCL_OTA_IMAGE_BLOCK_REQ_DELAY_EVT, zclOTA_MinBlockReqDelay);
+      }
+    }
+    else
+    {
+      // Stop the timer and clear the retry count
+      zclOTA_BlockRetry = 0;
+      osal_stop_timerEx(zclOTA_TaskID, ZCL_OTA_BLOCK_RSP_TO_EVT);
+
+      // set timer for next image block req
+      zclOTA_StartTimer(ZCL_OTA_IMAGE_BLOCK_WAIT_EVT,
+                        (param.rsp.wait.requestTime - param.rsp.wait.currentTime));
+    }
   }
   else if (param.status == ZCL_STATUS_ABORT)
   {
@@ -2104,11 +2178,13 @@ ZStatus_t zclOTA_Srv_ImageBlockReq(afAddrType_t *pSrcAddr, zclOTA_ImageBlockReqP
         len = OTA_MAX_MTU;
       }
 
-      // Read the data from the OTA Console
-      status = MT_OtaFileReadReq(pSrcAddr, &pParam->fileId, len, pParam->fileOffset);
+      // The item already exists in NV memory, read it from NV memory
+      osal_nv_read( ZCD_NV_OTA_BLOCK_REQ_DELAY, 0,
+                    sizeof(zclOTA_MinBlockReqDelay), &zclOTA_MinBlockReqDelay );
 
-      // Send a wait response to the client
-      if (status != ZSuccess)
+      // check if client supports rate limiting feature, and if client rate needs to be set
+      if ( ( ( pParam->fieldControl & OTA_BLOCK_FC_REQ_DELAY_PRESENT ) != 0 ) &&
+           ( pParam->blockReqDelay != zclOTA_MinBlockReqDelay ) )
       {
         zclOTA_ImageBlockRspParams_t blockRsp;
 
@@ -2116,10 +2192,32 @@ ZStatus_t zclOTA_Srv_ImageBlockReq(afAddrType_t *pSrcAddr, zclOTA_ImageBlockReqP
         blockRsp.status = ZOtaWaitForData;
         osal_memcpy(&blockRsp.rsp.success.fileId, &pParam->fileId, sizeof(zclOTA_FileID_t));
         blockRsp.rsp.wait.currentTime = 0;
-        blockRsp.rsp.wait.requestTime = OTA_SEND_BLOCK_WAIT;
+        blockRsp.rsp.wait.requestTime = 0;
+        blockRsp.rsp.wait.blockReqDelay = zclOTA_MinBlockReqDelay;
 
-        // Send the block to the peer
+        // Send a wait response with updated rate limit timing
         zclOTA_SendImageBlockRsp(pSrcAddr, &blockRsp);
+      }
+      else
+      {
+        // Read the data from the OTA Console
+        status = MT_OtaFileReadReq(pSrcAddr, &pParam->fileId, len, pParam->fileOffset);
+
+        // Send a wait response to the client
+        if (status != ZSuccess)
+        {
+          zclOTA_ImageBlockRspParams_t blockRsp;
+
+          // Fill in the response parameters
+          blockRsp.status = ZOtaWaitForData;
+          osal_memcpy(&blockRsp.rsp.success.fileId, &pParam->fileId, sizeof(zclOTA_FileID_t));
+          blockRsp.rsp.wait.currentTime = 0;
+          blockRsp.rsp.wait.requestTime = OTA_SEND_BLOCK_WAIT;
+          blockRsp.rsp.wait.blockReqDelay = zclOTA_MinBlockReqDelay;
+
+          // Send the block to the peer
+          zclOTA_SendImageBlockRsp(pSrcAddr, &blockRsp);
+        }
       }
 
       status = ZCL_STATUS_CMD_HAS_RSP;
@@ -2278,8 +2376,8 @@ static ZStatus_t zclOTA_ProcessImageBlockReq( zclIncoming_t *pInMsg )
   uint8 *pData;
 
   /* verify message length */
-  if ((pInMsg->pDataLen != PAYLOAD_MAX_LEN_IMAGE_BLOCK_REQ) &&
-      (pInMsg->pDataLen != PAYLOAD_MIN_LEN_IMAGE_BLOCK_REQ))
+  if ( ( pInMsg->pDataLen > PAYLOAD_MAX_LEN_IMAGE_BLOCK_REQ ) &&
+       ( pInMsg->pDataLen < PAYLOAD_MIN_LEN_IMAGE_BLOCK_REQ ) )
   {
     /* no further processing if invalid */
     return ZCL_STATUS_MALFORMED_COMMAND;
@@ -2297,9 +2395,14 @@ static ZStatus_t zclOTA_ProcessImageBlockReq( zclIncoming_t *pInMsg )
   param.fileOffset = osal_build_uint32( pData, 4 );
   pData += 4;
   param.maxDataSize = *pData++;
-  if ((param.fieldControl & 0x01) != 0)
+  if ( ( param.fieldControl & OTA_BLOCK_FC_NODES_IEEE_PRESENT ) != 0 )
   {
     osal_cpyExtAddr(param.nodeAddr, pData);
+    pData += 8;
+  }
+  if ( ( param.fieldControl & OTA_BLOCK_FC_REQ_DELAY_PRESENT ) != 0 )
+  {
+    param.blockReqDelay = BUILD_UINT16(pData[0], pData[1]);
   }
 
   /* call callback */
@@ -2458,6 +2561,29 @@ static ZStatus_t zclOTA_ServerHdlIncoming( zclIncoming_t *pInMsg )
 
     default:
       return ZFailure;
+  }
+}
+
+/*********************************************************************
+ * @fn          zclOTA_InitBlockReqDelay
+ *
+ * @brief       Initialization attribute Minimum Block Request Delay.
+ *
+ * @param       none
+ *
+ * @return      none
+ */
+static void zclOTA_InitBlockReqDelay( void )
+{
+  // If the item doesn't exist in NV memory, create and initialize
+  // it with the value passed in.
+  if ( osal_nv_item_init( ZCD_NV_OTA_BLOCK_REQ_DELAY,
+                          sizeof(zclOTA_MinBlockReqDelay),
+                          &zclOTA_MinBlockReqDelay ) == ZSuccess )
+  {
+    // The item already exists in NV memory, read it from NV memory
+    osal_nv_read( ZCD_NV_OTA_BLOCK_REQ_DELAY, 0,
+                  sizeof(zclOTA_MinBlockReqDelay), &zclOTA_MinBlockReqDelay );
   }
 }
 #endif // OTA_SERVER

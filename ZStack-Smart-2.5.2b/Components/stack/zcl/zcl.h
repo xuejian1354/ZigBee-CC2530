@@ -1,12 +1,12 @@
 /**************************************************************************************************
   Filename:       zcl.h
-  Revised:        $Date: 2011-12-19 12:28:26 -0800 (Mon, 19 Dec 2011) $
-  Revision:       $Revision: 28712 $
+  Revised:        $Date: 2013-11-06 11:29:52 -0800 (Wed, 06 Nov 2013) $
+  Revision:       $Revision: 35933 $
 
   Description:    This file contains the Zigbee Cluster Library Foundation definitions.
 
 
-  Copyright 2006-2011 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2006-2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -48,6 +48,12 @@ extern "C"
 /*********************************************************************
  * INCLUDES
  */
+#if !defined ( ZCL_STANDALONE )
+  #include "OSAL.h"
+  #include "OSAL_Nv.h"
+  #include "OSAL_Tasks.h"
+#endif
+
 #include "AF.h"
 #include "aps_groups.h"
 
@@ -78,9 +84,16 @@ extern "C"
 #define ZCL_CLUSTER_ID_GEN_MULTISTATE_OUTPUT_BASIC           0x0013
 #define ZCL_CLUSTER_ID_GEN_MULTISTATE_VALUE_BASIC            0x0014
 #define ZCL_CLUSTER_ID_GEN_COMMISSIONING                     0x0015
+#define ZCL_CLUSTER_ID_GEN_PARTITION                         0x0016
 
 #define ZCL_CLUSTER_ID_OTA                                   0x0019
-#define ZCL_CLUSTER_ID_GREEN_POWER_PROXY                     0x001A
+
+#define ZCL_CLUSTER_ID_GEN_POWER_PROFILE                     0x001A
+#define ZCL_CLUSTER_ID_GEN_APPLIANCE_CONTROL                 0x001B
+
+#define ZCL_CLUSTER_ID_GEN_POLL_CONTROL                      0x0020
+
+#define ZCL_CLUSTER_ID_GREEN_POWER_PROXY                     0x0021
 
 // Closures Clusters
 #define ZCL_CLUSTER_ID_CLOSURES_SHADE_CONFIG                 0x0100
@@ -89,10 +102,10 @@ extern "C"
 
 // HVAC Clusters
 #define ZCL_CLUSTER_ID_HVAC_PUMP_CONFIG_CONTROL              0x0200
-#define ZCL_CLUSTER_ID_HAVC_THERMOSTAT                       0x0201
-#define ZCL_CLUSTER_ID_HAVC_FAN_CONTROL                      0x0202
-#define ZCL_CLUSTER_ID_HAVC_DIHUMIDIFICATION_CONTROL         0x0203
-#define ZCL_CLUSTER_ID_HAVC_USER_INTERFACE_CONFIG            0x0204
+#define ZCL_CLUSTER_ID_HVAC_THERMOSTAT                       0x0201
+#define ZCL_CLUSTER_ID_HVAC_FAN_CONTROL                      0x0202
+#define ZCL_CLUSTER_ID_HVAC_DIHUMIDIFICATION_CONTROL         0x0203
+#define ZCL_CLUSTER_ID_HVAC_USER_INTERFACE_CONFIG            0x0204
 
 // Lighting Clusters
 #define ZCL_CLUSTER_ID_LIGHTING_COLOR_CONTROL                0x0300
@@ -149,8 +162,15 @@ extern "C"
 
 #define ZCL_CLUSTER_ID_GEN_KEY_ESTABLISHMENT                 0x0800
 
-// Smart Light cluster
-#define ZCL_CLUSTER_ID_SMART_LIGHT                           0x1000
+#define ZCL_CLUSTER_ID_HA_APPLIANCE_IDENTIFICATION           0x0B00
+#define ZCL_CLUSTER_ID_HA_METER_IDENTIFICATION               0x0B01
+#define ZCL_CLUSTER_ID_HA_APPLIANCE_EVENTS_ALERTS            0x0B02
+#define ZCL_CLUSTER_ID_HA_APPLIANCE_STATISTICS               0x0B03
+#define ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT             0x0B04
+#define ZCL_CLUSTER_ID_HA_DIAGNOSTIC                         0x0B05
+
+// Light Link cluster
+#define ZCL_CLUSTER_ID_LIGHT_LINK                           0x1000
 
 /*** Frame Control bit mask ***/
 #define ZCL_FRAME_CONTROL_TYPE                          0x03
@@ -182,10 +202,25 @@ extern "C"
 #define ZCL_CMD_READ_REPORT_CFG_RSP                     0x09
 #define ZCL_CMD_REPORT                                  0x0a
 #define ZCL_CMD_DEFAULT_RSP                             0x0b
-#define ZCL_CMD_DISCOVER                                0x0c
-#define ZCL_CMD_DISCOVER_RSP                            0x0d
+#define ZCL_CMD_DISCOVER_ATTRS                          0x0c
+#define ZCL_CMD_DISCOVER_ATTRS_RSP                      0x0d
+#define ZCL_CMD_DISCOVER_CMDS_RECEIVED                  0x11
+#define ZCL_CMD_DISCOVER_CMDS_RECEIVED_RSP              0x12
+#define ZCL_CMD_DISCOVER_CMDS_GEN                       0x13
+#define ZCL_CMD_DISCOVER_CMDS_GEN_RSP                   0x14
+#define ZCL_CMD_DISCOVER_ATTRS_EXT                      0x15
+#define ZCL_CMD_DISCOVER_ATTRS_EXT_RSP                  0x16
 
-#define ZCL_CMD_MAX                                     ZCL_CMD_DISCOVER_RSP
+#define ZCL_CMD_MAX           ZCL_CMD_DISCOVER_ATTRS_EXT_RSP
+
+// define reporting constant
+#define ZCL_REPORTING_OFF     0xFFFF  // turn off reporting (maxReportInt)
+
+// define command direction flag masks
+#define CMD_DIR_SERVER_GENERATED          0x01
+#define CMD_DIR_CLIENT_GENERATED          0x02
+#define CMD_DIR_SERVER_RECEIVED           0x04
+#define CMD_DIR_CLIENT_RECEIVED           0x08
 
 /*** Data Types ***/
 #define ZCL_DATATYPE_NO_DATA                            0x00
@@ -285,11 +320,16 @@ extern "C"
 #define ZCL_STATUS_CMD_HAS_RSP                          0xFF // Non-standard status (used for Default Rsp)
 
 /*** Attribute Access Control - bit masks ***/
-#define ACCESS_CONTROL_READ                             0x01
-#define ACCESS_CONTROL_WRITE                            0x02
-#define ACCESS_CONTROL_COMMAND                          0x04
+#define ACCESS_CONTROL_READ                             0x01  // attribute can be read
+#define ACCESS_CONTROL_WRITE                            0x02  // attribute can be written
+#define ACCESS_REPORTABLE                               0x04  // indicate attribute is reportable
+#define ACCESS_CONTROL_COMMAND                          0x08
 #define ACCESS_CONTROL_AUTH_READ                        0x10
 #define ACCESS_CONTROL_AUTH_WRITE                       0x20
+#define ACCESS_CLIENT                                   0x80  // TI unique, indicate client side attribute
+
+// Access Control as reported OTA via DiscoveryAttributesExtended
+#define ACCESS_CONTROLEXT_MASK                          0x07  // read/write/reportable bits same as above
 
 #define ZCL_ATTR_ID_MAX                                 0xFFFF
 
@@ -325,7 +365,7 @@ extern "C"
 #define ZCL_CLUSTER_ID_CLOSURES( id ) ( (id) >= ZCL_CLUSTER_ID_CLOSURES_SHADE_CONFIG && \
                                         (id) <= ZCL_CLUSTER_ID_CLOSURES_WINDOW_COVERING )
 #define ZCL_CLUSTER_ID_HVAC( id )     ( (id) >= ZCL_CLUSTER_ID_HVAC_PUMP_CONFIG_CONTROL && \
-                                        (id) <= ZCL_CLUSTER_ID_HAVC_USER_INTERFACE_CONFIG )
+                                        (id) <= ZCL_CLUSTER_ID_HVAC_USER_INTERFACE_CONFIG )
 #define ZCL_CLUSTER_ID_LIGHTING( id ) ( (id) >= ZCL_CLUSTER_ID_LIGHTING_COLOR_CONTROL && \
                                         (id) <= ZCL_CLUSTER_ID_LIGHTING_BALLAST_CONFIG )
 #define ZCL_CLUSTER_ID_MS( id )       ( (id) >= ZCL_CLUSTER_ID_MS_ILLUMINANCE_MEASUREMENT && \
@@ -342,7 +382,30 @@ extern "C"
 #endif  // SE_UK_EXT
 #define ZCL_CLUSTER_ID_PI( id )       ( (id) >= ZCL_CLUSTER_ID_PI_GENERIC_TUNNEL && \
                                         (id) <= ZCL_CLUSTER_ID_PI_11073_PROTOCOL_TUNNEL )
-#define ZCL_CLUSTER_ID_SL( id )       ( (id) == ZCL_CLUSTER_ID_SMART_LIGHT )
+#define ZCL_CLUSTER_ID_LL( id )       ( (id) == ZCL_CLUSTER_ID_LIGHT_LINK )
+#define ZCL_CLUSTER_ID_PART( id )     ( (id) == ZCL_CLUSTER_ID_GEN_PARTITION )
+
+#define ZCL_CLUSTER_ID_PC( id )       ( (id) == ZCL_CLUSTER_ID_GEN_POLL_CONTROL )
+
+#define ZCL_CLUSTER_ID_EM( id )	      ( (id) == ZCL_CLUSTER_ID_HA_ELECTRICAL_MEASUREMENT )
+
+#define ZCL_CLUSTER_ID_DIAG( id )     ( (id) == ZCL_CLUSTER_ID_HA_DIAGNOSTIC )
+
+#define ZCL_CLUSTER_ID_MI( id )       ( (id) == ZCL_CLUSTER_ID_HA_METER_IDENTIFICATION )
+
+#define ZCL_CLUSTER_ID_APPL_C( id )   ( (id) == ZCL_CLUSTER_ID_GEN_APPLIANCE_CONTROL )
+
+#define ZCL_CLUSTER_ID_APPL_I( id )   ( (id) == ZCL_CLUSTER_ID_HA_APPLIANCE_IDENTIFICATION )
+
+#define ZCL_CLUSTER_ID_APPL_STAT( id ) ( (id) == ZCL_CLUSTER_ID_HA_APPLIANCE_STATISTICS )
+
+#define ZCL_CLUSTER_ID_APPL_E_A( id ) ( (id) == ZCL_CLUSTER_ID_HA_APPLIANCE_EVENTS_ALERTS )
+
+#define ZCL_CLUSTER_ID_APPL_S( id )   ( (id) == ZCL_CLUSTER_ID_HA_APPLIANCE_STATISTICS )
+
+#define ZCL_CLUSTER_ID_PP( id )       ( (id) == ZCL_CLUSTER_ID_GEN_POWER_PROFILE )
+
+#define ZCL_CLUSTER_ID_DL( id )       ( (id) == ZCL_CLUSTER_ID_CLOSURES_DOOR_LOCK )
 
 /*********************************************************************
  * TYPEDEFS
@@ -431,7 +494,7 @@ typedef struct
   uint16 attrID;             // attribute ID
   uint8  dataType;           // attribute data type
   uint16 minReportInt;       // minimum reporting interval
-  uint16 maxReportInt;       // maximum reporting interval
+  uint16 maxReportInt;       // maximum reporting interval, 0xFFFF=off
   uint16 timeoutPeriod;      // timeout period
   uint8  *reportableChange;  // reportable change (only applicable to analog data type)
                              // - the size depends on the attribute data type
@@ -515,29 +578,29 @@ typedef struct
   uint8  statusCode;
 } zclDefaultRspCmd_t;
 
-// Discover Attributes Command format
+// Discover Attributes and Attributes Extended Command format
 typedef struct
 {
   uint16 startAttr;          // specifies the minimum value of the identifier
                              // to begin attribute discovery.
   uint8  maxAttrIDs;         // maximum number of attribute IDs that are to be
                              // returned in the resulting response command.
-} zclDiscoverCmd_t;
+} zclDiscoverAttrsCmd_t;
 
 // Attribute Report info
 typedef struct
 {
   uint16 attrID;             // attribute ID
   uint8  dataType;           // attribute data type (see Table 17 in Spec)
-} zclDiscoverInfo_t;
+} zclDiscoverAttrInfo_t;
 
 // Discover Attributes Response Command format
 typedef struct
 {
   uint8             discComplete; // whether or not there're more attributes to be discovered
   uint8             numAttr;      // number of attributes in the list
-  zclDiscoverInfo_t attrList[];   // supported attributes list
-} zclDiscoverRspCmd_t;
+  zclDiscoverAttrInfo_t attrList[];   // supported attributes list
+} zclDiscoverAttrsRspCmd_t;
 
 // String Data Type
 typedef struct
@@ -545,6 +608,39 @@ typedef struct
   uint8 strLen;
   uint8 *pStr;
 } UTF8String_t;
+
+// Command format for the following:
+// Discover Commands Received, Discover Commands Generated
+typedef struct
+{
+  uint8 startCmdID;
+  uint8 maxCmdID;
+} zclDiscoverCmdsCmd_t;
+
+// Command format for the following:
+// Discover Commands Received Response Command, Discover Commands Generated Response
+typedef struct
+{
+  uint8 discComplete;
+  uint8 cmdType;    // either ZCL_CMD_DISCOVER_CMDS_GEN or ZCL_CMD_DISCOVER_CMDS_RECEIVED
+  uint8 numCmd;     // number of provided commands
+  uint8 *pCmdID;    // variable length array
+} zclDiscoverCmdsCmdRsp_t;
+
+// Discover Attributes Extended Response Command format
+typedef struct
+{
+  uint16 attrID;
+  uint8 attrDataType;
+  uint8 attrAccessControl;
+} zclExtAttrInfo_t;
+
+typedef struct
+{
+  uint8 discComplete;
+  uint8 numAttr;                  // number of attributes provided
+  zclExtAttrInfo_t  aExtAttrInfo[];    // variable length array
+} zclDiscoverAttrsExtRsp_t;
 
 /*********************************************************************
  * Plugins
@@ -597,6 +693,14 @@ typedef ZStatus_t (*zclInHdlr_t)( zclIncoming_t *pInHdlrMsg );
 //   logicalClusterID - logical cluster ID
 //   writeRec - received data to be written
 typedef ZStatus_t (*zclInWrtHdlr_t)( zclIncoming_t *msg, uint16 logicalClusterID, zclWriteRec_t *writeRec );
+
+// Command record
+typedef struct
+{
+  uint16   clusterID;
+  uint8    cmdID;
+  uint8    flag;  // one of CMD_DIR_CLIENT_GENERATED, CMD_DIR_CLIENT_RECEIVED, CMD_DIR_SERVER_GENERATED, CMD_DIR_SERVER_RECEIVED
+} zclCommandRec_t;
 
 // Attribute record
 typedef struct
@@ -691,25 +795,71 @@ extern uint8 zcl_SeqNum;
 #define zcl_SendWriteNoRsp(a,b,c,d,e,f,g) (zcl_SendWriteRequest( (a), (b), (c), (d), ZCL_CMD_WRITE_NO_RSP, (e), (f), (g) ))
 #endif // ZCL_WRITE
 
+#if !defined ( ZCL_STANDALONE )
+  #define zcl_mem_alloc      osal_mem_alloc
+  #define zcl_memset         osal_memset
+  #define zcl_memcpy         osal_memcpy
+  #define zcl_mem_free       osal_mem_free
+  #define zcl_buffer_uint32  osal_buffer_uint32
+  #define zcl_nv_item_init   osal_nv_item_init
+  #define zcl_nv_write       osal_nv_write
+  #define zcl_nv_read        osal_nv_read
+  #define zcl_build_uint32   osal_build_uint32
+  #define zcl_cpyExtAddr     osal_cpyExtAddr
+#else
+  extern void *zcl_mem_alloc( uint16 size );
+  extern void *zcl_memset( void *dest, uint8 value, int len );
+  extern void *zcl_memcpy( void *dst, void *src, unsigned int len );
+  extern void zcl_mem_free(void *ptr);
+  extern uint8* zcl_buffer_uint32( uint8 *buf, uint32 val );
+  extern uint8 zcl_nv_item_init( uint16 id, uint16 len, void *buf );
+  extern uint8 zcl_nv_write( uint16 id, uint16 ndx, uint16 len, void *buf );
+  extern uint8 zcl_nv_read( uint16 id, uint16 ndx, uint16 len, void *buf );
+  extern uint32 zcl_build_uint32( uint8 *swapped, uint8 len );
+  extern void *zcl_cpyExtAddr(uint8 * pDest, const uint8 * pSrc);
+#endif
+
 /*********************************************************************
  * FUNCTIONS
  */
 
  /*
+  * callback function to handle messages externally
+  */
+extern uint8 zcl_HandleExternal( zclIncoming_t *pInMsg );
+
+
+#if !defined ( ZCL_STANDALONE )
+ /*
   * Initialization for the task
   */
 extern void zcl_Init( byte task_id );
+#endif
 
+#if !defined ( ZCL_STANDALONE )
 /*
  *  Event Process for the task
  */
 extern UINT16 zcl_event_loop( byte task_id, UINT16 events );
+#endif
+
+#if !defined ( ZCL_STANDALONE )
+/*
+ *  Register the Application to receive the unprocessed Foundation command/response messages
+ */
+extern uint8 zcl_registerForMsg( uint8 taskId );
+#endif
 
 /*
  *  Function for Plugins' to register for incoming messages
  */
 extern ZStatus_t zcl_registerPlugin( uint16 startLogCluster, uint16 endLogCluster,
                                      zclInHdlr_t pfnIncomingHdlr );
+
+/*
+ *  Register Application's Command table
+ */
+extern ZStatus_t zcl_registerCmdList( uint8 endpoint, CONST uint8 numAttrs, CONST zclCommandRec_t zclTestApp_Cmds[] );
 
 /*
  *  Register Application's Attribute table
@@ -733,9 +883,9 @@ extern ZStatus_t zcl_registerReadWriteCB( uint8 endpoint, zclReadWriteCB_t pfnRe
                                           zclAuthorizeCB_t pfnAuthorizeCB );
 
 /*
- *  Register the Application to receive the unprocessed Foundation command/response messages
+ *  Process incoming ZCL messages
  */
-extern uint8 zcl_registerForMsg( uint8 taskId );
+extern void zcl_ProcessMessageMSG( afIncomingMSGPacket_t *pkt );
 
 /*
  *  Function for Sending a Command
@@ -759,6 +909,13 @@ extern ZStatus_t zcl_SendRead( uint8 srcEP, afAddrType_t *dstAddr,
 extern ZStatus_t zcl_SendReadRsp( uint8 srcEP, afAddrType_t *dstAddr,
                                   uint16 realClusterID, zclReadRspCmd_t *readRspCmd,
                                   uint8 direction, uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ *  Function for reading a local attribute
+ */
+extern ZStatus_t zcl_ReadAttrData( uint8 endpoint, uint16 clusterId, uint16 attrId,
+                                         uint8 *pAttrData, uint16 *pDataLen );
+
 #endif // ZCL_READ
 
 #ifdef ZCL_WRITE
@@ -823,18 +980,46 @@ extern ZStatus_t zcl_SendDefaultRspCmd( uint8 srcEP, afAddrType_t *dstAddr, uint
 
 #ifdef ZCL_DISCOVER
 /*
+ *  Function to Discover the ID and Types of commands on a remote device
+ */
+extern ZStatus_t zcl_SendDiscoverCmdsCmd( uint8 srcEP, afAddrType_t *dstAddr,
+                            uint16 clusterID, uint8 cmdType, zclDiscoverCmdsCmd_t *pDiscoverCmd,
+                            uint8 direction, uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ *  Function for sending the Discover Commands Response command
+ */
+extern ZStatus_t zcl_SendDiscoverCmdsRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
+                          uint16 clusterID, zclDiscoverCmdsCmdRsp_t *pDiscoverRspCmd,
+                          uint8 direction, uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
  *  Function to Discover the ID and Types of the Attributes on a remote device
  */
-extern ZStatus_t zcl_SendDiscoverCmd( uint8 srcEP, afAddrType_t *dstAddr,
-                            uint16 realClusterID, zclDiscoverCmd_t *discoverCmd,
+extern ZStatus_t zcl_SendDiscoverAttrsCmd( uint8 srcEP, afAddrType_t *dstAddr,
+                            uint16 realClusterID, zclDiscoverAttrsCmd_t *pDiscoverCmd,
                             uint8 direction, uint8 disableDefaultRsp, uint8 seqNum );
 
 /*
  *  Function for sending the Discover Attributes Response command
  */
-extern ZStatus_t zcl_SendDiscoverRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
-                      uint16 realClusterID, zclDiscoverRspCmd_t *discoverRspCmd,
+extern ZStatus_t zcl_SendDiscoverAttrsRspCmd( uint8 srcEP, afAddrType_t *dstAddr,
+                      uint16 realClusterID, zclDiscoverAttrsRspCmd_t *pDiscoverRspCmd,
                       uint8 direction, uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ * Function for sending the Discover Attributes Extended command
+ */
+extern ZStatus_t zcl_SendDiscoverAttrsExt( uint8 srcEP, afAddrType_t *dstAddr,
+                                     uint16 realClusterID, zclDiscoverAttrsCmd_t *pDiscoverAttrsExt,
+                                     uint8 direction, uint8 disableDefaultRsp, uint8 seqNum );
+
+/*
+ * Function for sending the Discover Attributes Extended Response command
+ */
+extern ZStatus_t zcl_SendDiscoverAttrsExtRsp( uint8 srcEP, afAddrType_t *dstAddr,
+                                         uint16 realClusterID, zclDiscoverAttrsExtRsp_t *pDiscoverAttrsExtRsp,
+                                         uint8 direction, uint8 disableDefaultRsp, uint8 seqNum );
 #endif // ZCL_DISCOVER
 
 #ifdef ZCL_READ
@@ -874,9 +1059,19 @@ extern uint8 zclAnalogDataType( uint8 dataType );
 
 #ifdef ZCL_DISCOVER
 /*
- * Function to parse the "Profile" Discover Commands
+ * Function to parse the "Profile" Discover Commands Command
  */
-extern void *zclParseInDiscCmd( zclParseCmd_t *pCmd );
+extern void *zclParseInDiscCmdsCmd( zclParseCmd_t *pCmd );
+
+/*
+ * Function to parse the "Profile" Discover Attributes and Attributes Extended Commands
+ */
+extern void *zclParseInDiscAttrsCmd( zclParseCmd_t *pCmd );
+
+/*
+ * Function to find the command record that matchs the parameters
+ */
+extern uint8 zclFindCmdRec( uint8 endpoint, uint16 clusterID, uint8 cmdID, zclCommandRec_t *pCmd );
 #endif // ZCL_DISCOVER
 
 /*
@@ -892,7 +1087,7 @@ extern uint8 zclFindAttrRec( uint8 endpoint, uint16 realClusterID, uint16 attrId
 /*
  * Function to read the attribute's current value
  */
-extern uint8 zclReadAttrData( uint8 *pAttrData, zclAttrRec_t *pAttr, uint16 *pDataLen );
+extern ZStatus_t zclReadAttrData( uint8 *pAttrData, zclAttrRec_t *pAttr, uint16 *pDataLen );
 
 /*
  * Function to return the length of the datatype in length.

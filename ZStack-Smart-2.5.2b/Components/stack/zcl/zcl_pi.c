@@ -1,12 +1,12 @@
 /**************************************************************************************************
   Filename:       zcl_pi.c
-  Revised:        $Date: 2010-09-28 08:39:46 -0700 (Tue, 28 Sep 2010) $
-  Revision:       $Revision: 23926 $
+  Revised:        $Date: 2013-06-11 13:53:09 -0700 (Tue, 11 Jun 2013) $
+  Revision:       $Revision: 34523 $
 
   Description:    Zigbee Cluster Library - Protocol Interfaces (PI)
 
 
-  Copyright 2010 Texas Instruments Incorporated. All rights reserved.
+  Copyright 2010 - 2013 Texas Instruments Incorporated. All rights reserved.
 
   IMPORTANT: Your use of this Software is limited to those specific rights
   granted under the terms of a software license agreement between the user
@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+  PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE, 
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -40,8 +40,6 @@
 /*********************************************************************
  * INCLUDES
  */
-#include "ZComDef.h"
-#include "OSAL.h"
 #include "zcl.h"
 #include "zcl_general.h"
 #include "zcl_pi.h"
@@ -123,7 +121,7 @@ ZStatus_t zclPI_RegisterCmdCallbacks( uint8 endpoint, zclPI_AppCallbacks_t *call
   }
 
   // Fill in the new profile list
-  pNewItem = osal_mem_alloc( sizeof( zclPICBRec_t ) );
+  pNewItem = zcl_mem_alloc( sizeof( zclPICBRec_t ) );
   if ( pNewItem == NULL )
     return (ZMemError);
 
@@ -175,17 +173,17 @@ ZStatus_t zclPI_Send_MatchProtocolAddrCmd( uint8 srcEP, afAddrType_t *dstAddr,
   uint8 *buf;
   ZStatus_t stat;
 
-  buf = osal_mem_alloc( len+1 );  // 1 for length field
+  buf = zcl_mem_alloc( len+1 );  // 1 for length field
   if ( buf )
   {  
     buf[0] = len;
-    osal_memcpy( &(buf[1]), protocolAddr, len );
+    zcl_memcpy( &(buf[1]), protocolAddr, len );
 
     stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_PI_GENERIC_TUNNEL,
                             COMMAND_PI_GENERIC_TUNNEL_MATCH_PROTOCOL_ADDR, TRUE, 
                             ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum,
                             (len+1), buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -220,21 +218,21 @@ ZStatus_t zclPI_Send_MatchProtocolAddrRsp( uint8 srcEP, afAddrType_t *dstAddr,
   uint8 msgLen = Z_EXTADDR_LEN + 1 + len; // IEEE Address + 1 for length field
   ZStatus_t stat;
 
-  buf = osal_mem_alloc( msgLen ); // 1 for length field
+  buf = zcl_mem_alloc( msgLen ); // 1 for length field
   if ( buf )
   {
     // Copy over IEEE Address
-    osal_cpyExtAddr( buf, ieeeAddr );
+    zcl_cpyExtAddr( buf, ieeeAddr );
 
     // Copy over Protocol Address
     buf[8] = len;
-    osal_memcpy( &(buf[9]), protocolAddr, len );
+    zcl_memcpy( &(buf[9]), protocolAddr, len );
 
     stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_PI_GENERIC_TUNNEL,
                             COMMAND_PI_GENERIC_TUNNEL_MATCH_PROTOCOL_ADDR_RSP, TRUE, 
                             ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum,
                             msgLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -268,17 +266,17 @@ ZStatus_t zclPI_Send_AdvertiseProtocolAddrCmd( uint8 srcEP, afAddrType_t *dstAdd
   uint8 *buf;
   ZStatus_t stat;
 
-  buf = osal_mem_alloc( len+1 ); // 1 for length field
+  buf = zcl_mem_alloc( len+1 ); // 1 for length field
   if ( buf )
   {  
     buf[0] = len;
-    osal_memcpy( &(buf[1]), protocolAddr, len );
+    zcl_memcpy( &(buf[1]), protocolAddr, len );
 
     stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_PI_GENERIC_TUNNEL,
                             COMMAND_PI_GENERIC_TUNNEL_ADVERTISE_PROTOCOL_ADDR, TRUE, 
                             ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum,
                             (len+1), buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -320,19 +318,19 @@ ZStatus_t zclPI_Send_11073TransferAPDUCmd( uint8 srcEP, afAddrType_t *dstAddr,
   uint8 *buf;
   ZStatus_t stat;
 
-  buf = osal_mem_alloc( len+2 ); // 2 for length field (long octet string)
+  buf = zcl_mem_alloc( len+2 ); // 2 for length field (long octet string)
   if ( buf )
   {  
     buf[0] = LO_UINT16( len );
     buf[1] = HI_UINT16( len );
-    osal_memcpy( &(buf[2]), apdu, len );
+    zcl_memcpy( &(buf[2]), apdu, len );
 
     // This command shall always be transmitted with the Disable Default 
     // Response bit in the ZCL frame control field set to 1.
     stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_PI_11073_PROTOCOL_TUNNEL,
                             COMMAND_PI_11073_TUNNEL_TRANSFER_APDU, TRUE, 
                             ZCL_FRAME_CLIENT_SERVER_DIR, TRUE, 0, seqNum, (len+2), buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
@@ -374,20 +372,20 @@ ZStatus_t zclPI_Send_11073ConnectReq( uint8 srcEP, afAddrType_t *dstAddr,
   uint8 msgLen = 1 + 2 + Z_EXTADDR_LEN + 1; // connect ctrl + idle timeout + IEEE Address + manager EP
   ZStatus_t stat;
 
-  buf = osal_mem_alloc( msgLen );
+  buf = zcl_mem_alloc( msgLen );
   if ( buf )
   {
     buf[0] = connectCtrl;
     buf[1] = LO_UINT16( idleTimeout );
     buf[2] = HI_UINT16( idleTimeout );
-    osal_memcpy( &(buf[3]), managerAddr, Z_EXTADDR_LEN );
+    zcl_memcpy( &(buf[3]), managerAddr, Z_EXTADDR_LEN );
     buf[11] = managerEP;
 
     stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_PI_11073_PROTOCOL_TUNNEL,
                             COMMAND_PI_11073_TUNNEL_CONNECT_REQ, TRUE, 
                             ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum,
                             msgLen, buf );
-    osal_mem_free( buf );
+    zcl_mem_free( buf );
   }
   else
   {
