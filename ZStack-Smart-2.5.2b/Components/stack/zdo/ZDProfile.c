@@ -168,7 +168,7 @@ typedef struct
 
 CONST zdpMsgProcItem_t zdpMsgProcs[] =
 {
-#if ( RFD_RCVC_ALWAYS_ON==TRUE ) || ( ZG_BUILD_RTR_TYPE )
+#if ( RFD_RCVC_ALWAYS_ON==TRUE ) || ( ZG_BUILD_RTR_TYPE ) || defined(ED_ALWAYS_RCV)
   // These aren't processed by sleeping end devices.
   { NWK_addr_req,           zdpProcessAddrReq },
   { Device_annce,           ZDO_ProcessDeviceAnnce },

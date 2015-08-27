@@ -94,7 +94,7 @@ extern "C" {
   #define NWK_LINK_STATUS_PERIOD  0
 #endif
 
-#if ( RFD_RCVC_ALWAYS_ON==TRUE ) || ( ZG_BUILD_RTR_TYPE )
+#if ( RFD_RCVC_ALWAYS_ON==TRUE ) || ( ZG_BUILD_RTR_TYPE ) || defined(ED_ALWAYS_RCV)
   // The PANID Conflict feature is mandatory for both 2007 and 2007 PRO.
   // So, it will be ON all the time (except sleeping end devices).
   #if !defined ( ZIGBEE_PANID_CONFLICT )

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-20
+Date:2015-08-27
 **************************************************************************************************/
 
 
@@ -76,6 +76,7 @@ extern "C"
 #define DEMOBASE_HUMITURE_EVT		0x0040
 #define DEMOBASE_LIGHTDETECT_EVT	0x0080
 #define DEMOBASE_AIRETECT_EVT		0x0100
+#define HUELIGHT_COUNT_EVT			0x0010
 
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86
@@ -102,6 +103,7 @@ extern "C"
 #endif
 
 #define POWERSETTING_TIMEOUT	3000
+#define HUELIGHT_TIMEOUT		1000
 
 #define PERMIT_JOIN_FORBID	0
 #define PERMIT_JOIN_ALWAYS	0xFF

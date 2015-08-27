@@ -228,6 +228,7 @@ extern "C"
 #define ZCD_NV_AIRCONTROLLER_HOLD			0x0414
 #define ZCD_NV_TRANSCONN_IPASET				0x0415
 #define ZCD_NV_TRANSCONN_IPADDR				0x0416
+#define ZCD_NV_HUELIGHT_DATASET				0x0417
 
 // ZCD_NV_STARTUP_OPTION values
 //   These are bit weighted - you can OR these together.

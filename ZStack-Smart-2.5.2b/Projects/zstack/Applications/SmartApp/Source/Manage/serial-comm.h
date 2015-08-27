@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-31
+Date:2015-08-27
 **************************************************************************************************/
 
 #ifndef SERIAL_COM_H
@@ -88,6 +88,7 @@ typedef void(*UART_TxHandler)(uint8[], uint8);
 /*********************************************************************
  * FUNCTIONS
  */
+#if(HAL_UART==TRUE)
 #ifndef HAL_UART01_BOTH
 extern void Serial_Init(UART_TxHandler txHandler);
 extern void Data_TxHandler(uint8 txBuf[], uint8 txLen);
@@ -98,6 +99,7 @@ extern void Data1_TxHandler(uint8 txBuf[], uint8 txLen);
 #endif
 
 extern void SerialTx_Handler(int port, UART_TxHandler txHandler);
+#endif
 
 /*********************************************************************
 *********************************************************************/

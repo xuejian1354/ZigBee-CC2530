@@ -39,7 +39,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-04-22
+Date:2015-08-27
 **************************************************************************************************/
 
 /**************************************************************************************************
@@ -131,7 +131,7 @@ void Hal_Init( uint8 task_id )
 void HalDriverInit (void)
 {
   /* TIMER */
-#if (defined HAL_TIMER) && (HAL_TIMER == TRUE)
+#if (defined HAL_TIMER) && (HAL_TIMER == TRUE) && (DEVICE_TYPE_ID != 5)
   #error "The hal timer driver module is removed."
 #endif
 
@@ -290,7 +290,7 @@ void Hal_ProcessPoll ()
 {
 
   /* Timer Poll */
-#if (defined HAL_TIMER) && (HAL_TIMER == TRUE)
+#if (defined HAL_TIMER) && (HAL_TIMER == TRUE) && (DEVICE_TYPE_ID != 5)
   #error "The hal timer driver module is removed."
 #endif
 

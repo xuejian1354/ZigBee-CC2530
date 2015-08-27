@@ -57,7 +57,6 @@ static UART_TxHandler mData_TxHandler;
 static UART_TxHandler mData0_TxHandler;
 static UART_TxHandler mData1_TxHandler;
 #endif
-#endif
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -250,4 +249,5 @@ void Data1_TxHandler(uint8 txBuf[], uint8 txLen)
 {
   HalUARTWrite(SERIAL_COM_PORT0, txBuf, txLen);
 }
+#endif
 #endif

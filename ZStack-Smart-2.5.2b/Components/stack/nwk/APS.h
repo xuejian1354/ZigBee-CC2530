@@ -127,7 +127,7 @@ extern uint8  AIB_apsUseExtendedPANID[Z_EXTADDR_LEN];
 extern uint8  AIB_apsUseInsecureJoin;
 extern uint8 APS_AllowDataRequests;
 
-#if ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE )
+#if ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE || defined(ED_ALWAYS_RCV))
   extern apsEndDeviceBroadcast_t apsEndDeviceBroadcastTable[];
 #endif  
 
@@ -162,7 +162,7 @@ extern void APS_CmdInd( APS_CmdInd_t* ind );
  */
 extern void APS_ReflectorInit( uint8 type );
 
-#if ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE )
+#if ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE || defined(ED_ALWAYS_RCV))
   /*
    * APS_InitEndDeviceBroadcastTable - Initialize the End Device Broadcast table 
    */
@@ -172,7 +172,7 @@ extern void APS_ReflectorInit( uint8 type );
    * APS_EndDeviceBroadcastCheck 
    */
   extern uint8 APS_EndDeviceBroadcastCheck( NLDE_FrameFormat_t *ff );
-#endif // ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE )
+#endif // ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE  || defined(ED_ALWAYS_RCV))
 
 
 /*********************************************************************

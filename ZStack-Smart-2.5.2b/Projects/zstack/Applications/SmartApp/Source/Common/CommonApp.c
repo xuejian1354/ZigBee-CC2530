@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-07
+Date:2015-08-27
 **************************************************************************************************/
 
 
@@ -379,6 +379,23 @@ void CommonApp_PowerOnFactorySetting(devStates_t status)
     if(devState != DEV_HOLD)
     {
       HalLedBlink ( HAL_LED_4, 0, 50, 100 );
+
+#if (DEVICE_TYPE_ID==5)
+	  uint8 nvData[5];
+	  if (ZSUCCESS == osal_nv_item_init( 
+						ZCD_NV_HUELIGHT_DATASET, sizeof(nvData),  &nvData))
+	  {
+		nvData[0] = 0;
+		nvData[1] = 1;
+		nvData[2] = 0xFE;
+		nvData[3] = 0;
+		nvData[4] = 0;
+		
+		osal_nv_write(
+			ZCD_NV_HUELIGHT_DATASET, 0, sizeof(nvData),  &nvData);
+	  }
+#endif
+	  
       devStates_t tStates;
       if (ZSUCCESS == osal_nv_item_init( 
                           ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
@@ -389,6 +406,7 @@ void CommonApp_PowerOnFactorySetting(devStates_t status)
 
       zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);
       WatchDogEnable( WDTIMX );
+	  
     }
 #endif
   }

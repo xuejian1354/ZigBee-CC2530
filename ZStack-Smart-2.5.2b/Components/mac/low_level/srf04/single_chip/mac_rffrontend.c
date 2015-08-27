@@ -42,7 +42,7 @@
  * ------------------------------------------------------------------------------------------------
  */
 #include "hal_types.h"
-#include "hal_board_cfg.h"
+#include "hal_board.h"
 #include "hal_assert.h"
 #include "mac_api.h"
 #include "mac_radio_defs.h"

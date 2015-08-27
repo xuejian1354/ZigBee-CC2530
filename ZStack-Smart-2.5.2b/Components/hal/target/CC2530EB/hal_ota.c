@@ -45,7 +45,7 @@
  * INCLUDES
  */
 #include "comdef.h"
-#include "hal_board_cfg.h"
+#include "hal_board.h"
 #include "hal_dma.h"
 #include "hal_flash.h"
 #include "hal_ota.h"

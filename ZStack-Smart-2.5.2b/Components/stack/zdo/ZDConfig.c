@@ -135,7 +135,7 @@ void ZDConfig_UpdateNodeDescriptor( void )
   else if ( ZSTACK_END_DEVICE_BUILD )
   {
     ZDO_Config_Node_Descriptor.CapabilityFlags = (CAPINFO_DEVICETYPE_RFD
-  #if ( RFD_RCVC_ALWAYS_ON == TRUE)
+  #if ( RFD_RCVC_ALWAYS_ON == TRUE) || defined(ED_ALWAYS_RCV)
             | CAPINFO_RCVR_ON_IDLE
   #endif
         );

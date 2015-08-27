@@ -44,7 +44,7 @@
  * INCLUDES
  */
 
-#include "hal_board_cfg.h"
+#include "hal_board.h"
 #include "hal_types.h"
 
 /******************************************************************************

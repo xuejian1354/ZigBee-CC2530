@@ -142,6 +142,11 @@ const uint16 zclColor_Primary3Y = 0x05D2;
 const uint8 zclColor_Primary3Intensity = 0xFE;
 #endif
 
+extern uint8 bright;
+extern uint8 hue;
+extern uint8 saturation;
+
+
 /*********************************************************************
  * TYPEDEFS
  */
@@ -670,21 +675,11 @@ void hwLight_UpdateOnOff( uint8 state )
 {
   if ( state == LIGHT_ON )
   {
-#ifdef ZLL_HW_LED_LAMP
-    ENABLE_LAMP;
-#else
-    // On default platform, we use LED4 to simulate the Light
-    HalLedSet( HAL_LED_4, HAL_LED_MODE_ON );
-#endif
+  	hwLight_UpdateLampColorHueSat(hue, saturation, bright);
   }
   else
   {
-#ifdef ZLL_HW_LED_LAMP
-    DISABLE_LAMP;
-#else
-    HalLedSet( HAL_LED_4, HAL_LED_MODE_OFF );
-    HalLedSet( HAL_LED_2, HAL_LED_MODE_OFF );
-#endif
+  	hwLight_UpdateLampColorHueSat(0, 0, 0);
   }
 }
 

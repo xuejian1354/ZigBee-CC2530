@@ -50,7 +50,7 @@ extern "C"
  * INCLUDES
  */
 #include "hal_types.h"
-#include "hal_board_cfg.h"
+#include "hal_board.h"
 
 /*********************************************************************
  * CONSTANTS

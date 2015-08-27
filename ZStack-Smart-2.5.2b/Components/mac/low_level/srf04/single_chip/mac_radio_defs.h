@@ -45,7 +45,7 @@
  * ------------------------------------------------------------------------------------------------
  */
 #include "hal_defs.h"
-#include "hal_board_cfg.h"
+#include "hal_board.h"
 #include "hal_mac_cfg.h"
 #include "mac_spec.h"
 #include "mac_mcu.h"
