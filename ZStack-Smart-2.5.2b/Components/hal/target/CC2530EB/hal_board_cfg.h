@@ -423,7 +423,7 @@ st( \
 
 /* Set to TRUE enable ADC usage, FALSE disable it */
 #ifndef HAL_ADC
-#define HAL_ADC TRUE
+#define HAL_ADC FALSE
 #endif
 
 /* Set to TRUE enable DMA usage, FALSE disable it */
@@ -474,7 +474,7 @@ st( \
 #endif
 #endif
 
-#if HAL_UART
+#if (HAL_UART==TRUE)
 #ifndef HAL_UART01_BOTH
 
 #ifndef HAL_UART_DMA

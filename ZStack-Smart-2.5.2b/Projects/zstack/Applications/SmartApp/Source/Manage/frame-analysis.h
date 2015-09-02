@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-31
+Date:2015-08-21
 **************************************************************************************************/
 
 
@@ -51,6 +51,7 @@ extern "C"
 #define FR_APP_LIGHTSWITCH_TWO		"02"
 #define FR_APP_LIGHTSWITCH_THREE	"03"
 #define FR_APP_LIGHTSWITCH_FOUR		"04"
+#define FR_APP_HUELIGHT				"05"
 #define FR_APP_ALARM				"11"
 #define FR_APP_IR_DETECTION			"12"
 #define FR_APP_DOOR_SENSOR			"13"
@@ -81,6 +82,8 @@ extern "C"
 #define FR_APP_DEV FR_APP_LIGHTSWITCH_THREE
 #elif(DEVICE_TYPE_ID==4)
 #define FR_APP_DEV FR_APP_LIGHTSWITCH_FOUR
+#elif(DEVICE_TYPE_ID==5)
+#define FR_APP_DEV FR_APP_HUELIGHT
 #elif(DEVICE_TYPE_ID==11)
 #define FR_APP_DEV FR_APP_ALARM
 #elif(DEVICE_TYPE_ID==12)

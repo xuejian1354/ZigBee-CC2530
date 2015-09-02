@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-31
+Date:2015-08-27
 **************************************************************************************************/
 
 
@@ -76,6 +76,7 @@ extern "C"
 #define DEMOBASE_HUMITURE_EVT		0x0040
 #define DEMOBASE_LIGHTDETECT_EVT	0x0080
 #define DEMOBASE_AIRETECT_EVT		0x0100
+#define HUELIGHT_COUNT_EVT			0x0010
 
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86
@@ -90,17 +91,19 @@ extern "C"
 #define IRDETECT_QUERY_TIMEOUT	500
 #define AIRCONTROLLER_TIMEOUT	5000
 #define PERMIT_JOIN_TIMEOUT		30		//30 Seconds, <=255s
+#define HUMITUREDETECT_TIMEOUT  5000
 #else
 #define HEARTBEAT_TIMEOUT   	6000	//Every 36 Seconds
 #define TRANSNODE_TIMEOUT   	6000	//Every 36 Seconds
 #define CMD_PEROID_TIMEOUT		1000	//Every 6 Seconds
 #define DOORSENSOR_TIMEOUT  	1000	//Every 6 Seconds
+#define HUMITUREDETECT_TIMEOUT  3000
 
 #define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
 #endif
 
-#define HUMITUREDETECT_TIMEOUT  5000
 #define POWERSETTING_TIMEOUT	3000
+#define HUELIGHT_TIMEOUT		1000
 
 #define PERMIT_JOIN_FORBID	0
 #define PERMIT_JOIN_ALWAYS	0xFF
@@ -225,8 +228,8 @@ extern int8 CommonDevice_GetData(uint8 *data, uint8 *dataLen);
 
 extern void CommonApp_CmdPeroidCB( void *params, uint16 *duration, uint8 *count);
 extern int8 DataCmd_Ctrl(uint8 *data, uint8 length);
-extern void Update_Refresh(uint8 *data, uint8 length);
 #endif
+extern void Update_Refresh(uint8 *data, uint8 length);
 extern void PermitJoin_Refresh(uint8 *data, uint8 length);
 ZStatus_t CommonApp_PermitJoiningRequest( byte PermitDuration );
 

@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, 
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE, 
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -127,7 +127,7 @@ extern uint8  AIB_apsUseExtendedPANID[Z_EXTADDR_LEN];
 extern uint8  AIB_apsUseInsecureJoin;
 extern uint8 APS_AllowDataRequests;
 
-#if ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE )
+#if ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE || defined(ED_ALWAYS_RCV))
   extern apsEndDeviceBroadcast_t apsEndDeviceBroadcastTable[];
 #endif  
 
@@ -162,7 +162,7 @@ extern void APS_CmdInd( APS_CmdInd_t* ind );
  */
 extern void APS_ReflectorInit( uint8 type );
 
-#if ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE )
+#if ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE || defined(ED_ALWAYS_RCV))
   /*
    * APS_InitEndDeviceBroadcastTable - Initialize the End Device Broadcast table 
    */
@@ -172,7 +172,7 @@ extern void APS_ReflectorInit( uint8 type );
    * APS_EndDeviceBroadcastCheck 
    */
   extern uint8 APS_EndDeviceBroadcastCheck( NLDE_FrameFormat_t *ff );
-#endif // ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE )
+#endif // ( ZG_BUILD_ENDDEVICE_TYPE ) && ( RFD_RCVC_ALWAYS_ON==TRUE  || defined(ED_ALWAYS_RCV))
 
 
 /*********************************************************************
