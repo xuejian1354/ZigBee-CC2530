@@ -675,11 +675,21 @@ void hwLight_UpdateOnOff( uint8 state )
 {
   if ( state == LIGHT_ON )
   {
+	T1CCTL0 |= 0x04;
+	T1CCTL1 |= 0x04;
+	T1CCTL2 |= 0x04;
+	T1CCTL3 |= 0x04;
+	T1CCTL4 |= 0x04;
+	
   	hwLight_UpdateLampColorHueSat(hue, saturation, bright);
   }
   else
   {
-  	hwLight_UpdateLampColorHueSat(0, 0, 0);
+	T1CCTL0 &= ~0x04;
+	T1CCTL1 &= ~0x04;
+	T1CCTL2 &= ~0x04;
+	T1CCTL3 &= ~0x04;
+	T1CCTL4 &= ~0x04;
   }
 }
 
