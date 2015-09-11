@@ -58,6 +58,7 @@ extern "C"
 #define FR_APP_ENVDETECTION			"14"
 #define FR_APP_SMOG					"15"
 #define FR_APP_IR_RELAY				"21"
+#define FR_APP_SUPER_BUTTON			"22"
 #define FR_APP_HUMITURE_DETECTION	"A1"
 #define FR_APP_SOLENOID_VALVE		"A2"
 
@@ -96,6 +97,8 @@ extern "C"
 #define FR_APP_DEV FR_APP_SMOG
 #elif(DEVICE_TYPE_ID==21)
 #define FR_APP_DEV FR_APP_IR_RELAY
+#elif(DEVICE_TYPE_ID==22)
+#define FR_APP_DEV FR_APP_SUPER_BUTTON
 
 /*Smart Farm*/
 #elif(DEVICE_TYPE_ID==0xA1)

@@ -19,6 +19,7 @@
 #include "EnvDetection_Board_cfg.h"
 #include "DustSensor_Board_cfg.h"
 #include "IRRelay_Board_cfg.h"
+#include "SuperButton_Board_cfg.h"
 
 #include "HumitureDetection_Board_cfg.h"
 #include "SolenoidValve_Board_cfg.h"
