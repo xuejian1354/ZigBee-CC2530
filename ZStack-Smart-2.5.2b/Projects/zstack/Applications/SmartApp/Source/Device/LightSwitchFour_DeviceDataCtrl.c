@@ -85,6 +85,10 @@ void HalDeviceInit (void)
 void HalStatesInit(devStates_t status)
 {}
 
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+void BindBtn_Ctrl(void)
+{}
+#endif
 
 #ifdef KEY_PUSH_PORT_1_BUTTON
 void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)

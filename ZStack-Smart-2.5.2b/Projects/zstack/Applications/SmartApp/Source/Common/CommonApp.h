@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-27
+Date:2015-09-11
 **************************************************************************************************/
 
 
@@ -51,8 +51,10 @@ extern "C"
 #define COMMONAPP_MAX_INCLUSTERS     1
 #define COMMONAPP_MAX_OUTCLUSTERS    1
 
-#define COORDINATOR_ADDR		0x0000
+#define COORDINATOR_ADDR	0x0000
 #define BROADCAST_ADDR		0xFFFF
+
+#define EXT_ADDR_SIZE		16
 
 /*********************************************************************
  * MACROS
@@ -60,6 +62,7 @@ extern "C"
 //User events message
 #define SERIAL_CMD_EVT				0x4000		//serial receive event by user defined
 #define TRANSNODE_UPLOAD_EVT		0x2000
+#define BINDSRCBTN_CLEAR_EVT		0x1000
 #define HEARTBERAT_EVT				0x0001		//heart beat event by user defined
 #define CMD_PEROID_EVT				0x0002		//cmd period control event
 #define PERMIT_JOIN_EVT				0x0004
@@ -77,6 +80,7 @@ extern "C"
 #define DEMOBASE_LIGHTDETECT_EVT	0x0080
 #define DEMOBASE_AIRETECT_EVT		0x0100
 #define HUELIGHT_COUNT_EVT			0x0010
+#define SUPERBUTTON_PAIR_EVT		0x0010
 
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86
@@ -101,6 +105,8 @@ extern "C"
 
 #define PERMIT_JOIN_TIMEOUT	6		//36 Seconds
 #endif
+
+#define SUPERBUTTON_PAIR_TIMEOUT	30000
 
 #define POWERSETTING_TIMEOUT	3000
 #define HUELIGHT_TIMEOUT		1000
@@ -136,7 +142,19 @@ extern "C"
 #define AIRCONTROL_PM25_DEFAULT_TRESHOLD	115
 #endif
 
-#define EXT_ADDR_SIZE		16
+/* Used for SuperButton Functions */
+#define SB_OPT_CFG				'!'		//入网配置请求
+#define SB_OPT_DEVREG			'@'		//设备获取
+#define SB_OPT_PAIR				'#'		//配对,按钮请求
+#define SB_OPT_PAIRREG			'$'		//配对,设备返回
+#define SB_OPT_MATCH			'%'		//匹配获取返回
+#define SB_OPT_RESET			'^'		//复位设置
+#define SB_OPT_CTRL				'&'		//发送控制命令
+#define SB_OPT_REMOTE_CTRL		'*'		//发送控制命令到远程
+
+#define SB_OPT_CTRL_CODE	"F12%_a"	//6 位发送控制命令检验码
+
+#define SB_REMOTE_ADDR	0xFEFE
 
 /*********************************************************************
  * TYPEDEFS
@@ -215,10 +233,17 @@ extern void CommonApp_InitConfirm( byte task_id );
 extern void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pckt );
 extern void CommonApp_ProcessZDOStates(devStates_t status);
 extern void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts);
-/*SolenoidValve*/
+/* SolenoidValve */
 #if (DEVICE_TYPE_ID==0xA2)
 extern void SolenoidValve_KeyHandler(void);
+
+/* Super Button */
+#elif (DEVICE_TYPE_ID==22)
+extern void SuperButton_KeyHandler(void);
+extern void SuperButton_LongKeyCountsSettingHandler(uint8 keyCounts);
 #endif
+
+/* Light Switch */
 #ifdef KEY_PUSH_PORT_1_BUTTON
 extern void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts);
 #endif
@@ -232,6 +257,9 @@ extern int8 CommonDevice_GetData(uint8 *data, uint8 *dataLen);
 
 extern void CommonApp_CmdPeroidCB( void *params, uint16 *duration, uint8 *count);
 extern int8 DataCmd_Ctrl(uint8 *data, uint8 length);
+#if defined(BIND_SUPERBUTTON_CTRL_SUPPORT) && (DEVICE_TYPE_ID!=22)
+extern void BindBtn_Ctrl(void);
+#endif
 #endif
 extern void Update_Refresh(uint8 *data, uint8 length);
 extern void PermitJoin_Refresh(uint8 *data, uint8 length);

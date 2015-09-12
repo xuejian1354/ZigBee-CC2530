@@ -1,4 +1,4 @@
-#define ACTIVE_LOW        !
+#define ACTIVE_LOW        !		/* make bit result negative */
 #define ACTIVE_HIGH       !!    /* double negation forces result to be '1' */
 
 #define HAL_UART_DMA_DISABLE_RTCT	/*串口RT , CT 引脚无效*/

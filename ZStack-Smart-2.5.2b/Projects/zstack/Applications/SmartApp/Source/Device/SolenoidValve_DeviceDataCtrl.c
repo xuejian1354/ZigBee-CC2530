@@ -75,6 +75,11 @@ void HalDeviceInit (void)
 void HalStatesInit(devStates_t status)
 {}
 
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+void BindBtn_Ctrl(void)
+{}
+#endif
+
 void SolenoidValve_KeyHandler(void)
 {
 	uint8 buf[FRAME_DATA_SIZE] = {0};

@@ -24,6 +24,8 @@ Date:2015-08-07
 #include "ZComDef.h"
 #include "OnBoard.h"
 
+#include "mincode.h"
+
 #include "CommonApp.h"
 #if defined(TRANSCONN_BOARD_GATEWAY) && defined(SSA_CONNECTOR)
 #include "framelysis.h"
@@ -48,6 +50,15 @@ Date:2015-08-07
 /*********************************************************************
  * TYPEDEFS
  */
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+typedef struct PairSrc
+{
+	uint16 pairNwk;
+	ZLongAddr_t pairMac;
+	
+	struct PairSrc *next;
+}PairSrc_t;
+#endif
 
 /*********************************************************************
  * GLOBAL VARIABLES
@@ -90,6 +101,10 @@ extern bool isPermitJoining;
 static uint8 *fBuf;		//pointer data buffer
 static uint16 fLen;		//buffer data length
 
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+static PairSrc_t *pairList = NULL;
+#endif
+
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
@@ -97,6 +112,12 @@ static uint16 fLen;		//buffer data length
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+static int8 ConnectorApp_BindRemoteHandler(uint16 srcAddr, 
+															uint8 *data, uint16 len);
+static void ConnectorApp_BindSrcClearCB( void *params, 
+														uint16 *duration, uint8 *count);
+#endif
 #ifndef ZDO_COORDINATOR
 static void ConnectorApp_HeartBeatEvent(void);
 #endif
@@ -151,11 +172,198 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
   switch ( pkt->clusterId )
   {
     case COMMONAPP_CLUSTERID:
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+	  if(pkt->cmd.DataLength > 0
+	  	 && ConnectorApp_BindRemoteHandler(pkt->srcAddr.addr.shortAddr, 
+	  	 			pkt->cmd.Data, pkt->cmd.DataLength) > 0)
+	  {
+	  	break;
+	  }
+#endif
       CommonApp_GetDevDataSend(pkt->cmd.Data, pkt->cmd.DataLength);
       break; 
   }
 }
 
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+int8 ConnectorApp_BindRemoteHandler(uint16 srcAddr, 
+														uint8 *TxBuf, uint16 bufLen)
+{
+	int8 ret = 0;
+	uint8 *data = NULL;
+	uint16 len = 0;
+
+	if(bufLen>=14 && !memcmp(TxBuf, FR_HEAD_DE, 2)
+		&& !memcmp(TxBuf+2, FR_CMD_FAST_CTRL, 4)
+		&& !memcmp(TxBuf+bufLen-4, f_tail, 4))
+	{
+		data = TxBuf+10;
+		len = bufLen-14;
+	}
+
+	if(len == 0)
+	{
+		return ret;
+	}
+	
+	switch(data[0])
+	{
+	case SB_OPT_CFG:
+	{
+		// reback coord mac
+		DE_t mFrame = {0};
+	
+		osal_memcpy(mFrame.head, FR_HEAD_DE, 2);
+		osal_memcpy(mFrame.cmd, FR_CMD_FAST_CTRL, 4);
+		incode_xtoc16(mFrame.short_addr, srcAddr);
+
+		mFrame.data_len = 1+16;		//opt+coord
+		mFrame.data = osal_mem_alloc(mFrame.data_len);
+		osal_memset(mFrame.data, 0, mFrame.data_len);
+		mFrame.data[0] = SB_OPT_CFG;
+		osal_memcpy(mFrame.data+1, EXT_ADDR_G, 16);
+		memcpy(mFrame.tail, f_tail, 4);
+
+		if(!SSAFrame_Package(HEAD_DE, &mFrame, &fBuf, &fLen))
+		{
+			CommonApp_SendTheMessage(srcAddr, fBuf, fLen);
+		}
+		osal_mem_free(mFrame.data);	
+		
+		// use default ret = 0, just hanle CommonApp_GetDevDataSend() retransmit data
+	}
+		break;
+		
+	case SB_OPT_PAIR:
+		if(len > 20)
+		{
+			ret = 1;
+			
+			PairSrc_t *m_PairSrc = osal_mem_alloc(sizeof(PairSrc_t));
+			incode_ctoxs(m_PairSrc->pairMac, data+1, 16);
+			incode_ctox16(&m_PairSrc->pairNwk, data+17);
+			m_PairSrc->next = NULL;
+
+			PairSrc_t *t_PairSrc = pairList;
+			if(t_PairSrc == NULL)
+			{
+				pairList = m_PairSrc;
+				goto bind_clear;
+			}
+
+			while(t_PairSrc->next != NULL)
+			{
+				if(osal_memcmp(t_PairSrc->pairMac, 
+						m_PairSrc->pairMac, sizeof(ZLongAddr_t)))
+				{
+					t_PairSrc->pairNwk = m_PairSrc->pairNwk;
+					osal_mem_free(m_PairSrc);
+					goto bind_clear;
+				}
+				
+				t_PairSrc = t_PairSrc->next;
+			}
+
+			if(osal_memcmp(t_PairSrc->pairMac, 
+					m_PairSrc->pairMac, sizeof(ZLongAddr_t)))
+			{
+				t_PairSrc->pairNwk = m_PairSrc->pairNwk;
+				osal_mem_free(m_PairSrc);
+			}
+			else
+			{
+				t_PairSrc->next = m_PairSrc;
+			}
+
+bind_clear:
+			update_user_event(CommonApp_TaskID, 
+								BINDSRCBTN_CLEAR_EVT, 
+								ConnectorApp_BindSrcClearCB, 
+								SUPERBUTTON_PAIR_TIMEOUT, 
+								TIMER_ONE_EXECUTION, 
+								NULL);
+		}
+		break;
+
+	case SB_OPT_PAIRREG:
+		if(len > 20)
+		{
+			ret = 2;
+
+			DE_t mFrame = {0};
+	
+			osal_memcpy(mFrame.head, FR_HEAD_DE, 2);
+			osal_memcpy(mFrame.cmd, FR_CMD_FAST_CTRL, 4);
+
+			mFrame.data_len = 1+16+4;
+			mFrame.data = osal_mem_alloc(mFrame.data_len);
+			osal_memcpy(mFrame.data, data, 21);
+			memcpy(mFrame.tail, f_tail, 4);
+
+			
+			PairSrc_t *t_PairSrc = pairList;
+			bool isMatch = 0;
+			while(t_PairSrc)
+			{
+				incode_xtoc16(mFrame.short_addr, t_PairSrc->pairNwk);
+				if(!SSAFrame_Package(HEAD_DE, &mFrame, &fBuf, &fLen))
+				{
+					CommonApp_SendTheMessage(t_PairSrc->pairNwk, fBuf, fLen);
+					isMatch = 1;
+				}
+				
+				t_PairSrc = t_PairSrc->next;
+			}
+			
+			osal_mem_free(mFrame.data);	
+
+			if(isMatch)
+			{
+				update_user_event(CommonApp_TaskID, 
+								BINDSRCBTN_CLEAR_EVT, 
+								ConnectorApp_BindSrcClearCB, 
+								TIMER_NO_LIMIT, 
+								TIMER_ONE_EXECUTION, 
+								NULL);
+			}
+		}
+		break;
+		
+	case SB_OPT_MATCH:
+		// use default ret = 0, just hanle CommonApp_GetDevDataSend() retransmit data
+		break;
+		
+	case SB_OPT_CTRL:
+		break;
+		
+	case SB_OPT_REMOTE_CTRL:
+		break;
+	}
+
+	return ret;
+}
+
+void ConnectorApp_BindSrcClearCB( void *params, 
+												uint16 *duration, uint8 *count)
+{
+	
+	PairSrc_t *pre_PairSrc =  NULL;
+	PairSrc_t *t_PairSrc = pairList;
+
+	while(t_PairSrc != NULL)
+	{
+		pre_PairSrc = t_PairSrc;
+		t_PairSrc = t_PairSrc->next;
+
+		osal_mem_free(pre_PairSrc);
+
+		if(pre_PairSrc == pairList)
+		{
+			pairList = NULL;
+		}
+	}
+}
+#endif
 
 /*********************************************************************
  * @fn      CommonApp_ProcessZDOStates
@@ -400,6 +608,7 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 	}
 	else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
 		&& (!memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)
+		|| !memcmp(txBuf+2, FR_CMD_FAST_CTRL, 4)
 		|| !memcmp(txBuf+2, FR_CMD_PEROID_EXCUTE, 4)
 		|| !memcmp(txBuf+2, FR_CMD_PEROID_STOP, 4))
 		&& !memcmp(txBuf+txLen-4, f_tail, 4))
