@@ -137,6 +137,10 @@ void HalStatesInit(devStates_t status)
 	sysOClock = osal_GetSystemClock();
 }
 
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+void BindBtn_Ctrl(void)
+{}
+#endif
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {

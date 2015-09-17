@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-07
+Date:2015-09-11
 **************************************************************************************************/
 
 /*********************************************************************
@@ -24,6 +24,8 @@ Date:2015-08-07
 
 #include "ZComDef.h"
 #include "CommonApp.h"
+
+#include "mincode.h"
 
 /* HAL */
 #include "hal_lcd.h"
@@ -91,6 +93,9 @@ static uint16 fLen;		//buffer data length
  */
 static void EndNodeApp_HeartBeatEvent(void);
 static void Data_Analysis(uint8 *data, uint16 length);
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+static void DataBind_Ctrl(uint8 *data, uint16 len);
+#endif
 
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
@@ -196,6 +201,17 @@ void Data_Analysis(uint8 *data, uint16 length)
       if(!CommonDevice_GetData(buf, &len))
         Update_Refresh(buf, len);
     }
+	else if(!memcmp(mdeFrame->cmd, FR_CMD_FAST_CTRL, 4))
+    {
+/* Super Button */
+#if (DEVICE_TYPE_ID==22)
+      DataCmd_Ctrl(mdeFrame->data, mdeFrame->data_len);
+
+/* Bind Device */
+#elif defined(BIND_SUPERBUTTON_CTRL_SUPPORT)
+	  DataBind_Ctrl(mdeFrame->data, mdeFrame->data_len);
+#endif
+    }
     else if(!memcmp(mdeFrame->cmd, FR_CMD_PEROID_EXCUTE, 4))
     {
       DataCmd_Ctrl(mdeFrame->data, mdeFrame->data_len);
@@ -236,6 +252,47 @@ void Data_Analysis(uint8 *data, uint16 length)
   }
 }
 
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+void DataBind_Ctrl(uint8 *data, uint16 len)
+{
+	switch(data[0])
+	{
+	case SB_OPT_DEVREG:
+		if(len >= 17)
+		{
+			DE_t mFrame = {0};
+			osal_memcpy(mFrame.head, FR_HEAD_DE, 2);
+			osal_memcpy(mFrame.cmd, FR_CMD_FAST_CTRL, 4);
+			incode_xtoc16(mFrame.short_addr, COORDINATOR_ADDR);
+			mFrame.data_len = 1+16+16+4;	//opt+ctrlmac+ownmac+ownaddr
+			mFrame.data = osal_mem_alloc(1+16+16+4);
+			mFrame.data[0] = SB_OPT_MATCH;
+			osal_memcpy(mFrame.data+1, data+1, 16);
+			osal_memcpy(mFrame.data+17, EXT_ADDR_G, 16);
+			incode_xtoc16(mFrame.data+33, nwkAddr);
+			memcpy(mFrame.tail, f_tail, 4);
+
+			if(!SSAFrame_Package(HEAD_DE, &mFrame, &fBuf, &fLen))
+			{
+				CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+			}
+
+			osal_mem_free(mFrame.data);
+		}
+		break;
+		
+	case SB_OPT_CTRL:
+		if(len >= 7 && osal_memcpy(data, SB_OPT_CTRL_CODE, 6))
+		{
+			BindBtn_Ctrl();
+		}
+		break;
+
+	case SB_OPT_REMOTE_CTRL:
+		break;
+	}
+}
+#endif
 
 /*********************************************************************
  * @fn      CommonApp_ProcessZDOStates
@@ -328,6 +385,28 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
         {
           CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
         }
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+		DE_t mFrame = {0};
+	
+		osal_memcpy(mFrame.head, FR_HEAD_DE, 2);
+		osal_memcpy(mFrame.cmd, FR_CMD_FAST_CTRL, 4);
+		incode_xtoc16(mFrame.short_addr, COORDINATOR_ADDR);
+		mFrame.data_len = 1+16+4;
+		mFrame.data = osal_mem_alloc(1+16+4);
+		osal_memset(mFrame.data, 0, 1+16+4);
+		mFrame.data[0] = SB_OPT_PAIRREG;
+		osal_memcpy(mFrame.data+1, EXT_ADDR_G, 16);
+		osal_memcpy(mFrame.data+17, SHORT_ADDR_G, 4);
+		memcpy(mFrame.tail, f_tail, 4);
+
+		if(!SSAFrame_Package(HEAD_DE, &mFrame, &fBuf, &fLen))
+		{
+			CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+			//HalLedBlink(HAL_LED_2, 2, 50, 100);
+		}
+
+		osal_mem_free(mFrame.data);
+#endif
       }
       break;
 
@@ -347,9 +426,18 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 
   if (keysPush[0] == HAL_KEY_LONG_PUSH)
   {
-/*SolenoidValve*/
+/* SolenoidValve */
 #if (DEVICE_TYPE_ID==0xA2)
-	if(keyCounts == 3 )
+	if(keyCounts == 6 )
+		
+/* Super Button */
+#elif (DEVICE_TYPE_ID==22)
+	if(keyCounts != 6 )
+	{
+		SuperButton_LongKeyCountsSettingHandler(keyCounts);
+	}
+	else if(keyCounts == 6)
+
 #else
 	if(keyCounts == 6 &&(osal_memcmp(keysID, "333333", keyCounts)
 		|| osal_memcmp(keysID, "444444", keyCounts)
@@ -374,6 +462,32 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
       }
 #endif
     }
+/* Not Super Button */
+#if (DEVICE_TYPE_ID!=22) && defined(BIND_SUPERBUTTON_CTRL_SUPPORT)
+	else if(keyCounts == 3)
+	{
+		DE_t mFrame = {0};
+	
+		osal_memcpy(mFrame.head, FR_HEAD_DE, 2);
+		osal_memcpy(mFrame.cmd, FR_CMD_FAST_CTRL, 4);
+		incode_xtoc16(mFrame.short_addr, COORDINATOR_ADDR);
+		mFrame.data_len = 1+16+4;
+		mFrame.data = osal_mem_alloc(1+16+4);
+		osal_memset(mFrame.data, 0, 1+16+4);
+		mFrame.data[0] = SB_OPT_PAIRREG;
+		osal_memcpy(mFrame.data+1, EXT_ADDR_G, 16);
+		osal_memcpy(mFrame.data+17, SHORT_ADDR_G, 4);
+		memcpy(mFrame.tail, f_tail, 4);
+
+		if(!SSAFrame_Package(HEAD_DE, &mFrame, &fBuf, &fLen))
+		{
+			CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+			//HalLedBlink(HAL_LED_2, 2, 50, 100);
+		}
+
+		osal_mem_free(mFrame.data);
+	}
+#endif
 	else if((keysID[0]=='3' || keysID[0]=='4' || keysID[0]=='5')
 		&& keyCounts == 1)
     {
@@ -397,10 +511,16 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
   }
   else if (keysPush[0] == HAL_KEY_SHORT_PUSH)
   {
-/*SolenoidValve*/
+/* SolenoidValve */
 #if (DEVICE_TYPE_ID==0xA2)
 	SolenoidValve_KeyHandler();
+
+/* Super Button */
+#elif (DEVICE_TYPE_ID==22)
+	SuperButton_KeyHandler();
 #endif
+
+/* Light Switch */
 #ifdef KEY_PUSH_PORT_1_BUTTON
     DeviceCtrl_HandlePort1Keys(keys, keyCounts);
 #endif

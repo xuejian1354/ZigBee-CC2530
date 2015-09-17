@@ -23,6 +23,7 @@ extern "C"
 #if (DEVICE_TYPE_ID==11)
 
 #define HAL_GPIO_FEATURE
+#define BIND_SUPERBUTTON_CTRL_SUPPORT	/* 绑定紧急按钮控制 */
 
 #define KEY_PUSH_PORT_0_BUTTON		/* 自定义映射按键IO  */
 #define HAL_KEY_INT_METHOD		/*按键触发方式为中断(默认为查询)*/

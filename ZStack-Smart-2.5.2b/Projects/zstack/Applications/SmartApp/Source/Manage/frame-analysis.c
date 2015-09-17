@@ -9,7 +9,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-31
+Date:2015-09-12
 **************************************************************************************************/
 
 
@@ -282,7 +282,7 @@ int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *Ds
 		DE_t *p_deFrame = (DE_t *)data;
 		memset(pFrameBuffer, 0, sizeof(pFrameBuffer));
 		memcpy(pFrameBuffer, p_deFrame->head, 2);
-		memcpy(pFrameBuffer+3, p_deFrame->cmd, 4);
+		memcpy(pFrameBuffer+2, p_deFrame->cmd, 4);
 		memcpy(pFrameBuffer+6, p_deFrame->short_addr, 4);
 		memcpy(pFrameBuffer+10, p_deFrame->data, p_deFrame->data_len);
 		memcpy(pFrameBuffer+10+p_deFrame->data_len, p_deFrame->tail, 4);

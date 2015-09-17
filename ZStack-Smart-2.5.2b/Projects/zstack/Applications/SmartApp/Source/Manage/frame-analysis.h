@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-21
+Date:2015-09-12
 **************************************************************************************************/
 
 
@@ -58,6 +58,7 @@ extern "C"
 #define FR_APP_ENVDETECTION			"14"
 #define FR_APP_SMOG					"15"
 #define FR_APP_IR_RELAY				"21"
+#define FR_APP_SUPER_BUTTON			"22"
 #define FR_APP_HUMITURE_DETECTION	"A1"
 #define FR_APP_SOLENOID_VALVE		"A2"
 
@@ -96,6 +97,8 @@ extern "C"
 #define FR_APP_DEV FR_APP_SMOG
 #elif(DEVICE_TYPE_ID==21)
 #define FR_APP_DEV FR_APP_IR_RELAY
+#elif(DEVICE_TYPE_ID==22)
+#define FR_APP_DEV FR_APP_SUPER_BUTTON
 
 /*Smart Farm*/
 #elif(DEVICE_TYPE_ID==0xA1)
@@ -109,12 +112,13 @@ extern "C"
 
 
 //控制命令
-#define FR_CMD_BROCAST_REFRESH	    "/BR/"		//广播刷新
-#define FR_CMD_SINGLE_REFRESH	    "/SR/"		//单播刷新
-#define FR_CMD_SINGLE_EXCUTE	    "/EC/"		//单次执行发送
-#define FR_CMD_PEROID_EXCUTE	    "/ES/"		//周期性执行发送
-#define FR_CMD_PEROID_STOP	    "/EP/"		//停止周期性发送
-#define FR_CMD_JOIN_CTRL	    "/CJ/"		//网关允许/不允许加入
+#define FR_CMD_BROCAST_REFRESH	"/BR/"		//广播刷新
+#define FR_CMD_SINGLE_REFRESH	"/SR/"		//单播刷新
+#define FR_CMD_SINGLE_EXCUTE	"/EC/"		//单次执行发送
+#define FR_CMD_PEROID_EXCUTE	"/ES/"		//周期性执行发送
+#define FR_CMD_PEROID_STOP		"/EP/"		//停止周期性发送
+#define FR_CMD_JOIN_CTRL		"/CJ/"		//网关允许/不允许加入
+#define FR_CMD_FAST_CTRL		"/FC/"		//快速按钮控制
 
 #define FR_UC_DATA_FIX_LEN		38		//UC帧固定长度
 #define FR_UO_DATA_FIX_LEN		30		//UO帧固定长度

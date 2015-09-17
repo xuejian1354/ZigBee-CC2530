@@ -1,4 +1,4 @@
-#define ACTIVE_LOW        !
+#define ACTIVE_LOW        !		/* make bit result negative */
 #define ACTIVE_HIGH       !!    /* double negation forces result to be '1' */
 
 #define HAL_UART_DMA_DISABLE_RTCT	/*串口RT , CT 引脚无效*/
@@ -19,6 +19,7 @@
 #include "EnvDetection_Board_cfg.h"
 #include "DustSensor_Board_cfg.h"
 #include "IRRelay_Board_cfg.h"
+#include "SuperButton_Board_cfg.h"
 
 #include "HumitureDetection_Board_cfg.h"
 #include "SolenoidValve_Board_cfg.h"

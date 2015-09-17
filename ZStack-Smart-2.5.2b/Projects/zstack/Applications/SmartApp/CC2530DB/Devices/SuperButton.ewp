@@ -126,15 +126,15 @@
         </option>
         <option>
           <name>ExePath</name>
-          <state>..\bin\EnvDetectionZD\Exe</state>
+          <state>..\bin\SuperButtonZD\Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>..\bin\EnvDetectionZD\Obj</state>
+          <state>..\bin\SuperButtonZD\Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>..\bin\EnvDetectionZD\List</state>
+          <state>..\bin\SuperButtonZD\List</state>
         </option>
         <option>
           <name>GOutputBinary</name>
@@ -267,7 +267,8 @@
           <name>CCDefines</name>
           <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
-          <state>DEVICE_TYPE_ID=14</state>
+          <state>DEVICE_TYPE_ID=22</state>
+          <state>xED_ALWAYS_RCV</state>
           <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
@@ -370,7 +371,7 @@
         </option>
         <option>
           <name>CCDebugInfo</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>OCCProcessorVariant</name>
@@ -653,7 +654,7 @@
         </option>
         <option>
           <name>ADefines</name>
-          <state></state>
+          <state>NDEBUG</state>
         </option>
         <option>
           <name>AWarnEnable</name>
@@ -735,7 +736,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state>EnvDetection.d51</state>
+          <state>SuperButton.d51</state>
         </option>
         <option>
           <name>OutputFormat</name>
@@ -879,7 +880,7 @@
         </option>
         <option>
           <name>SuppressDiags</name>
-          <state>e24</state>
+          <state></state>
         </option>
         <option>
           <name>TreatAsWarn</name>
@@ -937,7 +938,7 @@
         </option>
         <option>
           <name>ExtraOutputFile</name>
-          <state>EnvDetection.sim</state>
+          <state>SuperButton.sim</state>
         </option>
         <option>
           <name>ExtraOutputFormat</name>
@@ -1200,15 +1201,15 @@
         </option>
         <option>
           <name>ExePath</name>
-          <state>..\bin\EnvDetectionZR\Exe</state>
+          <state>..\bin\SuperButtonZR\Exe</state>
         </option>
         <option>
           <name>ObjPath</name>
-          <state>..\bin\EnvDetectionZR\Obj</state>
+          <state>..\bin\SuperButtonZR\Obj</state>
         </option>
         <option>
           <name>ListPath</name>
-          <state>..\bin\EnvDetectionZR\List</state>
+          <state>..\bin\SuperButtonZR\List</state>
         </option>
         <option>
           <name>GOutputBinary</name>
@@ -1341,7 +1342,7 @@
           <name>CCDefines</name>
           <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
-          <state>DEVICE_TYPE_ID=14</state>
+          <state>DEVICE_TYPE_ID=22</state>
           <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
@@ -1444,7 +1445,7 @@
         </option>
         <option>
           <name>CCDebugInfo</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>OCCProcessorVariant</name>
@@ -1584,7 +1585,7 @@
         <option>
           <name>CCOptStrategy</name>
           <version>0</version>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>CCOptLevelSlave</name>
@@ -1727,7 +1728,7 @@
         </option>
         <option>
           <name>ADefines</name>
-          <state></state>
+          <state>NDEBUG</state>
         </option>
         <option>
           <name>AWarnEnable</name>
@@ -1809,7 +1810,7 @@
         </option>
         <option>
           <name>OutputFile</name>
-          <state>EnvDetection.d51</state>
+          <state>SuperButton.d51</state>
         </option>
         <option>
           <name>OutputFormat</name>
@@ -1953,7 +1954,7 @@
         </option>
         <option>
           <name>SuppressDiags</name>
-          <state>e24</state>
+          <state></state>
         </option>
         <option>
           <name>TreatAsWarn</name>
@@ -1979,7 +1980,7 @@
         </option>
         <option>
           <name>ModuleSummary</name>
-          <state>1</state>
+          <state>0</state>
         </option>
         <option>
           <name>xcProgramEntryLabel</name>
@@ -2011,7 +2012,7 @@
         </option>
         <option>
           <name>ExtraOutputFile</name>
-          <state>EnvDetection.sim</state>
+          <state>SuperButton.sim</state>
         </option>
         <option>
           <name>ExtraOutputFormat</name>
@@ -2170,10 +2171,10 @@
         <name>$PROJ_DIR$\..\..\Source\Device\EndnodeApp.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Board\EnvDetection_Board_cfg.h</name>
+        <name>$PROJ_DIR$\..\..\Source\Board\SuperButton_Board_cfg.h</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Source\Device\EnvDetection_DeviceDataCtrl.c</name>
+        <name>$PROJ_DIR$\..\..\Source\Device\SuperButton_DeviceDataCtrl.c</name>
       </file>
     </group>
     <group>
@@ -2204,18 +2205,18 @@
         <file>
           <name>$PROJ_DIR$\..\..\Source\Manage\incode\incode.h</name>
         </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.h</name>
+        </file>
       </group>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.h</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Source\Manage\OLCD.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Source\Manage\OLCD.h</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.c</name>

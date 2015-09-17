@@ -268,14 +268,15 @@
           <state>SECURE=1</state>
           <state>ZTOOL_P1</state>
           <state>DEVICE_TYPE_ID=2</state>
+          <state>ED_ALWAYS_RCV</state>
           <state>SIGNAL_AMPLIFIER_SETTING</state>
           <state>xNWK_AUTO_POLL</state>
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
           <state>xJIAJU_BUILDIN</state>
-          <state>MT_TASK</state>
-          <state>MT_SYS_FUNC</state>
-          <state>MT_ZDO_FUNC</state>
+          <state>xMT_TASK</state>
+          <state>xMT_SYS_FUNC</state>
+          <state>xMT_ZDO_FUNC</state>
           <state>NV_INIT</state>
           <state>NV_RESTORE</state>
         </option>
@@ -1346,9 +1347,9 @@
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
           <state>xJIAJU_BUILDIN</state>
-          <state>MT_TASK</state>
-          <state>MT_SYS_FUNC</state>
-          <state>MT_ZDO_FUNC</state>
+          <state>xMT_TASK</state>
+          <state>xMT_SYS_FUNC</state>
+          <state>xMT_ZDO_FUNC</state>
           <state>NV_INIT</state>
           <state>NV_RESTORE</state>
         </option>
@@ -2202,6 +2203,12 @@
         </file>
         <file>
           <name>$PROJ_DIR$\..\..\Source\Manage\incode\incode.h</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.c</name>
+        </file>
+        <file>
+          <name>$PROJ_DIR$\..\..\Source\Manage\incode\mincode.h</name>
         </file>
       </group>
       <file>

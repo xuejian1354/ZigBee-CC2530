@@ -16,6 +16,7 @@ Date:2015-07-31
  */
 #include "CommonApp.h"
 #include "hal_drivers.h" 
+#include "hal_led.h"
 #include "i2c-ctrl.h"
 #include "ht-ctrl.h"
 #include "rfid/RC522_RegCtrl.h"
@@ -144,6 +145,13 @@ void HalStatesInit(devStates_t status)
 	case 7: lightctrl_init(); break;
 	}
 }
+
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+void BindBtn_Ctrl(void)
+{
+	HalLedSet(HAL_LED_1, HAL_LED_MODE_TOGGLE);
+}
+#endif
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {

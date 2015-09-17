@@ -70,6 +70,11 @@ void HalDeviceInit (void)
 void HalStatesInit(devStates_t status)
 {}
 
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+void BindBtn_Ctrl(void)
+{}
+#endif
+
 void IRRelayApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {}
 

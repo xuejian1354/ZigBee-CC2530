@@ -1,29 +1,28 @@
 /**************************************************************************************************
-  Filename:       SolenoidValve_Board_cfg.h
-  Revised:        $Date: 2015-07-10 08:46:22 -0800 (Fri, 10 Jul 2015) $
-  Revision:       $Revision: 29218 $
+  Filename:       SuperButton_Board_cfg.h
+  Revised:        $Date: 2015-09-11 14:00:23 -0800 (Sep, 02 Fri 2015) $
+  Revision:       $Revision: 29217 $
 
-  Description:    Solenoid Valve Board Configuration.
+  Description:    Super Button Board Configuration.
 **************************************************************************************************/
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-07
+Date:2015-09-11
 **************************************************************************************************/
 
 
-#ifndef SOLENOIDVALVE_BOARD_CFG_H
-#define SOLENOIDVALVE_BOARD_CFG_H
+#ifndef SUPERBUTTON_BOARD_CFG_H
+#define SUPERBUTTON_BOARD_CFG_H
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#if (DEVICE_TYPE_ID==0xA2)
+#if (DEVICE_TYPE_ID==22)
 
 #define HAL_GPIO_FEATURE
-#define BIND_SUPERBUTTON_CTRL_SUPPORT	/* 绑定紧急按钮控制 */
 
 #define KEY_PUSH_PORT_0_BUTTON		/* 自定义映射按键IO  */
 #define HAL_KEY_INT_METHOD		/*按键触发方式为中断(默认为查询)*/
@@ -31,10 +30,8 @@ extern "C"
 #define HAL_KEY_COMBINE_INT_METHOD	/*中断下 按键组合功能 */
 #define HAL_KEY_MATCH_ID	/*按键匹配ID */
 #define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
-#define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
 
-//#define TRANSCONN_BOARD_GATEWAY		/*板级网关应用转发层功能*/
-#define TRANSCONN_BOARD_ENDNODE			/*板级应用支持节点*/
+
 /*********************************************************************
  * INCLUDES
  */
@@ -46,34 +43,20 @@ extern "C"
 /*********************************************************************
  * MACROS
  */
-#define LED1_BV           BV(3)
-#define LED1_SBIT         P1_3
+#define LED1_BV           BV(0)
+#define LED1_SBIT         P1_0
 #define LED1_DDR          P1DIR
-#define LED1_POLARITY     ACTIVE_LOW
+#define LED1_POLARITY     ACTIVE_HIGH
 
 #define LED2_BV           BV(1)
 #define LED2_SBIT         P1_1
 #define LED2_DDR          P1DIR
-#define LED2_POLARITY     ACTIVE_LOW
+#define LED2_POLARITY     ACTIVE_HIGH
 
-#define LED3_BV           BV(0)
-#define LED3_SBIT         P1_0
+#define LED3_BV           BV(4)
+#define LED3_SBIT         P1_4
 #define LED3_DDR          P1DIR
-#define LED3_POLARITY     ACTIVE_LOW
-
-/* S1 */
-#define PUSH1_BV          BV(5)
-#define PUSH1_SBIT        P0_5
-#define PUSH1_POLARITY    ACTIVE_LOW
-
-
-#define HAL_PUSH_BUTTON1()        (PUSH1_POLARITY (PUSH1_SBIT))
-#define HAL_PUSH_BUTTON2()        (0)
-#define HAL_PUSH_BUTTON3()        (0)
-#define HAL_PUSH_BUTTON4()        (0)
-#define HAL_PUSH_BUTTON5()        (0)
-#define HAL_PUSH_BUTTON6()        (0)
-
+#define LED3_POLARITY     ACTIVE_HIGH
 
 #define HAL_TURN_OFF_LED1()       st( LED1_SBIT = LED1_POLARITY (0); )
 #define HAL_TURN_ON_LED1()        st( LED1_SBIT = LED1_POLARITY (1); )
@@ -97,22 +80,19 @@ extern "C"
 #define HAL_STATE_LED4()          HAL_STATE_LED1()
 
 
-/* Output Logic Control */
-/* VALVE  Switch*/
-#define VSW_BV1           BV(6)
-#define VSW_SBIT1         P0_6
-#define VSW_DDR1          P0DIR
-#define VSW_POLARITY1     ACTIVE_HIGH
+/* S1 */
+#define PUSH1_BV          BV(5)
+#define PUSH1_SBIT        P0_5
+#define PUSH1_POLARITY    ACTIVE_LOW
 
-#define VSW_BV2           BV(7)
-#define VSW_SBIT2         P0_7
-#define VSW_DDR2          P0DIR
-#define VSW_POLARITY2     ACTIVE_HIGH
 
-#define HAL_TURN_OFF_VSW()       st( VSW_SBIT1 = VSW_POLARITY1 (0); VSW_SBIT2 = VSW_POLARITY2 (1); )
-#define HAL_TURN_ON_VSW()        st( VSW_SBIT1 = VSW_POLARITY1 (1); VSW_SBIT2 = VSW_POLARITY2 (0); )
-#define HAL_TOGGLE_VSW()         st( VSW_SBIT1 ^= 1; VSW_SBIT2 ^= 1; )
-#define HAL_STATE_VSW()          (VSW_POLARITY1 (VSW_SBIT1))
+#define HAL_PUSH_BUTTON1()        (PUSH1_POLARITY (PUSH1_SBIT))
+#define HAL_PUSH_BUTTON2()        (0)
+#define HAL_PUSH_BUTTON3()        (0)
+#define HAL_PUSH_BUTTON4()        (0)
+#define HAL_PUSH_BUTTON5()        (0)
+#define HAL_PUSH_BUTTON6()        (0)
+
 
 #define HAL_LED TRUE
 #define BLINK_LEDS
@@ -135,4 +115,4 @@ extern "C"
 }
 #endif
 
-#endif /* SOLENOIDVALVE_BOARD_CFG_H */
+#endif /* SUPERBUTTON_BOARD_CFG_H */
