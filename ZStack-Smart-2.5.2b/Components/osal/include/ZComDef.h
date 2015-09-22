@@ -230,8 +230,8 @@ extern "C"
 #define ZCD_NV_TRANSCONN_IPADDR				0x0416
 #define ZCD_NV_HUELIGHT_DATASET				0x0417
 #define ZCD_NV_SUPERBUTTON_ISFIRST			0x0418
-#define ZCD_NV_SUPERBUTTON_SIZE				0x0419
-#define ZCD_NV_SUPERBUTTON_DATA				0x0420
+#define ZCD_NV_SUPERBUTTON_BINDSIZE			0x0419
+#define ZCD_NV_SUPERBUTTON_BINDHEAD			0x0420
 
 // ZCD_NV_STARTUP_OPTION values
 //   These are bit weighted - you can OR these together.

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-09-12
+Date:2015-09-22
 **************************************************************************************************/
 
 
@@ -98,7 +98,6 @@ static int8 SuperButton_SendBindCmd(uint16 dstNwkAddr,
 static void SuperButton_PairCB( void *params, uint16 *duration, uint8 *count);
 
 static void write_nv_bindsrc(ZLongAddr_t bindSrc);
-static int8 read_nv_bindsrc(ZLongAddr_t *bindSrc, uint16 bindSize);
 
 /*********************************************************************
  * PUBLIC FUNCTIONS
@@ -125,15 +124,14 @@ void HalDeviceInit (void)
 		  					&firstSetCode);	
 
 			uint16 size = 0;
-			if (ZSUCCESS == osal_nv_item_init( ZCD_NV_SUPERBUTTON_SIZE,
-											sizeof(size),  
-											&size))
-			{
-				osal_nv_write(ZCD_NV_SUPERBUTTON_SIZE, 
+			osal_nv_item_init( ZCD_NV_SUPERBUTTON_BINDSIZE,
+									sizeof(size),  
+									&size);
+			
+			osal_nv_write(ZCD_NV_SUPERBUTTON_BINDSIZE, 
 			  					0, 
 			  					sizeof(size), 
 			  					&size);
-			}
 		}
 	}
 }
@@ -160,47 +158,51 @@ int8 SuperButton_SendBindCmd(uint16 dstNwkAddr,
 	case SB_OPT_CFG:
 	{
 		uint16 size = 0;
-		if (ZSUCCESS == osal_nv_item_init( ZCD_NV_SUPERBUTTON_SIZE,
-										sizeof(size),  
-										&size))
+		uint16 i = 0;
+		
+		osal_nv_item_init( ZCD_NV_SUPERBUTTON_BINDSIZE,
+								sizeof(size),  
+								&size);
+		
+		osal_nv_read(ZCD_NV_SUPERBUTTON_BINDSIZE, 
+	  					0, 
+	  					sizeof(size), 
+	  					&size);
+
+		mFrame.data_len = 1+16+16*size;		//opt+extaddr+bindsrc
+		mFrame.data = osal_mem_alloc(mFrame.data_len);
+		osal_memset(mFrame.data, 0, mFrame.data_len);
+		mFrame.data[0] = SB_OPT_CFG;
+		osal_memcpy(mFrame.data+1, EXT_ADDR_G, 16);
+
+		while( i < size )
 		{
-			osal_nv_read(ZCD_NV_SUPERBUTTON_SIZE, 
-		  					0, 
-		  					sizeof(size), 
-		  					&size);
-
-			ZLongAddr_t *bindSrc = osal_mem_alloc(Z_EXTADDR_LEN*size);
-			if(read_nv_bindsrc(bindSrc, size))
-			{
-				break;
-			}
+			ZLongAddr_t bindSrc = {0};
+			osal_nv_item_init( ZCD_NV_SUPERBUTTON_BINDHEAD+i,
+										sizeof(ZLongAddr_t),  
+										bindSrc);
 			
-			mFrame.data_len = 1+16+16*size;		//opt+extaddr+bindsrc
-			mFrame.data = osal_mem_alloc(mFrame.data_len);
-			osal_memset(mFrame.data, 0, mFrame.data_len);
-			mFrame.data[0] = SB_OPT_CFG;
-			osal_memcpy(mFrame.data+1, EXT_ADDR_G, 16);
-
-			uint16 i = 0;
-			while(i<size)
+			if(ZSUCCESS == osal_nv_read(ZCD_NV_SUPERBUTTON_BINDHEAD+i, 
+		  									0, 
+					  						sizeof(ZLongAddr_t),  
+		  									bindSrc))
 			{
-				incode_xtocs(mFrame.data+17+Z_EXTADDR_LEN*i, 
-								(uint8 *)&bindSrc[i], 
+				incode_xtocs(mFrame.data+17+16*i, 
+								bindSrc, 
 								Z_EXTADDR_LEN);
-
-				i++;
-			}
-			
-			memcpy(mFrame.tail, f_tail, 4);
-
-			if(!SSAFrame_Package(HEAD_DE, &mFrame, &sBuf, &sLen))
-			{
-				CommonApp_SendTheMessage(dstNwkAddr, sBuf, sLen);
 			}
 
-			osal_mem_free(mFrame.data);			
-			osal_mem_free(bindSrc);
+			i++;
 		}
+		
+		osal_memcpy(mFrame.tail, f_tail, 4);
+
+		if(!SSAFrame_Package(HEAD_DE, &mFrame, &sBuf, &sLen))
+		{
+			CommonApp_SendTheMessage(dstNwkAddr, sBuf, sLen);
+		}
+
+		osal_mem_free(mFrame.data);
 	}
 		break;
 		
@@ -322,7 +324,7 @@ void SuperButton_LongKeyCountsSettingHandler(uint8 keyCounts)
 		SuperButton_SendBindCmd(COORDINATOR_ADDR, SB_OPT_PAIR, NULL, 0);
 		break;
 
-	case 5:	//reset
+	case SB_KEY_LONG_RESET_COUNTS:	//reset
 	{
 		FastCtrlBindSrc_t *t_BindSrc = bindList;
 		FastCtrlBindSrc_t *pre_BindSrc;
@@ -342,15 +344,16 @@ void SuperButton_LongKeyCountsSettingHandler(uint8 keyCounts)
 		bindList = NULL;
 		bindLen = 0;
 
-		if (ZSUCCESS == osal_nv_item_init( ZCD_NV_SUPERBUTTON_SIZE,
-										sizeof(bindLen),  
-										&bindLen))
-		{
-			osal_nv_write(ZCD_NV_SUPERBUTTON_SIZE, 
-		  					0, 
-		  					sizeof(bindLen), 
-		  					&bindLen);
-		}
+		osal_nv_item_init( ZCD_NV_SUPERBUTTON_BINDSIZE,
+								sizeof(bindLen),  
+								&bindLen);
+		
+		osal_nv_write(ZCD_NV_SUPERBUTTON_BINDSIZE, 
+	  					0, 
+	  					sizeof(bindLen), 
+	  					&bindLen);
+
+		HalLedBlink(HAL_LED_2, 2, 50, 100);
 	}
 		break;
 
@@ -401,6 +404,13 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 					FastCtrlBindSrc_t *t_BindSrc = bindList;
 					while(t_BindSrc->next != NULL)
 					{
+						if(t_BindSrc->dst.addrMode == Addr16Bit
+							&& t_BindSrc->dst.addr.shortAddr 
+								== m_BindSrc->dst.addr.shortAddr)
+						{
+							return 1;
+						}
+						
 						t_BindSrc = t_BindSrc->next;
 					}
 					
@@ -424,7 +434,7 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 			{
 				FastCtrlBindSrc_t *m_BindSrc = osal_mem_alloc(sizeof(FastCtrlBindSrc_t));
 				incode_ctoxs(m_BindSrc->coordMac, (uint8 *)(data+1), 16);
-				if( osal_memcmp(m_BindSrc->coordMac, data, Z_EXTADDR_LEN) 
+				if( osal_memcmp(m_BindSrc->coordMac, coordAddr, Z_EXTADDR_LEN) 
 					&& dataLen > 36 )
 				{
 					ZLongAddr_t bindSrcMac;
@@ -461,6 +471,16 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 						FastCtrlBindSrc_t *t_BindSrc = bindList;
 						while(t_BindSrc->next != NULL)
 						{
+							if((t_BindSrc->dst.addrMode == Addr16Bit
+								&& t_BindSrc->dst.addr.shortAddr 
+									== m_BindSrc->dst.addr.shortAddr)
+								|| (t_BindSrc->dst.addrMode == Addr64Bit
+									&& osal_memcmp(t_BindSrc->dst.addr.extAddr, 
+										m_BindSrc->dst.addr.extAddr, Z_EXTADDR_LEN)))
+							{
+								return 1;
+							}
+							
 							t_BindSrc = t_BindSrc->next;
 						}
 						
@@ -479,75 +499,65 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 
 void write_nv_bindsrc(ZLongAddr_t bindSrc)
 {
-	uint16 size;
-	if (ZSUCCESS == osal_nv_item_init( ZCD_NV_SUPERBUTTON_SIZE,
+	uint16 size = 0;
+	uint16 i = 0;
+	bool isMatch = FALSE;
+	
+	osal_nv_item_init( ZCD_NV_SUPERBUTTON_BINDSIZE,
 											sizeof(size),  
-											&size))
-  	{
-      	osal_nv_read(ZCD_NV_SUPERBUTTON_SIZE, 
-	  					0, 
-	  					sizeof(size),  
-	  					&size);
+											&size);
+	
+  	osal_nv_read(ZCD_NV_SUPERBUTTON_BINDSIZE, 
+  					0, 
+  					sizeof(size),  
+  					&size);
 
-		uint16 dataLen = Z_EXTADDR_LEN*(size+1);
-		ZLongAddr_t *data = osal_mem_alloc(dataLen);
-		if (ZSUCCESS == osal_nv_item_init( ZCD_NV_SUPERBUTTON_DATA,
-												dataLen,  
-												data))
-		{
-			osal_nv_read(ZCD_NV_SUPERBUTTON_DATA, 
-	  						0, 
-	  						dataLen,  
-	  						data);
-
-			uint16 i = 0;
-			uint8 isMatch = 0;
-			while(i<size)
-			{
-				if(osal_memcmp(bindSrc, data[i], Z_EXTADDR_LEN))
-				{
-					isMatch = 1;
-					break;
-				}
-				
-				i++;
-			}
-
-			if(!isMatch)
-			{
-				osal_memcpy(&data[size], bindSrc, Z_EXTADDR_LEN);
-				osal_nv_write(ZCD_NV_SUPERBUTTON_DATA, 
-	  							0, 
-	  							dataLen,  
-	  							data);
-
-				size++;
-				osal_nv_write(ZCD_NV_SUPERBUTTON_SIZE, 
-	  							0, 
-	  							sizeof(size),  
-								&size);
-			}
-		}
-  	}
-}
-
-int8 read_nv_bindsrc(ZLongAddr_t *bindSrc, uint16 bindSize)
-{
-	if (ZSUCCESS == osal_nv_item_init( ZCD_NV_SUPERBUTTON_DATA,
-												sizeof(ZLongAddr_t)*bindSize,  
-												bindSrc))
+	while(i < size)
 	{
-		if(ZSUCCESS == osal_nv_read(ZCD_NV_SUPERBUTTON_DATA, 
-	  						0, 
-	  						sizeof(ZLongAddr_t)*bindSize,  
-	  						bindSrc))
+		ZLongAddr_t eSrc;
+		osal_nv_item_init( ZCD_NV_SUPERBUTTON_BINDHEAD+i,
+								sizeof(ZLongAddr_t), 
+								eSrc);
+		
+		osal_nv_read( ZCD_NV_SUPERBUTTON_BINDHEAD+i,
+  						0, 
+  						sizeof(ZLongAddr_t), 
+  						eSrc);
+
+		if(osal_memcmp(bindSrc, eSrc, sizeof(ZLongAddr_t)))
 		{
-			return 0;
+			isMatch = TRUE;
+			break;
 		}
+		
+		i++;
 	}
 
-	return -1;
+
+	if(!isMatch)
+	{
+		osal_nv_item_init( ZCD_NV_SUPERBUTTON_BINDHEAD+size,
+									sizeof(ZLongAddr_t), 
+									bindSrc);
+		
+		osal_nv_write( ZCD_NV_SUPERBUTTON_BINDHEAD+size,
+  						0, 
+  						sizeof(ZLongAddr_t), 
+  						bindSrc);
+
+		size++;
+		osal_nv_write(ZCD_NV_SUPERBUTTON_BINDSIZE, 
+							0, 
+							sizeof(size),  
+						&size);
+
+		osal_nv_read(ZCD_NV_SUPERBUTTON_BINDSIZE, 
+  					0, 
+  					sizeof(size), 
+  					&size);
+	}
 }
+
 
 int8 get_device_data(uint8 *data, uint8 *dataLen)
 {

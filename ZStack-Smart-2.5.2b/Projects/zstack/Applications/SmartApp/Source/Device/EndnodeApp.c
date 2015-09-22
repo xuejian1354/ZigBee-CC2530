@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-09-11
+Date:2015-09-22
 **************************************************************************************************/
 
 /*********************************************************************
@@ -170,12 +170,12 @@ void Data_Analysis(uint8 *data, uint16 length)
 //#ifdef __DEBUG__
     //HalUARTWrite(SERIAL_COM_PORT, data, length);
 //#endif
-
+	
     if(!memcmp(mdeFrame->cmd, FR_CMD_BROCAST_REFRESH, 4)
        || !memcmp(mdeFrame->cmd, FR_CMD_SINGLE_REFRESH, 4))
     {
       UO_t mFrame;
-			
+	  
       memcpy(mFrame.head, FR_HEAD_UO, 3);
 #ifdef RTR_NWK
       mFrame.type = FR_DEV_ROUTER;
@@ -447,6 +447,10 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 #if defined(HOLD_INIT_AUTHENTICATION)
       if(devState != DEV_HOLD)
       {
+/* Super Button */
+#if (DEVICE_TYPE_ID==22)
+		SuperButton_LongKeyCountsSettingHandler(SB_KEY_LONG_RESET_COUNTS);
+#endif
       	HalLedBlink ( HAL_LED_4, 0, 50, 100 );
         devStates_t tStates;
         if (ZSUCCESS == osal_nv_item_init( 
