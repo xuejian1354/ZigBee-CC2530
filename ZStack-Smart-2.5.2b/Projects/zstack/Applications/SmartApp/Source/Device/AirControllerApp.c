@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-08
+Date:2015-09-23
 **************************************************************************************************/
 
 
@@ -80,8 +80,8 @@ extern bool isPermitJoining;
 /*********************************************************************
  * LOCAL VARIABLES
  */
-static uint8 *fBuf;		//pointer data buffer
-static uint16 fLen;		//buffer data length
+extern uint8 *fBuf;		//pointer data buffer
+extern uint16 fLen;		//buffer data length
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS

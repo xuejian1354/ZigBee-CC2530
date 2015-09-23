@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-07
+Date:2015-09-23
 **************************************************************************************************/
 
 
@@ -98,8 +98,8 @@ extern bool isPermitJoining;
 /*********************************************************************
  * LOCAL VARIABLES
  */
-static uint8 *fBuf;		//pointer data buffer
-static uint16 fLen;		//buffer data length
+extern uint8 *fBuf;		//pointer data buffer
+extern uint16 fLen;		//buffer data length
 
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
 static PairSrc_t *pairList = NULL;

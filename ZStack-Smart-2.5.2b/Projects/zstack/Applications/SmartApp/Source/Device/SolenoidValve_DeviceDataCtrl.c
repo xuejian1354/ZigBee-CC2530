@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-20
+Date:2015-09-23
 **************************************************************************************************/
 
 /*********************************************************************
@@ -77,7 +77,9 @@ void HalStatesInit(devStates_t status)
 
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
 void BindBtn_Ctrl(void)
-{}
+{
+	HAL_TOGGLE_VSW();
+}
 #endif
 
 void SolenoidValve_KeyHandler(void)

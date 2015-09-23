@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-27
+Date:2015-09-23
 **************************************************************************************************/
 
 
@@ -23,6 +23,7 @@ Date:2015-08-27
 #include "OSAL.h"
 #include "OSAL_Nv.h"
 #include "OnBoard.h"
+#include "mincode.h"
 
 /* HAL */
 #include "hal_lcd.h"
@@ -106,6 +107,9 @@ uint8 isFirstState = 1;
 uint8 *optData = NULL;
 uint8 optDataLen = 0;
 #endif
+
+uint8 *fBuf;		//pointer data buffer
+uint16 fLen;		//buffer data length
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
@@ -416,7 +420,7 @@ void CommonApp_PowerSettingCountCB( void *params,
 										uint16 *duration, uint8 *count)
 {
 	if(CommonApp_NwkState != DEV_ZB_COORD && CommonApp_NwkState != DEV_ROUTER 
-  		|| CommonApp_NwkState != DEV_END_DEVICE)
+  		&& CommonApp_NwkState != DEV_END_DEVICE)
 	{
 #if !(DEVICE_TYPE_ID==12)
 		HalLedBlink ( HAL_LED_2, 2, 50, 100 );
@@ -424,6 +428,30 @@ void CommonApp_PowerSettingCountCB( void *params,
 		HalLedBlink ( HAL_LED_4, 2, 50, 100 );
 #endif
 	}
+#ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+	else
+	{
+		DE_t mFrame = {0};
+	
+		osal_memcpy(mFrame.head, FR_HEAD_DE, 2);
+		osal_memcpy(mFrame.cmd, FR_CMD_FAST_CTRL, 4);
+		incode_xtoc16(mFrame.short_addr, COORDINATOR_ADDR);
+		mFrame.data_len = 1+16+4;
+		mFrame.data = osal_mem_alloc(1+16+4);
+		osal_memset(mFrame.data, 0, 1+16+4);
+		mFrame.data[0] = SB_OPT_PAIRREG;
+		osal_memcpy(mFrame.data+1, EXT_ADDR_G, 16);
+		osal_memcpy(mFrame.data+17, SHORT_ADDR_G, 4);
+		memcpy(mFrame.tail, f_tail, 4);
+
+		if(!SSAFrame_Package(HEAD_DE, &mFrame, &fBuf, &fLen))
+		{
+			CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
+		}
+
+		osal_mem_free(mFrame.data);
+	}
+#endif
 	
 	isNotTimeOut = 0;
 }

@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-16
+Date:2015-09-23
 **************************************************************************************************/
 
 
@@ -87,7 +87,11 @@ void HalStatesInit(devStates_t status)
 
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
 void BindBtn_Ctrl(void)
-{}
+{
+	HAL_TOGGLE_OLC1();
+	HAL_TOGGLE_OLC2();
+	HAL_TOGGLE_OLC3();
+}
 #endif
 
 #ifdef KEY_PUSH_PORT_1_BUTTON

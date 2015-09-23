@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-27
+Date:2015-09-23
 **************************************************************************************************/
 
 
@@ -69,6 +69,7 @@ extern byte CommonApp_TaskID;
  * LOCAL VARIABLES
  */
 static uint8 onOff = 1;
+static uint8 stepCount = 1;
 uint8 bright = 0xFE;
 uint8 hue = 0x80;
 uint8 saturation = 0;
@@ -139,7 +140,52 @@ void HalStatesInit(devStates_t status)
 
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
 void BindBtn_Ctrl(void)
-{}
+{
+	if(stepCount < 8)
+	{
+		stepCount = hue/32;
+		stepCount++;
+	}
+	
+	switch(stepCount)
+	{
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+	case 8:
+		onOff = 1;
+		bright = 0xFD;
+		saturation = 0xFD;
+		hue = 32*stepCount;
+		if(stepCount == 8)
+		{
+			stepCount++;
+		}
+		hwLight_UpdateOnOff(onOff);
+		hwLight_UpdateLampColorHueSat(hue-32, saturation, bright);
+		break;
+
+	case 9:
+		onOff = 1;
+		bright = 0xFD;
+		saturation = 0;
+		hwLight_UpdateOnOff(onOff);
+		hwLight_UpdateLampColorHueSat(hue, saturation, bright);
+		stepCount++;
+		break;
+
+	default:
+		onOff = 0;
+		hue = 0;
+		stepCount = 0;
+		hwLight_UpdateOnOff(onOff);
+		break;
+	}
+}
 #endif
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)
@@ -171,7 +217,7 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 		onOff = mOnOff;
 		hwLight_UpdateOnOff(onOff);
 	}
-
+	
 	if(onOff)
 	{
 		incode_ctoxs(&mBright, (uint8 *)(data+2), 2);

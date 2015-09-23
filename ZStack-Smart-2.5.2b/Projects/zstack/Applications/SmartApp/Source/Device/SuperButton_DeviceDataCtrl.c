@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-09-22
+Date:2015-09-23
 **************************************************************************************************/
 
 
@@ -541,20 +541,15 @@ void write_nv_bindsrc(ZLongAddr_t bindSrc)
 									bindSrc);
 		
 		osal_nv_write( ZCD_NV_SUPERBUTTON_BINDHEAD+size,
-  						0, 
-  						sizeof(ZLongAddr_t), 
-  						bindSrc);
+	  						0, 
+	  						sizeof(ZLongAddr_t), 
+	  						bindSrc);
 
 		size++;
 		osal_nv_write(ZCD_NV_SUPERBUTTON_BINDSIZE, 
 							0, 
 							sizeof(size),  
-						&size);
-
-		osal_nv_read(ZCD_NV_SUPERBUTTON_BINDSIZE, 
-  					0, 
-  					sizeof(size), 
-  					&size);
+							&size);
 	}
 }
 
