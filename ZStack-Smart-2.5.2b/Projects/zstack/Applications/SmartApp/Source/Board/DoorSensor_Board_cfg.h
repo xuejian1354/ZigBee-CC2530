@@ -102,7 +102,7 @@ extern "C"
 #define DIC_BV           BV(0)
 #define DIC_SBIT         P1_0
 #define DIC_DDR          P1DIR
-#define DIC_POLARITY     ACTIVE_HIGH
+#define DIC_POLARITY     ACTIVE_LOW
 
 #define DIC_SEL		P1SEL
 #define DIC_ICTL	P1IEN

@@ -46,12 +46,12 @@ extern "C"
 #define LED1_BV           BV(0)
 #define LED1_SBIT         P1_0
 #define LED1_DDR          P1DIR
-#define LED1_POLARITY     ACTIVE_HIGH
+#define LED1_POLARITY     ACTIVE_LOW
 
-#define LED2_BV           BV(1)
-#define LED2_SBIT         P1_1
+#define LED2_BV           BV(3)
+#define LED2_SBIT         P1_3
 #define LED2_DDR          P1DIR
-#define LED2_POLARITY     ACTIVE_HIGH
+#define LED2_POLARITY     ACTIVE_LOW
 
 #define LED3_BV           BV(4)
 #define LED3_SBIT         P1_4

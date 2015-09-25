@@ -71,8 +71,8 @@ void HalDeviceInit (void)
   DIC_SEL &= ~(DIC_BV);
   DIC_DDR &= ~(DIC_BV);
 
-  PICTL &= ~0x06;
-  //PICTL |= 0x06;
+  //PICTL &= ~0x06;
+  PICTL |= 0x06;
 
   DIC_ICTL |= DIC_BV;
   DIC_IEN |= BV(4);
