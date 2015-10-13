@@ -63,6 +63,7 @@ extern "C"
 #define SERIAL_CMD_EVT				0x4000		//serial receive event by user defined
 #define TRANSNODE_UPLOAD_EVT		0x2000
 #define BINDSRCBTN_CLEAR_EVT		0x1000
+#define POWER_RECNF_EVT				0x0800
 #define HEARTBERAT_EVT				0x0001		//heart beat event by user defined
 #define CMD_PEROID_EVT				0x0002		//cmd period control event
 #define PERMIT_JOIN_EVT				0x0004
@@ -99,6 +100,7 @@ extern "C"
 #else
 #define HEARTBEAT_TIMEOUT   	6000	//Every 36 Seconds
 #define TRANSNODE_TIMEOUT   	6000	//Every 36 Seconds
+#define POWER_RECNF_TIMEOUT		6000
 #define CMD_PEROID_TIMEOUT		1000	//Every 6 Seconds
 #define DOORSENSOR_TIMEOUT  	1000	//Every 6 Seconds
 #define HUMITUREDETECT_TIMEOUT  3000

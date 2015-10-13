@@ -267,7 +267,11 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
           break;
 
         case ZDO_STATE_CHANGE:
-		  HalLedSet(HAL_LED_3, HAL_LED_MODE_BLINK);
+#ifndef ZDO_COORDINATOR
+		  HalLedBlink (HAL_LED_2, 1, 
+		  	HAL_LED_DEFAULT_DUTY_CYCLE, HAL_LED_DEFAULT_FLASH_TIME);
+#endif
+		  
 		  CommonApp_NwkState = (devStates_t)(MSGpkt->hdr.status);
 #if defined(POWERON_FACTORY_SETTING) && !defined(RTR_NWK)
 		  CommonApp_PowerOnFactorySetting(CommonApp_NwkState);

@@ -77,6 +77,10 @@ extern uint8 EXT_ADDR_G[16];
 extern const uint8 f_tail[4];
 
 extern bool isPermitJoining;
+extern uint8 continueJoining;
+
+extern uint8 *fBuf;		//pointer data buffer
+extern uint16 fLen;		//buffer data length
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
@@ -85,8 +89,9 @@ extern bool isPermitJoining;
 /*********************************************************************
  * LOCAL VARIABLES
  */
-extern uint8 *fBuf;		//pointer data buffer
-extern uint16 fLen;		//buffer data length
+#if !defined ( RTR_NWK ) && defined ( POWER_SAVING )
+static uint8 joiningCount = 0;
+#endif
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -95,6 +100,9 @@ static void EndNodeApp_HeartBeatEvent(void);
 static void Data_Analysis(uint8 *data, uint16 length);
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
 static void DataBind_Ctrl(uint8 *data, uint16 len);
+#endif
+#if !defined ( RTR_NWK ) && defined ( POWER_SAVING )
+void ZDApp_RejoinPowerCB( void *params, uint16 *duration, uint8 *count);
 #endif
 
 /*********************************************************************
@@ -336,7 +344,39 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 	EndNodeApp_HeartBeatEvent();
 	HalStatesInit(status);
   }
+
+#if !defined ( RTR_NWK ) && defined ( POWER_SAVING )
+  if( status != DEV_END_DEVICE )
+  {
+  	joiningCount++;
+  	if( joiningCount > 4 )
+  	{
+	  continueJoining = FALSE;
+	  update_user_event(CommonApp_TaskID, 
+							POWER_RECNF_EVT, 
+							ZDApp_RejoinPowerCB, 
+							POWER_RECNF_TIMEOUT, 
+							TIMER_ONE_EXECUTION, 
+							NULL);
+  	}
+  }
+  else
+  {
+  	continueJoining = TRUE;
+	joiningCount = 0;
+  }
+#endif
 }
+
+#if !defined ( RTR_NWK ) && defined ( POWER_SAVING )
+void ZDApp_RejoinPowerCB( void *params, uint16 *duration, uint8 *count)
+{
+	//HalLedBlink(HAL_LED_3, 2, 50, 200);
+	continueJoining = TRUE;
+	joiningCount = 0;
+	ZDApp_NetworkInit(0);
+}
+#endif
 
 #ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
 void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)

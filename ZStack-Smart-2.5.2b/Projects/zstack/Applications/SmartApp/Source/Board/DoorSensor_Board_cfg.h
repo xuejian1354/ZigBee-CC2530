@@ -61,7 +61,7 @@ extern "C"
 #define LED3_BV           LED1_BV
 #define LED3_SBIT         LED1_SBIT
 #define LED3_DDR          LED1_DDR
-#define LED3_POLARITY     ACTIVE_HIGH
+#define LED3_POLARITY     ACTIVE_LOW
 
 /* S1 */
 #define PUSH1_BV          BV(5)
@@ -115,10 +115,10 @@ extern "C"
 #define HAL_TOGGLE_DIC()         st( DIC_SBIT ^= 1;)
 #define HAL_STATE_DIC()          (DIC_POLARITY (DIC_SBIT))
 
-#define HAL_LED TRUE
-#define BLINK_LEDS
+#define HAL_LED FALSE
+//#define BLINK_LEDS
 
-#define HAL_KEY TRUE
+#define HAL_KEY FALSE
 
 /*********************************************************************
  * TYPEDEFS
