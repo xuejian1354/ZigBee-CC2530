@@ -1348,9 +1348,9 @@
           <state>xHAL_UART_DMA=2</state>
           <state>xHAL_UART_DMA_ALT1</state>
           <state>xJIAJU_BUILDIN</state>
-          <state>xMT_TASK</state>
-          <state>xMT_SYS_FUNC</state>
-          <state>xMT_ZDO_FUNC</state>
+          <state>MT_TASK</state>
+          <state>MT_SYS_FUNC</state>
+          <state>MT_ZDO_FUNC</state>
           <state>NV_INIT</state>
           <state>NV_RESTORE</state>
         </option>
