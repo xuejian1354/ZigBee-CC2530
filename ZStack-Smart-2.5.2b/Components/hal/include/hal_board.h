@@ -8,6 +8,7 @@
 #include "DemoBase_Board_cfg.h"
 
 #include "AirController_Board_cfg.h"
+#include "RelaySocket_Board_cfg.h"
 #include "LightSwitchOne_Board_cfg.h"
 #include "LightSwitchTwo_Board_cfg.h"
 #include "LightSwitchThree_Board_cfg.h"
