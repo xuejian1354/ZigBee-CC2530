@@ -55,6 +55,21 @@
   <project>
     <path>$WS_DIR$\Devices\SolenoidValve.ewp</path>
   </project>
+  <project>
+    <path>$WS_DIR$\Devices\LampSwitch.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\Projector.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\AirConditioner.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\Curtain.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\Devices\Doorlock.ewp</path>
+  </project>
   <batchBuild/>
 </workspace>
 

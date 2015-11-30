@@ -62,6 +62,11 @@ extern "C"
 #define FR_APP_SUPER_BUTTON			"22"
 #define FR_APP_HUMITURE_DETECTION	"A1"
 #define FR_APP_SOLENOID_VALVE		"A2"
+#define FR_APP_LAMPSWITCH			"31"
+#define FR_APP_PROJECTOR			"32"
+#define FR_APP_AIRCONDITIONER		"33"
+#define FR_APP_CURTAIN				"34"
+#define FR_APP_DOORLOCK				"35"
 
 /*Connector*/
 #if(DEVICE_TYPE_ID==0)
@@ -110,6 +115,18 @@ extern "C"
 #define FR_APP_DEV FR_APP_HUMITURE_DETECTION
 #elif(DEVICE_TYPE_ID==0xA2)
 #define FR_APP_DEV FR_APP_SOLENOID_VALVE
+
+/*Smart Lab*/
+#elif(DEVICE_TYPE_ID==31)
+#define FR_APP_DEV FR_APP_LAMPSWITCH
+#elif(DEVICE_TYPE_ID==32)
+#define FR_APP_DEV FR_APP_PROJECTOR
+#elif(DEVICE_TYPE_ID==33)
+#define FR_APP_DEV FR_APP_AIRCONDITIONER
+#elif(DEVICE_TYPE_ID==34)
+#define FR_APP_DEV FR_APP_CURTAIN
+#elif(DEVICE_TYPE_ID==35)
+#define FR_APP_DEV FR_APP_DOORLOCK
 
 #else
 #error "undef FR_APP_DEV !!!"

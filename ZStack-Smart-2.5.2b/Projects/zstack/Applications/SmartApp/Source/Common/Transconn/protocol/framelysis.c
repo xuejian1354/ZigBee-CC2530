@@ -123,6 +123,26 @@ fr_app_type_t get_frapp_type_from_str(char *app_type)
 	{
 		return FRAPP_IR_RELAY;
 	}
+	else if(!strncmp(FR_APP_LAMPSWITCH, app_type, 2))
+	{
+		return FRAPP_LAMPSWITCH;
+	}
+	else if(!strncmp(FR_APP_PROJECTOR, app_type, 2))
+	{
+		return FRAPP_PROJECTOR;
+	}
+	else if(!strncmp(FR_APP_AIRCONDITIONER, app_type, 2))
+	{
+		return FRAPP_AIRCONDITIONER;
+	}
+	else if(!strncmp(FR_APP_CURTAIN, app_type, 2))
+	{
+		return FRAPP_CURTAIN;
+	}
+	else if(!strncmp(FR_APP_DOORLOCK, app_type, 2))
+	{
+		return FRAPP_DOORLOCK;
+	}
 	else if(!strncmp(FR_APP_AIRCONTROLLER, app_type, 2))
 	{
 		return FRAPP_AIRCONTROLLER;
@@ -193,6 +213,26 @@ int get_frapp_type_to_str(char *dst, fr_app_type_t app_type)
 
 	case FRAPP_SUPER_BUTTON:
 		strcpy(dst, FR_APP_SUPER_BUTTON);
+		break;
+
+	case FRAPP_LAMPSWITCH:
+		strcpy(dst, FR_APP_LAMPSWITCH);
+		break;
+
+	case FRAPP_PROJECTOR:
+		strcpy(dst, FR_APP_PROJECTOR);
+		break;
+
+	case FRAPP_AIRCONDITIONER:
+		strcpy(dst, FR_APP_AIRCONDITIONER);
+		break;
+
+	case FRAPP_CURTAIN:
+		strcpy(dst, FR_APP_CURTAIN);
+		break;
+
+	case FRAPP_DOORLOCK:
+		strcpy(dst, FR_APP_DOORLOCK);
 		break;
 
 	case FRAPP_AIRCONTROLLER:

@@ -25,5 +25,10 @@
 #include "HumitureDetection_Board_cfg.h"
 #include "SolenoidValve_Board_cfg.h"
 
+#include "LampSwitch_Board_cfg.h"
+#include "Projector_Board_cfg.h"
+#include "AirConditioner_Board_cfg.h"
+#include "Curtain_Board_cfg.h"
+#include "Doorlock_Board_cfg.h"
 
 #include "hal_board_cfg.h"
