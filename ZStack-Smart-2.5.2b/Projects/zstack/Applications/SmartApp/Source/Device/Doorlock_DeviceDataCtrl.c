@@ -35,7 +35,7 @@ Date:2015-11-30
 /*********************************************************************
  * MACROS
  */
-#define SW1_DATA_SIZE	2
+#define DOORLOCK_DATA_SIZE	2
 
 /*********************************************************************
  * CONSTANTS
@@ -74,8 +74,8 @@ extern uint8 optDataLen;
  */
 void HalDeviceInit (void)
 {
-  HAL_TURN_OFF_OLC1();
-  OLC1_DDR |= OLC1_BV;
+  HAL_TURN_OFF_DLC();
+  DLC_DDR |= DLC_BV;
 }
 
 void HalStatesInit(devStates_t status)
@@ -84,7 +84,7 @@ void HalStatesInit(devStates_t status)
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
 void BindBtn_Ctrl(void)
 {
-	HAL_TOGGLE_OLC1();
+	HAL_TOGGLE_DLC();
 }
 #endif
 
@@ -120,8 +120,8 @@ void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
   	/* Output Logic Control */
 	if (keyCounts == 1)
 	{
-  	  //OLC1_DDR |= OLC1_BV;
-      HAL_TOGGLE_OLC1();
+  	  //DLC_DDR |= DLC_BV;
+      HAL_TOGGLE_DLC();
 	  
 	  UO_t mFrame;
       memcpy(mFrame.head, FR_HEAD_UO, 3);
@@ -176,15 +176,15 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
 	if (osal_memcmp(data, "00", 2))
 	{
-		HAL_TURN_OFF_OLC1();
+		HAL_TURN_OFF_DLC();
 	}
 	else if (osal_memcmp(data, "01", 2))
 	{
-		HAL_TURN_ON_OLC1();
+		HAL_TURN_ON_DLC();
 	}
 	else
 	{
-		if(optData!=NULL && optDataLen<SW1_DATA_SIZE)
+		if(optData!=NULL && optDataLen<DOORLOCK_DATA_SIZE)
 		{
 			osal_mem_free(optData);
 			optData = NULL;
@@ -193,8 +193,8 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 
 		if(optData == NULL)
 		{
-			optData = osal_mem_alloc(SW1_DATA_SIZE);
-			optDataLen = SW1_DATA_SIZE;
+			optData = osal_mem_alloc(DOORLOCK_DATA_SIZE);
+			optDataLen = DOORLOCK_DATA_SIZE;
 		}
 		
 		osal_memcpy(optData, "FF", 2);
@@ -205,7 +205,7 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 
 int8 get_device_data(uint8 *data, uint8 *dataLen)
 {
-	if(optData!=NULL && optDataLen<SW1_DATA_SIZE)
+	if(optData!=NULL && optDataLen<DOORLOCK_DATA_SIZE)
 	{
 		osal_mem_free(optData);
 		optData = NULL;
@@ -214,11 +214,11 @@ int8 get_device_data(uint8 *data, uint8 *dataLen)
 
 	if(optData == NULL)
 	{
-		optData = osal_mem_alloc(SW1_DATA_SIZE);
-		optDataLen = SW1_DATA_SIZE;
+		optData = osal_mem_alloc(DOORLOCK_DATA_SIZE);
+		optDataLen = DOORLOCK_DATA_SIZE;
 	}
 
-	if (HAL_STATE_OLC1())
+	if (HAL_STATE_DLC())
 	{
 		osal_memcpy(optData, "01", 2);
 	}

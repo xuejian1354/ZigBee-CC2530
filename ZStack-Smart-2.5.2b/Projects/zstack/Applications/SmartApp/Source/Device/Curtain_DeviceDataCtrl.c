@@ -35,7 +35,7 @@ Date:2015-11-30
 /*********************************************************************
  * MACROS
  */
-#define SW1_DATA_SIZE	2
+#define CURTAIN_DATA_SIZE	2
 
 /*********************************************************************
  * CONSTANTS
@@ -64,108 +64,93 @@ extern uint8 optDataLen;
 /*********************************************************************
  * LOCAL VARIABLES
  */
-
+static uint8 statsw = 2;
+static uint8 statdir = 0;
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-
+static void ToggleCtrl(void);
 /*********************************************************************
  * PUBLIC FUNCTIONS
  */
 void HalDeviceInit (void)
 {
-  HAL_TURN_OFF_OLC1();
-  OLC1_DDR |= OLC1_BV;
+  CTC1_DDR |= CTC1_BV;
+  CTC2_DDR |= CTC2_BV;
+  HAL_TURN_STOP_CTC();
 }
 
 void HalStatesInit(devStates_t status)
-{}
+{
+	HAL_TURN_STOP_CTC();
+}
+
+void ToggleCtrl(void)
+{
+	if(statdir)
+	{
+		statsw--;
+	}
+	else
+	{
+		statsw++;
+	}
+	
+	statsw %= 3;
+	switch(statsw)
+	{
+	case 0:
+		HAL_TURN_POSITIVE_CTC();
+		statdir = 0;
+		break;
+
+	case 1:
+		HAL_TURN_STOP_CTC();
+		break;
+
+	case 2:
+		HAL_TURN_NEGATIVE_CTC();
+		statdir = 1;
+		break;
+	}
+
+	HalLedBlink(HAL_LED_3, 1, 40, 200);
+}
 
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
+
 void BindBtn_Ctrl(void)
 {
-	HAL_TOGGLE_OLC1();
+	ToggleCtrl();
 }
 #endif
 
-#ifdef KEY_PUSH_PORT_1_BUTTON
-void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
+void Curtain_KeyHandler(void)
 {
-#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
-  uint8 *keysID = get_keys_id();
+	ToggleCtrl();
 
-  /* Initial Join NWK */
-  if(osal_memcmp(keysID, "444444", keyCounts))
-  {
-	if(devState == DEV_HOLD)
-    {
-      ZDOInitDevice( 0 );
-    }
-    else
-    {
-      if(isPermitJoining)
-      {
-        CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-      }
-      else
-      {
-        CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
-      }
-    }
-  }
-#endif
-
-  if(keys & HAL_KEY_PORT_1_SWITCH_4)
-  {
-  	/* Output Logic Control */
-	if (keyCounts == 1)
-	{
-  	  //OLC1_DDR |= OLC1_BV;
-      HAL_TOGGLE_OLC1();
-	  
-	  UO_t mFrame;
-      memcpy(mFrame.head, FR_HEAD_UO, 3);
+	UO_t mFrame;
+	memcpy(mFrame.head, FR_HEAD_UO, 3);
 #ifdef RTR_NWK
-      mFrame.type = FR_DEV_ROUTER;
+	mFrame.type = FR_DEV_ROUTER;
 #else
-      mFrame.type = FR_DEV_ENDDEV;
+	mFrame.type = FR_DEV_ENDDEV;
 #endif
-      memcpy(mFrame.ed_type, FR_APP_DEV, 2);
-      memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
-      memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
-	  get_device_data(NULL, NULL);
-      mFrame.data = optData;
-	  mFrame.data_len = optDataLen;
-      memcpy(mFrame.tail, f_tail, 4);
+	memcpy(mFrame.ed_type, FR_APP_DEV, 2);
+	memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
+	memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
+	get_device_data(NULL, NULL);
+	mFrame.data = optData;
+	mFrame.data_len = optDataLen;
+	memcpy(mFrame.tail, f_tail, 4);
 
-      uint8 *fBuf;
-	  uint16 fLen;
-      if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
-      {
-        CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
-      }
+	uint8 *fBuf;
+	uint16 fLen;
+	if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
+	{
+		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
-#if defined(HOLD_INIT_AUTHENTICATION) && !defined(HAL_KEY_LONG_SHORT_DISTINGUISH)
-	/* Reset Factory Mode */
-    else if(devState!=DEV_HOLD && keyCounts==0)
-    {
-      HalLedBlink ( HAL_LED_4, 0, 50, 100 );
-      devStates_t tStates;
-      if (ZSUCCESS == osal_nv_item_init( 
-                  ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
-      {
-         tStates = DEV_HOLD;
-         osal_nv_write(
-                ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates);
-      }
-
-      zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);
-      WatchDogEnable( WDTIMX );
-    }
-#endif
-  }
 }
-#endif
 
 /*
   * "00"	Open
@@ -176,15 +161,22 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
 	if (osal_memcmp(data, "00", 2))
 	{
-		HAL_TURN_OFF_OLC1();
+		statsw = 1;
+		HAL_TURN_STOP_CTC();
 	}
 	else if (osal_memcmp(data, "01", 2))
 	{
-		HAL_TURN_ON_OLC1();
+		statsw = 2;
+		HAL_TURN_NEGATIVE_CTC();
+	}
+	else if (osal_memcmp(data, "10", 2))
+	{
+		statsw = 3;
+		HAL_TURN_POSITIVE_CTC();
 	}
 	else
 	{
-		if(optData!=NULL && optDataLen<SW1_DATA_SIZE)
+		if(optData!=NULL && optDataLen<CURTAIN_DATA_SIZE)
 		{
 			osal_mem_free(optData);
 			optData = NULL;
@@ -193,19 +185,21 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 
 		if(optData == NULL)
 		{
-			optData = osal_mem_alloc(SW1_DATA_SIZE);
-			optDataLen = SW1_DATA_SIZE;
+			optData = osal_mem_alloc(CURTAIN_DATA_SIZE);
+			optDataLen = CURTAIN_DATA_SIZE;
 		}
 		
 		osal_memcpy(optData, "FF", 2);
 	}
+
+	HalLedBlink(HAL_LED_3, 1, 40, 200);
 	return 0;
 }
 
 
 int8 get_device_data(uint8 *data, uint8 *dataLen)
 {
-	if(optData!=NULL && optDataLen<SW1_DATA_SIZE)
+	if(optData!=NULL && optDataLen<CURTAIN_DATA_SIZE)
 	{
 		osal_mem_free(optData);
 		optData = NULL;
@@ -214,17 +208,23 @@ int8 get_device_data(uint8 *data, uint8 *dataLen)
 
 	if(optData == NULL)
 	{
-		optData = osal_mem_alloc(SW1_DATA_SIZE);
-		optDataLen = SW1_DATA_SIZE;
+		optData = osal_mem_alloc(CURTAIN_DATA_SIZE);
+		optDataLen = CURTAIN_DATA_SIZE;
 	}
 
-	if (HAL_STATE_OLC1())
+	switch (statsw%3)
 	{
-		osal_memcpy(optData, "01", 2);
-	}
-	else
-	{
+	case 0:
+		osal_memcpy(optData, "10", 2);
+		break;
+
+	case 1:
 		osal_memcpy(optData, "00", 2);
+		break;
+
+	case 2:
+		osal_memcpy(optData, "01", 2);
+		break;
 	}
 
 	if(data != NULL)

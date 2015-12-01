@@ -105,17 +105,16 @@ extern "C"
 #define PUSH_PORT_1_POLARITY    ~
 #define HAL_KEY_PORT_1_BITS (KEY_S1_PORT_BIT)
 
-/* Output Logic Control */
-/* OLC 1*/
-#define OLC1_BV           BV(6)
-#define OLC1_SBIT         P1_6
-#define OLC1_DDR          P1DIR
-#define OLC1_POLARITY     ACTIVE_HIGH
+/* Lamp Switch */
+#define LSW_BV           BV(6)
+#define LSW_SBIT         P1_6
+#define LSW_DDR          P1DIR
+#define LSW_POLARITY     ACTIVE_HIGH
 
-#define HAL_TURN_OFF_OLC1()       st( OLC1_SBIT = OLC1_POLARITY (0); )
-#define HAL_TURN_ON_OLC1()        st( OLC1_SBIT = OLC1_POLARITY (1); )
-#define HAL_TOGGLE_OLC1()         st( OLC1_SBIT ^= 1; )
-#define HAL_STATE_OLC1()          (OLC1_POLARITY (OLC1_SBIT))
+#define HAL_TURN_OFF_LSW()       st( LSW_SBIT = LSW_POLARITY (0); )
+#define HAL_TURN_ON_LSW()        st( LSW_SBIT = LSW_POLARITY (1); )
+#define HAL_TOGGLE_LSW()         st( LSW_SBIT ^= 1; )
+#define HAL_STATE_LSW()          (LSW_POLARITY (LSW_SBIT))
 
 #define HAL_LED FALSE
 //#define BLINK_LEDS

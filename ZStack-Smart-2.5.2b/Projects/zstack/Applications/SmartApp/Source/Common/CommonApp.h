@@ -245,6 +245,10 @@ extern void SolenoidValve_KeyHandler(void);
 #elif (DEVICE_TYPE_ID==22)
 extern void SuperButton_KeyHandler(void);
 extern void SuperButton_LongKeyCountsSettingHandler(uint8 keyCounts);
+
+/* Curtain */
+#elif (DEVICE_TYPE_ID==34)
+extern void Curtain_KeyHandler(void);
 #endif
 
 /* Light Switch */

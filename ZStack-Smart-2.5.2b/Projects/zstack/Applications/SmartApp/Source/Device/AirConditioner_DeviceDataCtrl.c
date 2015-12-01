@@ -21,11 +21,11 @@ Date:2015-11-30
 /*********************************************************************
  * MACROS
  */
-#define IRRELAY_LEARN_METHOD	"LEA"
-#define IRRELAY_SEND_METHOD		"SEN"
+#define AIRCONDITIONER_LEARN_METHOD	"LEA"
+#define AIRCONDITIONER_SEND_METHOD		"SEN"
 
-#define IRRELAY_LEARN_CMD	0x88
-#define IRRELAY_SEND_CMD	0x86
+#define AIRCONDITIONER_LEARN_CMD	0x88
+#define AIRCONDITIONER_SEND_CMD	0x86
 
 /*********************************************************************
  * CONSTANTS
@@ -70,7 +70,7 @@ void BindBtn_Ctrl(void)
 {
 	uint8 ctrlData[5] = {0};
 	
-	ctrlData[0] = IRRELAY_SEND_CMD;
+	ctrlData[0] = AIRCONDITIONER_SEND_CMD;
 	ctrlData[1] = 0x01;
 	ctrlData[4] = ctrlData[0] ^ ctrlData[1];
 	
@@ -84,13 +84,13 @@ void IRRelayApp_TxHandler(uint8 txBuf[], uint8 txLen)
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
 	uint8 ctrlData[5] = {0};
-	if(osal_memcmp(IRRELAY_LEARN_METHOD, data, 3))
+	if(osal_memcmp(AIRCONDITIONER_LEARN_METHOD, data, 3))
 	{
-		ctrlData[0] = IRRELAY_LEARN_CMD;
+		ctrlData[0] = AIRCONDITIONER_LEARN_CMD;
 	}
-	else if(osal_memcmp(IRRELAY_SEND_METHOD, data, 3))
+	else if(osal_memcmp(AIRCONDITIONER_SEND_METHOD, data, 3))
 	{
-		ctrlData[0] = IRRELAY_SEND_CMD;
+		ctrlData[0] = AIRCONDITIONER_SEND_CMD;
 	}
 	else
 	{

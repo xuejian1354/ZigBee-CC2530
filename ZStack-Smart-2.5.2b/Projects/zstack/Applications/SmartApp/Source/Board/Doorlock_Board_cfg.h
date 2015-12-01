@@ -106,19 +106,18 @@ extern "C"
 #define HAL_KEY_PORT_1_BITS (KEY_S1_PORT_BIT)
 
 /* Output Logic Control */
-/* OLC 1*/
-#define OLC1_BV           BV(6)
-#define OLC1_SBIT         P1_6
-#define OLC1_DDR          P1DIR
-#define OLC1_POLARITY     ACTIVE_HIGH
+#define DLC_BV           BV(6)
+#define DLC_SBIT         P1_6
+#define DLC_DDR          P1DIR
+#define DLC_POLARITY     ACTIVE_HIGH
 
-#define HAL_TURN_OFF_OLC1()       st( OLC1_SBIT = OLC1_POLARITY (0); )
-#define HAL_TURN_ON_OLC1()        st( OLC1_SBIT = OLC1_POLARITY (1); )
-#define HAL_TOGGLE_OLC1()         st( OLC1_SBIT ^= 1; )
-#define HAL_STATE_OLC1()          (OLC1_POLARITY (OLC1_SBIT))
+#define HAL_TURN_OFF_DLC()       st( DLC_SBIT = DLC_POLARITY (0); )
+#define HAL_TURN_ON_DLC()        st( DLC_SBIT = DLC_POLARITY (1); )
+#define HAL_TOGGLE_DLC()         st( DLC_SBIT ^= 1; )
+#define HAL_STATE_DLC()          (DLC_POLARITY (DLC_SBIT))
 
-#define HAL_LED FALSE
-//#define BLINK_LEDS
+#define HAL_LED TRUE
+#define BLINK_LEDS
 
 #define HAL_KEY TRUE
 

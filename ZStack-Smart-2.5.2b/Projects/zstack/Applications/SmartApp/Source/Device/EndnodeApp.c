@@ -466,8 +466,8 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 
   if (keysPush[0] == HAL_KEY_LONG_PUSH)
   {
-/* SolenoidValve */
-#if (DEVICE_TYPE_ID==0xA2)
+/* SolenoidValve  or Curtain*/
+#if (DEVICE_TYPE_ID==0xA2) || (DEVICE_TYPE_ID==34)
 	if(keyCounts == 6 )
 		
 /* Super Button */
@@ -562,6 +562,10 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 /* Super Button */
 #elif (DEVICE_TYPE_ID==22)
 	SuperButton_KeyHandler();
+
+/* Curtain */
+#elif (DEVICE_TYPE_ID==34)
+	Curtain_KeyHandler();
 #endif
 
 /* Light Switch */
