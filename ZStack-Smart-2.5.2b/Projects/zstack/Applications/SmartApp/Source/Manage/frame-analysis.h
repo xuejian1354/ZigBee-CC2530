@@ -48,6 +48,7 @@ extern "C"
 #define FR_APP_DEMOBASE				"FE"
 #define FR_APP_AIRCONTROLLER 		"F0"
 #define FR_APP_RELAYSOCKET			"F1"
+#define FR_APP_LIGHTDETECT			"F2"
 #define FR_APP_LIGHTSWITCH_ONE		"01"
 #define FR_APP_LIGHTSWITCH_TWO		"02"
 #define FR_APP_LIGHTSWITCH_THREE	"03"
@@ -83,6 +84,10 @@ extern "C"
 /*RelaySocket*/
 #elif(DEVICE_TYPE_ID==0xF1)
 #define FR_APP_DEV FR_APP_RELAYSOCKET
+
+/*LightDetect*/
+#elif(DEVICE_TYPE_ID==0xF2)
+#define FR_APP_DEV FR_APP_LIGHTDETECT
 
 /*Smart Home*/
 #elif(DEVICE_TYPE_ID==1)

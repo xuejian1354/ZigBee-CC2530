@@ -70,6 +70,9 @@
   <project>
     <path>$WS_DIR$\Devices\Doorlock.ewp</path>
   </project>
+  <project>
+    <path>$WS_DIR$\Devices\LightDetect.ewp</path>
+  </project>
   <batchBuild/>
 </workspace>
 
