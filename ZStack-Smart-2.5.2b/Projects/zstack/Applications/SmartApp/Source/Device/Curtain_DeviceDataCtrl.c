@@ -25,6 +25,7 @@ Date:2015-11-30
 
 #include "ZComDef.h"
 #include "CommonApp.h"
+#include "mincode.h"
 
 /* HAL */
 #include "hal_led.h"
@@ -36,6 +37,10 @@ Date:2015-11-30
  * MACROS
  */
 #define CURTAIN_DATA_SIZE	2
+
+#define CURTAIN_ADMODE_CLOSE		0
+#define CURTAIN_ADMODE_DEEPOPEN		1
+#define CURTAIN_ADMODE_LIGHTCLOSE	2
 
 /*********************************************************************
  * CONSTANTS
@@ -66,6 +71,12 @@ extern uint8 optDataLen;
  */
 static uint8 statsw = 2;
 static uint8 statdir = 0;
+
+static uint16 adval;
+static uint16 adhold = 0xA0;
+static uint8 ad_mode = CURTAIN_ADMODE_DEEPOPEN;
+
+static int8 ret;
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -129,8 +140,8 @@ void Curtain_KeyHandler(void)
 {
 	ToggleCtrl();
 
-	UO_t mFrame;
-	memcpy(mFrame.head, FR_HEAD_UO, 3);
+	UR_t mFrame;
+	memcpy(mFrame.head, FR_HEAD_UR, 3);
 #ifdef RTR_NWK
 	mFrame.type = FR_DEV_ROUTER;
 #else
@@ -138,7 +149,6 @@ void Curtain_KeyHandler(void)
 #endif
 	memcpy(mFrame.ed_type, FR_APP_DEV, 2);
 	memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
-	memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
 	get_device_data(NULL, NULL);
 	mFrame.data = optData;
 	mFrame.data_len = optDataLen;
@@ -146,7 +156,7 @@ void Curtain_KeyHandler(void)
 
 	uint8 *fBuf;
 	uint16 fLen;
-	if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
+	if(!SSAFrame_Package(HEAD_UR, &mFrame, &fBuf, &fLen))
 	{
 		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
 	}
@@ -159,19 +169,70 @@ void Curtain_KeyHandler(void)
  */
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
-	if (osal_memcmp(data, "00", 2))
+	HalLedBlink(HAL_LED_3, 1, 40, 200);
+	uint8 *mdata = (uint8 *)data;
+	ret = 0;
+
+	if(dataLen >= 4 && osal_memcmp(mdata, "MD", 2))
+	{
+		incode_ctoxs(&ad_mode, mdata+2, 2);
+		return 0;
+	}
+	else if(dataLen >= 6 && osal_memcmp(mdata, "HD", 2))
+	{
+		incode_ctox16(&adhold, mdata+2);
+		return 0;
+	}
+	else if(dataLen >= 6 && osal_memcmp(mdata, "AD", 2))
+	{
+		int tstatsw = statsw;
+		incode_ctox16(&adval, mdata+2);
+		if(ad_mode == CURTAIN_ADMODE_CLOSE)
+		{
+			return 0;
+		}
+		else if(ad_mode == CURTAIN_ADMODE_DEEPOPEN)
+		{
+			if(adval > adhold)
+			{
+				statsw = 3;
+				statdir = 0;
+				HAL_TURN_POSITIVE_CTC();
+			}
+		}
+		else if(ad_mode == CURTAIN_ADMODE_LIGHTCLOSE)
+		{
+			if(adval < adhold)
+			{
+				statsw = 2;
+				statdir = 1;
+				HAL_TURN_NEGATIVE_CTC();
+			}
+		}
+
+		if(tstatsw == statsw)
+		{
+			ret = 1;
+		}
+
+		return ret;
+	}
+
+	if (osal_memcmp(mdata, "00", 2))
 	{
 		statsw = 1;
 		HAL_TURN_STOP_CTC();
 	}
-	else if (osal_memcmp(data, "01", 2))
+	else if (osal_memcmp(mdata, "01", 2))
 	{
 		statsw = 2;
+		statdir = 1;
 		HAL_TURN_NEGATIVE_CTC();
 	}
-	else if (osal_memcmp(data, "10", 2))
+	else if (osal_memcmp(mdata, "10", 2))
 	{
 		statsw = 3;
+		statdir = 0;
 		HAL_TURN_POSITIVE_CTC();
 	}
 	else
@@ -192,7 +253,6 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 		osal_memcpy(optData, "FF", 2);
 	}
 
-	HalLedBlink(HAL_LED_3, 1, 40, 200);
 	return 0;
 }
 
@@ -229,10 +289,13 @@ int8 get_device_data(uint8 *data, uint8 *dataLen)
 
 	if(data != NULL)
 	{
-		*dataLen = optDataLen;
+		*dataLen = 2;
 		osal_memcpy(data, optData, *dataLen);
 	}
-	
-	return 0;
+
+	int tret = ret;
+	ret = 0;
+
+	return tret;
 }
 

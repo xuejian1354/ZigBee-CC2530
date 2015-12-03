@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-12-02
+Date:2015-12-03
 **************************************************************************************************/
 
 /*********************************************************************
@@ -22,6 +22,10 @@ Date:2015-12-02
 /*********************************************************************
  * MACROS
  */
+#define BIND_CURTAIN_SIZE	128
+
+#define BINDCTRL_LIGHTDETECT_FLAG	"LTD"
+#define BINDCTRL_CURTAIN_FLAG		"CTN"
 
 /*********************************************************************
  * CONSTANTS
@@ -32,6 +36,7 @@ Date:2015-12-02
  */
 extern byte CommonApp_TaskID;
 extern devStates_t CommonApp_NwkState;
+extern const uint8 f_tail[4];
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
@@ -44,7 +49,9 @@ extern devStates_t CommonApp_NwkState;
 /*********************************************************************
  * LOCAL VARIABLES
  */
-
+uint16 curtain_zaddrs[BIND_CURTAIN_SIZE] = {0};
+int curtain_size = 0;
+int curtain_index = 0;
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
@@ -71,16 +78,70 @@ void CommonApp_LightDetectStatusCB( void *params, uint16 *duration, uint8 *count
 {
   if( CommonApp_NwkState == DEV_ROUTER || CommonApp_NwkState == DEV_END_DEVICE)
   {
-  	  uint8 adval_str[4];
+  	  int i = 0;
+  	  uint8 adval_str[6];
+	  osal_memcpy(adval_str, "AD", 2);
 	  uint16 adval = HalAdcRead(HAL_ADC_CHANNEL_1, HAL_ADC_RESOLUTION_12);
-	  incode_xtoc16(adval_str, adval);
+	  incode_xtoc16(adval_str+2, adval);
 
-	  Update_Refresh(adval_str, 4);
+	  while(i < curtain_size)
+	  {
+	  	DE_t mFrame;
+		uint8 *fBuf;		//pointer data buffer
+		uint16 fLen;		//buffer data length
+	  
+		memcpy(mFrame.head, FR_HEAD_DE, 3);
+		memcpy(mFrame.cmd, FR_CMD_SINGLE_EXCUTE, 4);
+		incode_xtoc16(mFrame.short_addr, curtain_zaddrs[i]);
+		mFrame.data = adval_str;
+		mFrame.data_len = 6;
+		memcpy(mFrame.tail, f_tail, 4);
+
+		if(!SSAFrame_Package(HEAD_DE, &mFrame, &fBuf, &fLen))
+		{
+			CommonApp_SendTheMessage(curtain_zaddrs[i], fBuf, fLen);
+		}
+
+		i++;
+	  }
   }
 }
 
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
+	if(dataLen >= 7)
+	{
+		uint16 curtain_zaddr;
+		if(osal_memcmp(data, BINDCTRL_CURTAIN_FLAG, 3))
+		{
+			incode_ctox16(&curtain_zaddr, (uint8 *)(data+3));
+			curtain_zaddrs[curtain_index++] = curtain_zaddr;
+			if(curtain_size < BIND_CURTAIN_SIZE)
+			{
+				curtain_size++;
+			}
+		}
+		else if(osal_memcmp(data, BINDCTRL_LIGHTDETECT_FLAG, 3))
+		{
+			int i;
+			int num = (dataLen-3)/4;
+			for(i=0; i<num; i++)
+			{
+				incode_ctox16(&curtain_zaddr, (uint8 *)(data+3+(i<<2)));
+				curtain_zaddrs[curtain_index++] = curtain_zaddr;
+				if(curtain_size < BIND_CURTAIN_SIZE)
+				{
+					curtain_size++;
+				}
+			}			
+		}
+	}
+
+	if(curtain_index >= BIND_CURTAIN_SIZE)
+	{
+		curtain_index = 0;
+	}
+
 	return 0;
 }
 
