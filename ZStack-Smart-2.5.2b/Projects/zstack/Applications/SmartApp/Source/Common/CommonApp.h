@@ -83,6 +83,8 @@ extern "C"
 #define HUELIGHT_COUNT_EVT			0x0010
 #define SUPERBUTTON_PAIR_EVT		0x0010
 #define LIGHTDETECT_DETECT_EVT		0x0010
+#define DOORLOCK_UP_EVT				0x0010
+#define DOORLOCK_DOWN_EVT			0x0020
 
 #define IRRELAY_LEARN_CMD	0x88
 #define IRRELAY_SEND_CMD	0x86
@@ -252,6 +254,10 @@ extern void SuperButton_LongKeyCountsSettingHandler(uint8 keyCounts);
 /* Curtain */
 #elif (DEVICE_TYPE_ID==34)
 extern void Curtain_KeyHandler(void);
+
+/* Doorlock */
+#elif (DEVICE_TYPE_ID==35)
+extern void Doorlock_KeyHandler(void);
 #endif
 
 /* Light Switch */

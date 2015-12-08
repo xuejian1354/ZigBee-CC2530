@@ -566,6 +566,10 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 /* Curtain */
 #elif (DEVICE_TYPE_ID==34)
 	Curtain_KeyHandler();
+
+/* Doorlock */
+#elif (DEVICE_TYPE_ID==35)
+	Doorlock_KeyHandler();
 #endif
 
 /* Light Switch */

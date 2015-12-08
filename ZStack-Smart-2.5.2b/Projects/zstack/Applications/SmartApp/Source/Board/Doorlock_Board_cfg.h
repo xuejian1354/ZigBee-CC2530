@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-11-30
+Date:2015-12-08
 **************************************************************************************************/
 
 
@@ -84,7 +84,6 @@ extern "C"
 #define HAL_STATE_LED4()          HAL_STATE_LED1()
 
 
-/* S1 unused*/
 #define PUSH1_BV          BV(5)
 #define PUSH1_SBIT        P0_5
 #define PUSH1_POLARITY    ACTIVE_LOW
@@ -98,26 +97,17 @@ extern "C"
 #define HAL_PUSH_BUTTON6()        (0)
 
 
-#define KEY_PUSH_PORT_1_BUTTON
-
-#define KEY_S1_PORT_BIT		BV(3)
-
-#define PUSH_PORT_1_POLARITY    ~
-#define HAL_KEY_PORT_1_BITS (KEY_S1_PORT_BIT)
-
 /* Output Logic Control */
-#define DLC_BV           BV(6)
-#define DLC_SBIT         P1_6
+#define DLC_BV           BV(5)
+#define DLC_SBIT         P1_5
 #define DLC_DDR          P1DIR
-#define DLC_POLARITY     ACTIVE_HIGH
+#define DLC_POLARITY     ACTIVE_LOW
 
 #define HAL_TURN_OFF_DLC()       st( DLC_SBIT = DLC_POLARITY (0); )
 #define HAL_TURN_ON_DLC()        st( DLC_SBIT = DLC_POLARITY (1); )
-#define HAL_TOGGLE_DLC()         st( DLC_SBIT ^= 1; )
-#define HAL_STATE_DLC()          (DLC_POLARITY (DLC_SBIT))
 
-#define HAL_LED TRUE
-#define BLINK_LEDS
+#define HAL_LED FALSE
+//#define BLINK_LEDS
 
 #define HAL_KEY TRUE
 

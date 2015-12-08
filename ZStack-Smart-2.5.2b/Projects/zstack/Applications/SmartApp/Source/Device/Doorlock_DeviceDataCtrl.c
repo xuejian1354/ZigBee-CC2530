@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-11-30
+Date:2015-12-08
 **************************************************************************************************/
 
 
@@ -37,6 +37,8 @@ Date:2015-11-30
  */
 #define DOORLOCK_DATA_SIZE	2
 
+#define DOORLOCK_TRIGGER_TIME	500
+
 /*********************************************************************
  * CONSTANTS
  */
@@ -44,11 +46,7 @@ Date:2015-11-30
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
-extern uint8 SHORT_ADDR_G[4];
-extern uint8 EXT_ADDR_G[16];
-extern const uint8 f_tail[4];
-
-extern bool isPermitJoining;
+extern byte CommonApp_TaskID;
 
 extern uint8 *optData;
 extern uint8 optDataLen;
@@ -64,6 +62,9 @@ extern uint8 optDataLen;
 /*********************************************************************
  * LOCAL VARIABLES
  */
+void Doorlock_triggler_ctrl(void);
+void Doorlock_TriggerUpCB( void *params, uint16 *duration, uint8 *count);
+void Doorlock_TriggerDownCB( void *params, uint16 *duration, uint8 *count);
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -81,158 +82,62 @@ void HalDeviceInit (void)
 void HalStatesInit(devStates_t status)
 {}
 
+void Doorlock_KeyHandler(void)
+{
+	Doorlock_triggler_ctrl();
+}
+
+void Doorlock_triggler_ctrl(void)
+{
+	HAL_TURN_OFF_DLC();
+	update_user_event(CommonApp_TaskID,
+						DOORLOCK_UP_EVT,
+						Doorlock_TriggerUpCB, 
+  						DOORLOCK_TRIGGER_TIME/2,
+  						TIMER_ONE_EXECUTION|TIMER_EVENT_RESIDENTS,
+  						NULL);
+}
+
+void Doorlock_TriggerUpCB( void *params, uint16 *duration, uint8 *count)
+{
+	HAL_TURN_ON_DLC();
+	update_user_event(CommonApp_TaskID,
+						DOORLOCK_UP_EVT,
+						Doorlock_TriggerUpCB, 
+  						DOORLOCK_TRIGGER_TIME,
+  						TIMER_ONE_EXECUTION|TIMER_EVENT_RESIDENTS,
+  						NULL);
+}
+
+void Doorlock_TriggerDownCB( void *params, uint16 *duration, uint8 *count)
+{
+	HAL_TURN_OFF_DLC();
+}
+
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
 void BindBtn_Ctrl(void)
 {
-	HAL_TOGGLE_DLC();
+	Doorlock_triggler_ctrl();
 }
 #endif
 
-#ifdef KEY_PUSH_PORT_1_BUTTON
-void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
-{
-#ifndef HAL_KEY_LONG_SHORT_DISTINGUISH
-  uint8 *keysID = get_keys_id();
-
-  /* Initial Join NWK */
-  if(osal_memcmp(keysID, "444444", keyCounts))
-  {
-	if(devState == DEV_HOLD)
-    {
-      ZDOInitDevice( 0 );
-    }
-    else
-    {
-      if(isPermitJoining)
-      {
-        CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-      }
-      else
-      {
-        CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
-      }
-    }
-  }
-#endif
-
-  if(keys & HAL_KEY_PORT_1_SWITCH_4)
-  {
-  	/* Output Logic Control */
-	if (keyCounts == 1)
-	{
-  	  //DLC_DDR |= DLC_BV;
-      HAL_TOGGLE_DLC();
-	  
-	  UO_t mFrame;
-      memcpy(mFrame.head, FR_HEAD_UO, 3);
-#ifdef RTR_NWK
-      mFrame.type = FR_DEV_ROUTER;
-#else
-      mFrame.type = FR_DEV_ENDDEV;
-#endif
-      memcpy(mFrame.ed_type, FR_APP_DEV, 2);
-      memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
-      memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
-	  get_device_data(NULL, NULL);
-      mFrame.data = optData;
-	  mFrame.data_len = optDataLen;
-      memcpy(mFrame.tail, f_tail, 4);
-
-      uint8 *fBuf;
-	  uint16 fLen;
-      if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
-      {
-        CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
-      }
-	}
-#if defined(HOLD_INIT_AUTHENTICATION) && !defined(HAL_KEY_LONG_SHORT_DISTINGUISH)
-	/* Reset Factory Mode */
-    else if(devState!=DEV_HOLD && keyCounts==0)
-    {
-      HalLedBlink ( HAL_LED_4, 0, 50, 100 );
-      devStates_t tStates;
-      if (ZSUCCESS == osal_nv_item_init( 
-                  ZCD_NV_NWK_HOLD_STARTUP, sizeof(tStates),  &tStates))
-      {
-         tStates = DEV_HOLD;
-         osal_nv_write(
-                ZCD_NV_NWK_HOLD_STARTUP, 0, sizeof(tStates),  &tStates);
-      }
-
-      zgWriteStartupOptions(ZG_STARTUP_SET, ZCD_STARTOPT_DEFAULT_NETWORK_STATE);
-      WatchDogEnable( WDTIMX );
-    }
-#endif
-  }
-}
-#endif
-
-/*
-  * "00"	Open
-  * "01"	Close
-  * Total 6 bits.
- */
 int8 set_device_data(uint8 const *data, uint8 dataLen)
 {
-	if (osal_memcmp(data, "00", 2))
+	if(data == NULL || dataLen < 2)
 	{
-		HAL_TURN_OFF_DLC();
+		return -1;
 	}
-	else if (osal_memcmp(data, "01", 2))
-	{
-		HAL_TURN_ON_DLC();
-	}
-	else
-	{
-		if(optData!=NULL && optDataLen<DOORLOCK_DATA_SIZE)
-		{
-			osal_mem_free(optData);
-			optData = NULL;
-			optDataLen = 0;
-		}
 
-		if(optData == NULL)
-		{
-			optData = osal_mem_alloc(DOORLOCK_DATA_SIZE);
-			optDataLen = DOORLOCK_DATA_SIZE;
-		}
-		
-		osal_memcpy(optData, "FF", 2);
+	if (osal_memcmp(data, "01", 2))
+	{
+		Doorlock_triggler_ctrl();
 	}
 	return 0;
 }
 
-
 int8 get_device_data(uint8 *data, uint8 *dataLen)
 {
-	if(optData!=NULL && optDataLen<DOORLOCK_DATA_SIZE)
-	{
-		osal_mem_free(optData);
-		optData = NULL;
-		optDataLen = 0;
-	}
-
-	if(optData == NULL)
-	{
-		optData = osal_mem_alloc(DOORLOCK_DATA_SIZE);
-		optDataLen = DOORLOCK_DATA_SIZE;
-	}
-
-	if (HAL_STATE_DLC())
-	{
-		osal_memcpy(optData, "01", 2);
-	}
-	else
-	{
-		osal_memcpy(optData, "00", 2);
-	}
-
-	if(data != NULL)
-	{
-		*dataLen = optDataLen;
-		osal_memcpy(data, optData, *dataLen);
-	}
-	
+	*dataLen = 0;
 	return 0;
 }
 
