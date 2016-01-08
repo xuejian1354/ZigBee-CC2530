@@ -45,7 +45,6 @@ Date:2015-11-30
  * EXTERNAL VARIABLES
  */
 extern uint8 SHORT_ADDR_G[4];
-extern uint8 EXT_ADDR_G[16];
 extern const uint8 f_tail[4];
 
 extern bool isPermitJoining;
@@ -122,8 +121,8 @@ void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
   	  //LSW_DDR |= LSW_BV;
       HAL_TOGGLE_LSW();
 	  
-	  UO_t mFrame;
-      memcpy(mFrame.head, FR_HEAD_UO, 3);
+	  UR_t mFrame;
+      memcpy(mFrame.head, FR_HEAD_UR, 3);
 #ifdef RTR_NWK
       mFrame.type = FR_DEV_ROUTER;
 #else
@@ -131,15 +130,24 @@ void DeviceCtrl_HandlePort1Keys(uint16 keys, uint8 keyCounts)
 #endif
       memcpy(mFrame.ed_type, FR_APP_DEV, 2);
       memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
-      memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
 	  get_device_data(NULL, NULL);
+	  if(HAL_STATE_LSW())
+	  {
+	  	osal_memcpy(optData, "01", 2);
+		optDataLen = 2;
+	  }
+	  else
+	  {
+		osal_memcpy(optData, "00", 2);
+		optDataLen = 2;
+	  }
       mFrame.data = optData;
 	  mFrame.data_len = optDataLen;
       memcpy(mFrame.tail, f_tail, 4);
 
       uint8 *fBuf;
 	  uint16 fLen;
-      if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
+      if(!SSAFrame_Package(HEAD_UR, &mFrame, &fBuf, &fLen))
       {
         CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
       }
