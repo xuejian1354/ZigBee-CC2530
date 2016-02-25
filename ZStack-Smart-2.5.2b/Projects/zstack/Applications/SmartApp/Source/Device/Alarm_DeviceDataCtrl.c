@@ -17,6 +17,7 @@ Date:2015-09-23
  */
 #include "CommonApp.h"
 #include "hal_drivers.h" 
+#include "hal_led.h"
 
 /*********************************************************************
  * MACROS
@@ -55,17 +56,20 @@ void HalDeviceInit (void)
 {
 	ALARMIO_DDR |= ALARMIO_BV;
 	HAL_TURN_OFF_ALARM();
+	HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
 }
 
 void HalStatesInit(devStates_t status)
 {
-	
+	HAL_TURN_OFF_ALARM();
+	HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
 }
 
 #ifdef BIND_SUPERBUTTON_CTRL_SUPPORT
 void BindBtn_Ctrl(void)
 {
 	HAL_TOGGLE_ALARM();
+	HalLedSet(HAL_LED_3, HAL_LED_MODE_TOGGLE);
 }
 #endif
 
@@ -74,10 +78,12 @@ int8 set_device_data(uint8 const *data, uint8 dataLen)
 	if (osal_memcmp(data, "00", 2))
 	{
 		HAL_TURN_OFF_ALARM();
+		HalLedSet(HAL_LED_3, HAL_LED_MODE_OFF);
 	}
 	else if (osal_memcmp(data, "01", 2))
 	{
 		HAL_TURN_ON_ALARM();
+		HalLedSet(HAL_LED_3, HAL_LED_MODE_ON);
 	}
 	else
 	{

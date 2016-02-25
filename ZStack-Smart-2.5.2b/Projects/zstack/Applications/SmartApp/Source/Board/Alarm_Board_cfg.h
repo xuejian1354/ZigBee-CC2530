@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-07-07
+Date:2016-01-19
 **************************************************************************************************/
 
 
@@ -47,20 +47,20 @@ extern "C"
  */
 /* 1 - Green */
 #define LED1_BV           BV(0)
-#define LED1_SBIT         P2_0
-#define LED1_DDR          P2DIR
+#define LED1_SBIT         P1_0
+#define LED1_DDR          P1DIR
 #define LED1_POLARITY     ACTIVE_HIGH
 
 /* 2 - Red */
-#define LED2_BV           BV(0)
-#define LED2_SBIT         P2_0
-#define LED2_DDR          P2DIR
+#define LED2_BV           BV(1)
+#define LED2_SBIT         P1_1
+#define LED2_DDR          P1DIR
 #define LED2_POLARITY     ACTIVE_HIGH
 
 /* 3 - Yellow */
-#define LED3_BV           BV(0)
-#define LED3_SBIT         P2_0
-#define LED3_DDR          P2DIR
+#define LED3_BV           BV(4)
+#define LED3_SBIT         P1_4
+#define LED3_DDR          P1DIR
 #define LED3_POLARITY     ACTIVE_HIGH
 
 /* S1 */
