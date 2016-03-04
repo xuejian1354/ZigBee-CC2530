@@ -75,8 +75,8 @@ void Doorlock_TriggerDownCB( void *params, uint16 *duration, uint8 *count);
  */
 void HalDeviceInit (void)
 {
-  HAL_TURN_OFF_DLC();
   DLC_DDR |= DLC_BV;
+  HAL_TURN_ON_DLC();
 }
 
 void HalStatesInit(devStates_t status)
