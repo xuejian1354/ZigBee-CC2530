@@ -40,7 +40,20 @@
 #ifndef HAL_BOARD_CFG_H
 #define HAL_BOARD_CFG_H
 
-
+/* ------------------------------------------------------------------------------------------------
+ *                                       DEVICE_SET
+ *  #define SHT11_DEV 温湿度传感器  （SPI、I2C接口）   
+ *  #define IOCTL_DEV 控制类设备(IO口驱动)
+ *  #define QTJC_DEV 气体检测类设备(ADC采样)
+ *  #define LUX_DEV  光照类设备（I2C接口）
+ *  
+ * 
+ * ------------------------------------------------------------------------------------------------
+ */
+//#define SHT11_DEV
+#define IOCTL_DEV
+//#define QTJC_DEV
+//#define LUX_DEV
 /* ------------------------------------------------------------------------------------------------
  *                                           Includes
  * ------------------------------------------------------------------------------------------------
@@ -101,6 +114,9 @@
 #endif
 
 #define HAL_CLOCK_STABLE()    st( while (CLKCONSTA != (CLKCONCMD_32MHZ | OSC_32KHZ)); )
+
+
+
 
 /* ------------------------------------------------------------------------------------------------
  *                                       LED Configuration
@@ -262,6 +278,11 @@ extern void MAC_RfFrontendSetup(void);
   HAL_TURN_OFF_LED3();                                           \
   LED3_DDR |= LED3_BV;                                           \
                                                                  \
+  /* set direction for GPIO outputs  */                          \
+  GPIO1_DDR |= GPIO1_BV;                                         \
+  GPIO2_DDR |= GPIO2_BV;                                         \
+  GPIO3_DDR |= GPIO3_BV;                                         \
+  GPIO4_DDR |= GPIO4_BV;                                         \
   /* configure tristates */                                      \
   P0INP |= PUSH2_BV;                                             \
 }

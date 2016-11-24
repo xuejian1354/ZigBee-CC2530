@@ -802,7 +802,7 @@
         </option>
         <option>
           <name>XclFile</name>
-          <state>$PROJ_DIR$\..\..\..\..\Tools\CC2530DB\f8w2530.xcl</state>
+          <state>E:\work\zigbee\ZStack-Smart-2.5.2b\Projects\zstack\Tools\CC2530DB\f8w2530.xcl</state>
         </option>
         <option>
           <name>XclFileSlave</name>
@@ -3345,6 +3345,12 @@
         </file>
       </group>
       <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\bh1750.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\bh1750.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\frame-analysis.c</name>
       </file>
       <file>
@@ -3363,10 +3369,22 @@
         <name>$PROJ_DIR$\..\..\Source\Manage\i2c-ctrl.h</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\list.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\list.h</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Source\Manage\serial-comm.h</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\sht10.c</name>
+      </file>
+      <file>
+        <name>$PROJ_DIR$\..\..\Source\Manage\sht10.h</name>
       </file>
     </group>
   </group>

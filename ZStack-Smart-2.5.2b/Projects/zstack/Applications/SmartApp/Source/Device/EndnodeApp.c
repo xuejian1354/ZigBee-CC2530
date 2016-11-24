@@ -65,6 +65,7 @@ extern afAddrType_t CommonApp_DstAddr;
 
 //network address
 extern uint16 nwkAddr;
+extern uint8 nwkAddr_buf[2];
 //mac address
 extern ZLongAddr_t macAddr;
 
@@ -91,7 +92,10 @@ static uint16 fLen;		//buffer data length
  */
 static void EndNodeApp_HeartBeatEvent(void);
 static void Data_Analysis(uint8 *data, uint16 length);
+#ifdef RS485_DEV
+static void RS485_Analysis(uint8 *data, uint16 length);
 
+#endif
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
  */
@@ -117,8 +121,19 @@ static void Data_Analysis(uint8 *data, uint16 length);
 
 void CommonApp_InitConfirm( uint8 task_id )
 {
+#ifdef RS485_DEV
+  //读取NV地址值到存储空间
+  osal_nv_item_init(ZCD_DEV_ADDRESS, 1, NULL);
+  osal_nv_read(ZCD_DEV_ADDRESS, 0, 1, &Address_dev);
+#endif
+
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
   ZDOInitDevice( 0 );
+/* 串口回调中断未定义
+#if(HAL_UART==TRUE)
+  SerialTx_Handler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
+#endif
+  */
 }
 
 
@@ -143,12 +158,47 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
   switch ( pkt->clusterId )
   {
     case COMMONAPP_CLUSTERID:
+#ifndef RS485_DEV
       Data_Analysis(pkt->cmd.Data, pkt->cmd.DataLength);
+#else
+      RS485_Analysis(pkt->cmd.Data, pkt->cmd.DataLength);
+#endif
       break; 
   }
 }
 
-
+#ifdef RS485_DEV
+void RS485_Analysis(uint8 *data, uint16 length)
+{
+  RS485DR_t  rs485_rsData;
+  uint8 len=length;
+ // uint8 buf[FRAME_DATA_SIZE] = {0};
+  memcpy(rs485_rsData.data_buf,data,length);
+  if(crc_confirm(data,length))
+  {
+    //判断是否是该设备命令
+  switch(rs485_rsData.data_core.cmdId[0])
+    {
+     case CT_CMD_CX:
+      //查询状态 0x03
+       rs485_state(rs485_rsData.data_buf,len);
+      break;
+    case CT_CMD_KZ:
+      //控制设备 0x04
+       rs485_control(rs485_rsData.data_buf,len);
+      break;
+    case CT_CMD_XG:
+      //修改地址 0x06
+       rs485_changeAddr(rs485_rsData.data_buf,len);
+      break;
+    case CT_CMD_DI:
+      //查询地址 0x25
+      rs485_address();
+      break;
+    } 
+  }
+}
+#endif
 
 void Data_Analysis(uint8 *data, uint16 length)
 {
@@ -156,7 +206,12 @@ void Data_Analysis(uint8 *data, uint16 length)
 
   uint8 buf[FRAME_DATA_SIZE] = {0};
   uint8 len = 0;
-
+  
+  //uint8 rslength=length;
+  //sprintf(buf, "data:%s, len:%d\n", data, length);
+  //CommonApp_GetDevDataSend(&rslength, 1);
+  
+  
   mdeFrame = (DE_t *)SSAFrame_Analysis(HEAD_DE, data, length);
 
   //处理控制命令

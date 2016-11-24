@@ -207,6 +207,53 @@ typedef struct
 	uint8 tail[4]; //:O/r/n
  }DE_t; 
 
+
+extern uint8 Address_dev;//设备地址
+extern uint8 Device_state[4];//开关状态
+//定义485数据传输结构
+#ifdef  RS485_DEV
+
+
+
+#define CT_CMD_CX	0x03    //查询设备状态
+#define CT_CMD_KZ	0x04    //控制设备
+#define CT_CMD_XG	0x06    //修改设备地址
+#define CT_CMD_DI	0x25    //查询设备地址
+
+typedef enum
+{
+	CMD_CX,
+	CMD_KZ,
+	CMD_XG,
+	CMD_DI,
+}rsCmdType_t;
+
+//接收的数据命令
+typedef union rsve_data 
+{
+  uint8 data_buf[8];
+    struct  reve_data
+      {
+	uint8 head[1];   //设备硬件地址
+	uint8 cmdId[1];   //cmmandID
+	uint8 cmd[4];   //具体命令
+	uint8 data_crc[2];//crc_data
+      }data_core;
+}RS485DR_t;
+
+//发送的数据命令
+typedef struct  
+   {
+      uint8 head[1];   //设备硬件地址
+      uint8 cmdId[1];   //cmmandID
+      uint8 data_len;
+      uint8 *data;   //具体数据
+      uint8 data_crc[2];//crc_data
+   }RS485DS_t;
+  
+#endif
+
+
 /*********************************************************************
  * FUNCTIONS
  */
@@ -214,6 +261,20 @@ typedef struct
 void *SSAFrame_Analysis(frHeadType_t hType, uint8 SrcBuf[], uint8 SrcLen);
 int8 SSAFrame_Package(frHeadType_t hType, void *data, uint8 **DstBuf, uint16 *DstLen);
 
+#ifdef RS485_DEV
+extern void rs485_state(uint8 *data, uint16 length);
+extern void rs485_control(uint8 *data, uint16 length);
+extern void rs485_changeAddr(uint8 *data, uint16 length);
+extern void rs485_address(void);
+
+bool crc_confirm(uint8 SrcBuf[],uint8 SrcLen);
+unsigned int crc16(uint8 buf[],uint8 len);
+void Res_Inquire(void);
+void Res_Ioctrl(void);//控制类设备查询
+void QT_ResInquire(void);//气体查询返回
+void LUX_ResInquire(void);//光照强度查询返回
+
+#endif
 /*********************************************************************
 *********************************************************************/
 

@@ -213,6 +213,9 @@ extern "C"
 #define ZCD_NV_APS_LINK_KEY_DATA_START    0x0201     // APS key data
 #define ZCD_NV_APS_LINK_KEY_DATA_END      0x02FF
 
+#define ZCD_DEV_ADDRESS     0x0202     //device orial dev address
+#define ZCD_LIST_ADDRESS    0x0210
+  
 // NV Items Reserved for Master Key Table entries
 // 0x0301 - 0x03FF
 #define ZCD_NV_MASTER_KEY_DATA_START      0x0301     // Master key data

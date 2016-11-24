@@ -28,6 +28,7 @@ Date:2015-07-31
 #include "hal_uart.h"
 
 
+
 /*********************************************************************
  * MACROS
  */
@@ -89,6 +90,7 @@ afAddrType_t CommonApp_DstAddr;
 
 //network address
 uint16 nwkAddr;
+uint8 nwkAddr_buf[3];
 //mac address
 ZLongAddr_t macAddr;
 
@@ -98,11 +100,14 @@ uint8 EXT_ADDR_G[16] = "";
 
 uint8 isFirstState = 1;
 
+
+
 #if(DEVICE_TYPE_ID!=0)
 /* operations data */
 uint8 *optData = NULL;
 uint8 optDataLen = 0;
 #endif
+
 
 /*********************************************************************
  * EXTERNAL FUNCTIONS
@@ -186,8 +191,7 @@ void CommonApp_Init( uint8 task_id )
     ZDO_RegisterForZDOMsg( CommonApp_TaskID, End_Device_Bind_rsp );
     ZDO_RegisterForZDOMsg( CommonApp_TaskID, Match_Desc_rsp );
 
-	CommonApp_InitConfirm(task_id);
-
+    CommonApp_InitConfirm(task_id);
 }
 
 
@@ -265,7 +269,13 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
 #if defined(POWERON_FACTORY_SETTING) && !defined(RTR_NWK)
 		  CommonApp_PowerOnFactorySetting(CommonApp_NwkState);
 #endif
+#ifndef RS485_DEV
 		  CommonApp_ProcessZDOStates( CommonApp_NwkState );
+#endif
+        if( CommonApp_NwkState == DEV_ROUTER || CommonApp_NwkState == DEV_END_DEVICE)
+          {      
+            osal_set_event(CommonApp_TaskID,RS485_HEART_EVT);
+          }
 		  isFirstState = 0;
           break;
 
@@ -282,6 +292,23 @@ uint16 CommonApp_ProcessEvent(uint8 task_id, uint16 events)
 
     // return unprocessed events
     return (events ^ SYS_EVENT_MSG);
+  }
+  
+   if ( events & RS485_HEART_EVT )
+  {
+    nwkAddr = NLME_GetShortAddr();//正常字节序，高位在前，低位在后
+    
+    nwkAddr_buf[0]=nwkAddr>>8;
+    nwkAddr_buf[1]=nwkAddr&0x00ff;
+    nwkAddr_buf[2]=Address_dev;
+#ifdef UART_DEBUG
+    Data_TxHandler(nwkAddr_buf, 3);
+#endif
+    CommonApp_SendTheMessage(COORDINATOR_ADDR, nwkAddr_buf, 3);
+    osal_start_timerEx( CommonApp_TaskID,
+                        RS485_HEART_EVT,
+                        RS485_SEND_realtime_TIMEOUT );
+    return (events ^ RS485_HEART_EVT);
   }
 
   return process_event(task_id, events);
@@ -798,9 +825,29 @@ void CommonApp_GetDevDataSend(uint8 *buf, uint16 len)
 {
 #if (HAL_UART==TRUE)
   #ifndef HAL_UART01_BOTH
+        
 	HalUARTWrite(SERIAL_COM_PORT, buf, len);
   #else
   	HalUARTWrite(SERIAL_COM_PORT1, buf, len);
   #endif
 #endif
+}
+
+void RS485_GetDevDataSend(uint8 *buf, uint16 len)
+{
+  uint8 data_buf[64];
+  uint8 lenght = len;
+  
+  if(lenght==3)
+  {
+   //将设备信息添加到LIST中,最后一位有效
+    osal_memcpy(data_buf,buf,len);
+    //HalUARTWrite(SERIAL_COM_PORT,data_buf,3);
+    Node *node1 = (Node*)osal_mem_alloc(sizeof(Node));
+    node1->short_dev=(uint16)(data_buf[0])<<8 | (uint16)data_buf[1];
+    node1->addr_dev=data_buf[2];
+    setNodeList(node1);
+  }
+  else
+  HalUARTWrite(SERIAL_COM_PORT, buf, len);  
 }

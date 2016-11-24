@@ -32,6 +32,11 @@ extern "C"
 //#define HAL_KEY_LONG_SHORT_DISTINGUISH	/*按键长短按识别功能*/
 #define POWERON_FACTORY_SETTING		/*电源开关计次恢复出厂设置*/
 
+#define RS485_DEV
+#ifdef RS485_DEV
+#define SERIAL_COM_BAUD  HAL_UART_BR_9600
+#endif
+
 
 /*********************************************************************
  * INCLUDES
@@ -40,7 +45,31 @@ extern "C"
 /*********************************************************************
  * CONSTANTS
  */
+/* ------------------------------------------------------------------------------------------------
+ *                                       IOCTROL Configuration
+ * ------------------------------------------------------------------------------------------------
+ */
+#define GPIO1_BV           BV(4)
+#define GPIO1_SBIT         P1_4
+#define GPIO1_DDR          P1DIR
+#define GPIO1_POLARITY     ACTIVE_HIGH
 
+#define GPIO2_BV           BV(5)
+#define GPIO2_SBIT         P1_5
+#define GPIO2_DDR          P1DIR
+#define GPIO2_POLARITY     ACTIVE_HIGH
+
+#define GPIO3_BV           BV(6)
+#define GPIO3_SBIT         P1_6
+#define GPIO3_DDR          P1DIR
+#define GPIO3_POLARITY     ACTIVE_HIGH
+
+#define GPIO4_BV           BV(7)
+#define GPIO4_SBIT         P1_7
+#define GPIO4_DDR          P1DIR
+#define GPIO4_POLARITY     ACTIVE_HIGH
+  
+  
 /*********************************************************************
  * MACROS
  */
@@ -75,6 +104,28 @@ extern "C"
 #define HAL_PUSH_BUTTON5()        (0)
 #define HAL_PUSH_BUTTON6()        (0)
 
+/*定义GPIO*/
+#define HAL_TURN_OFF_GPIO1()       st( GPIO1_SBIT = GPIO1_POLARITY (0); )
+#define HAL_TURN_ON_GPIO1()        st( GPIO1_SBIT = GPIO1_POLARITY (1); )
+#define HAL_TOGGLE_GPIO1()         st( if (GPIO1_SBIT) { GPIO1_SBIT = 0; } else { GPIO1_SBIT = 1;} )
+#define HAL_STATE_GPIO1()          (GPIO1_POLARITY (GPIO1_SBIT))
+  
+#define HAL_TURN_OFF_GPIO2()       st( GPIO2_SBIT = GPIO2_POLARITY (0); )
+#define HAL_TURN_ON_GPIO2()        st( GPIO2_SBIT = GPIO2_POLARITY (1); )
+#define HAL_TOGGLE_GPIO2()         st( if (GPIO2_SBIT) { GPIO2_SBIT = 0; } else { GPIO2_SBIT = 1;} )
+#define HAL_STATE_GPIO2()          (GPIO2_POLARITY (GPIO2_SBIT)) 
+  
+#define HAL_TURN_OFF_GPIO3()       st( GPIO3_SBIT = GPIO3_POLARITY (0); )
+#define HAL_TURN_ON_GPIO3()        st( GPIO3_SBIT = GPIO3_POLARITY (1); )
+#define HAL_TOGGLE_GPIO3()         st( if (GPIO3_SBIT) { GPIO3_SBIT = 0; } else { GPIO3_SBIT = 1;} )
+#define HAL_STATE_GPIO3()          (GPIO3_POLARITY (GPIO3_SBIT))
+  
+#define HAL_TURN_OFF_GPIO4()       st( GPIO4_SBIT = GPIO4_POLARITY (0); )
+#define HAL_TURN_ON_GPIO4()        st( GPIO4_SBIT = GPIO4_POLARITY (1); )
+#define HAL_TOGGLE_GPIO4()         st( if (GPIO4_SBIT) { GPIO4_SBIT = 0; } else { GPIO4_SBIT = 1;} )
+#define HAL_STATE_GPIO4()          (GPIO4_POLARITY (GPIO4_SBIT))
+  
+  
 
 #define HAL_TURN_OFF_LED1()       st( LED1_SBIT = LED1_POLARITY (0); )
 #define HAL_TURN_ON_LED1()        st( LED1_SBIT = LED1_POLARITY (1); )

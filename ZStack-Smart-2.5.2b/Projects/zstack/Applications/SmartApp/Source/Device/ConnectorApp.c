@@ -83,6 +83,8 @@ extern bool isPermitJoining;
 static uint8 *fBuf;		//pointer data buffer
 static uint16 fLen;		//buffer data length
 
+uint8 list_len=0;               //定义list的长度
+
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
@@ -120,7 +122,10 @@ static void ConnectorApp_HeartBeatEvent(void);
 void CommonApp_InitConfirm( uint8 task_id )
 {
   CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-  
+#ifdef RS485_DEV
+  //初始化LIST,分配NV空间
+  createNodelist();
+#endif 
 #if(HAL_UART==TRUE)
   SerialTx_Handler(SERIAL_COM_PORT, ConnectorApp_TxHandler);
 #endif
@@ -144,7 +149,11 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
   switch ( pkt->clusterId )
   {
     case COMMONAPP_CLUSTERID:
+#ifndef RS485_DEV
       CommonApp_GetDevDataSend(pkt->cmd.Data, pkt->cmd.DataLength);
+#else
+      RS485_GetDevDataSend(pkt->cmd.Data, pkt->cmd.DataLength);
+#endif
       break; 
   }
 }
@@ -185,7 +194,7 @@ void CommonApp_ProcessZDOStates(devStates_t status)
 
 	if(!SSAFrame_Package(HEAD_UC, &mFrame, &fBuf, &fLen))
 	{
-		CommonApp_GetDevDataSend(fBuf, fLen);
+	  CommonApp_GetDevDataSend(fBuf, fLen);
 	}
 #else
 	UO_t mFrame;
@@ -341,6 +350,8 @@ void ConnectorApp_HeartBeatEvent(void)
 
 void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
+#ifndef  RS485_DEV
+  
 	uint16 Send_shortAddr = 0;
 
 	if(txLen>=16 && !memcmp(txBuf, FR_HEAD_DE, 2)
@@ -406,8 +417,27 @@ void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 			CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
 		}
 	}
+#else
+      CommonApp_RS485SendMessage(txBuf, txLen);
+#endif
 }
+
 
 /*********************************************************************
  */
-
+void CommonApp_RS485SendMessage(uint8 *data, uint8 length)
+{
+   uint16 dest_addr;
+   uint8 dev_addr=data[0];
+  if(data[0]==0xFA)
+  {
+    CommonApp_SendTheMessage(BROADCAST_ADDR, data,length);
+  }
+  else
+  {
+    //get the short_addr
+   dest_addr=get_NodeList(dev_addr);
+   if(dest_addr)
+   CommonApp_SendTheMessage(dest_addr, data,length);
+  }
+}

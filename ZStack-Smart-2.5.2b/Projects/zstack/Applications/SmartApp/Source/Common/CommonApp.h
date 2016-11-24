@@ -36,6 +36,10 @@ extern "C"
 #include "serial-comm.h"
 #include "frame-analysis.h"
 
+#include "bh1750.h"
+#include "sht10.h"
+#include "list.h"
+
 /*********************************************************************
  * CONSTANTS
  */
@@ -57,6 +61,7 @@ extern "C"
 /*********************************************************************
  * MACROS
  */
+#define RS485_HEART_EVT                 0x0200
 //User events message
 #define SERIAL_CMD_EVT				0x4000		//serial receive event by user defined
 #define TRANSNODE_UPLOAD_EVT		0x2000
@@ -82,6 +87,8 @@ extern "C"
 #define IRRELAY_SEND_CMD	0x86
 
 //event peroid
+  
+#define RS485_SEND_realtime_TIMEOUT   30000     // Every 30 seconds
 #ifndef POWER_SAVING
 #define HEARTBEAT_TIMEOUT   	30000	//Every 30 Seconds
 #define TRANSNODE_TIMEOUT   	30000	//Every 30 Seconds
@@ -243,7 +250,10 @@ extern void CommonApp_GetDeviceInfo ( uint8 param, void *pValue );
 extern void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen);
 #endif
 
+extern uint8 list_len;
 extern void CommonApp_GetDevDataSend(uint8 *buf, uint16 len);
+extern void RS485_GetDevDataSend(uint8 *buf, uint16 len);
+extern void CommonApp_RS485SendMessage(uint8 *data, uint8 length);
 
 /*********************************************************************
 *********************************************************************/

@@ -180,6 +180,8 @@ void HalDriverInit (void)
 #if (defined HAL_HID) && (HAL_HID == TRUE)
   usbHidInit();
 #endif
+  /*GPIO*/
+  GPIOInit();
 }
 
 

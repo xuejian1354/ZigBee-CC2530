@@ -19,6 +19,15 @@ Date:2015-07-31
 #include "serial-comm.h"
 #include "frame-analysis.h"
 
+#include "hal_adc.h"
+#include "hal_led.h"
+#include "hal_timer.h"
+#include "OSAL_Nv.h"
+#include "sht10.h"
+#include "bh1750.h"
+#include "list.h"
+#include "CommonApp.h"
+
 /*********************************************************************
  * MACROS
  */
@@ -48,6 +57,8 @@ static uint8 aDataLen = 0;
 
 const uint8 f_tail[4] = {0x3A, 0x4F, 0x0D, 0x0A}; 
 
+uint8 Address_dev;//设备地址
+uint8 Device_state[4];//开关状态
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
@@ -300,4 +311,199 @@ FR_Package_err:
 	return -1;
 }
 
+#ifdef RS485_DEV
+void rs485_state(uint8 *data, uint16 length)
+{
+#ifdef SHT11_DEV
+        //温湿度传感器
+        SHT11_Finish();//获取数据并且装入结构体
+        Res_Inquire();
+#endif
+#ifdef IOCTL_DEV
+        //控制设备
+        Res_Ioctrl();
+#endif
+#ifdef QTJC_DEV
+        //气体类检测
+       QT_ResInquire();
+#endif
+#ifdef LUX_DEV
+       //光照强度计数
+       LUX_ResInquire();
+#endif      
+}
+
+void Res_Inquire(void)
+{
+  uint8 send_buf[9];
+  int crcdata;
+  send_buf[0]=Address_dev;//设备地址
+  send_buf[1]=0x03;
+  send_buf[2]=0x04;
+  send_buf[3]=SHT11.Temp_byte[0];//温度值
+  send_buf[4]=SHT11.Temp_byte[1];
+  send_buf[5]=SHT11.Humi_byte[0];//湿度值
+  send_buf[6]=SHT11.Humi_byte[1];
+  crcdata=crc16(send_buf, 7);
+  send_buf[7]=crcdata&0x00ff;
+  send_buf[8]=crcdata>>8;
+#ifdef UART_DEBUG
+  Data_TxHandler(send_buf, 9);
+#endif
+  CommonApp_SendTheMessage(0x0000, send_buf, 9);
+}
+
+void Res_Ioctrl(void)
+{
+  uint8 send_buf[9];
+  int crcdata;
+  send_buf[0]=Address_dev;//设备地址
+  send_buf[1]=0x03;
+  send_buf[2]=0x04;
+  send_buf[3]=Device_state[0];
+  send_buf[4]=Device_state[1];
+  send_buf[5]=Device_state[2];
+  send_buf[6]=Device_state[3];
+  crcdata=crc16(send_buf, 7);
+  send_buf[7]=crcdata&0x00ff;
+  send_buf[8]=crcdata>>8;
+#ifdef UART_DEBUG
+  Data_TxHandler(send_buf, 9);
+#endif
+  CommonApp_SendTheMessage(0x0000, send_buf, 9);
+}
+
+void QT_ResInquire(void)
+{
+  //气体检测
+  uint8 send_buf[7];
+  int crcdata;
+  send_buf[0]=Address_dev;//设备地址
+  send_buf[1]=0x03;
+  send_buf[2]=0x02;
+  uint16 QT_Tmp = HalAdcRead (HAL_ADC_CHANNEL_1, HAL_ADC_RESOLUTION_12);
+  send_buf[3]=QT_Tmp>>8;     //高位在前
+  send_buf[4]=QT_Tmp&0x00ff; //低位在后
+  //矫正输出
+  crcdata=crc16(send_buf, 5);
+  send_buf[5]=crcdata&0x00ff;
+  send_buf[6]=crcdata>>8;
+#ifdef UART_DEBUG
+  Data_TxHandler(send_buf, 7);
+#endif
+  CommonApp_SendTheMessage(0x0000, send_buf, 7);
+}
+
+void LUX_ResInquire(void)
+{
+  //光照查询
+  uint16 LUX_value=Light();
+#ifdef DE_BUG
+  uint8 LUX_Buf[5];
+  conversion(LUX_value,LUX_Buf);
+  HalUARTWrite(0,LUX_Buf,5);
+#endif
+   uint8 send_buf[7];
+   int crcdata;
+   send_buf[0]=Address_dev;//设备地址
+   send_buf[1]=0x03;
+   send_buf[2]=0x02;
+   send_buf[3]=LUX_value>>8;
+   send_buf[4]=LUX_value&0x00ff;
+   crcdata=crc16(send_buf, 5);
+   send_buf[5]=crcdata&0x00ff;
+   send_buf[6]=crcdata>>8;
+#ifdef UART_DEBUG
+   Data_TxHandler(send_buf, 7);
+#endif
+   CommonApp_SendTheMessage(0x0000, send_buf, 7);
+}
+
+void rs485_control(uint8 *data, uint16 length)
+{
+  unsigned  char buf_tmp[8];
+	osal_memcpy(buf_tmp,data,length);
+        int i;
+        for(i=0;i<4;i++)
+        {
+          if(buf_tmp[2+i]==0x01)
+          {
+            HalGpioSet( 1<<i, HAL_GPIO_MODE_ON );
+            Device_state[i]=0x01;
+          }
+          else
+          {
+            HalGpioSet( 1<<i, HAL_GPIO_MODE_OFF );
+            Device_state[i]=0x00;
+          }
+        }
+        Res_Ioctrl();
+ 
+}
+void rs485_changeAddr(uint8 *data, uint16 length)
+{
+        uint8 buf_tmp[8];
+	osal_memcpy(buf_tmp,data,length);
+   	Address_dev=buf_tmp[5];
+	osal_nv_item_init(ZCD_DEV_ADDRESS, 1, NULL);
+	osal_nv_write(ZCD_DEV_ADDRESS, 0, 1, &Address_dev);
+        rs485_address();
+}
+void rs485_address(void)
+{
+        uint8 send_buf[6];
+  	unsigned int Crc_data=0;
+	send_buf[0]=Address_dev;
+	send_buf[1]=0x25;
+	send_buf[2]=0x01;
+	send_buf[3]=0x02;
+	Crc_data=crc16(send_buf, 4);
+	send_buf[4]=Crc_data&0x00ff;
+	send_buf[5]=Crc_data>>8;
+#ifdef   UART_DEBUG     
+        Data_TxHandler(send_buf, 6);
+#endif
+      CommonApp_SendTheMessage(0x0000, send_buf, 6); 
+ 
+}
+
+bool crc_confirm(uint8 SrcBuf[],uint8 SrcLen)
+{
+  uint8 crcbuf[2];
+  unsigned int crc_tmp;
+  crc_tmp=crc16(SrcBuf,SrcLen-2);
+  crcbuf[0]=crc_tmp&0x00ff;//crc低8位
+  crcbuf[1]=crc_tmp>>8;//crc高8位
+  if((crcbuf[0]==SrcBuf[SrcLen-2])&&(crcbuf[1]==SrcBuf[SrcLen-1]))
+  {
+    return true;
+  }
+  else
+    return false;
+}
+
+unsigned int crc16(uint8 buf[],uint8 len)
+{
+  unsigned int  i,j,c,crc;
+	crc=0xFFFF;
+	for(i=0;i<len;i++)
+		{
+		c=*(buf+i)&0xFF;
+		crc^=c;
+		for(j=0;j<8;j++)
+			{
+				if(crc & 0x0001)
+					{
+					crc>>=1;
+					crc ^=0xA001;
+					}
+				else
+					{
+					crc >>=1;
+					}
+			}
+		}
+  return(crc);
+}
+#endif
 

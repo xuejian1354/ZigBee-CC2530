@@ -3,7 +3,7 @@
 <project>
   <fileVersion>2</fileVersion>
   <configuration>
-    <name>ZD</name>
+    <name>ZC</name>
     <toolchain>
       <name>8051</name>
     </toolchain>
@@ -117,7 +117,7 @@
         </option>
         <option>
           <name>DdfFile master</name>
-          <state>$TOOLKIT_DIR$\config\devices\_generic\io8052.ddf</state>
+          <state>$TOOLKIT_DIR$\config\devices\Texas Instruments\ioCC2530F256.ddf</state>
         </option>
         <option>
           <name>OCImagesOffset1</name>
@@ -1277,7 +1277,7 @@
     </debuggerPlugins>
   </configuration>
   <configuration>
-    <name>ZC</name>
+    <name>ZD</name>
     <toolchain>
       <name>8051</name>
     </toolchain>
@@ -1391,7 +1391,7 @@
         </option>
         <option>
           <name>DdfFile master</name>
-          <state>$TOOLKIT_DIR$\config\devices\Texas Instruments\ioCC2530F256.ddf</state>
+          <state>$TOOLKIT_DIR$\config\devices\_generic\io8052.ddf</state>
         </option>
         <option>
           <name>OCImagesOffset1</name>

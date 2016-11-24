@@ -22,7 +22,7 @@
   its documentation for any purpose.
 
   YOU FURTHER ACKNOWLEDGE AND AGREE THAT THE SOFTWARE AND DOCUMENTATION ARE
-  PROVIDED “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+  PROVIDED “AS IS?WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
   INCLUDING WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY, TITLE,
   NON-INFRINGEMENT AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL
   TEXAS INSTRUMENTS OR ITS LICENSORS BE LIABLE OR OBLIGATED UNDER CONTRACT,
@@ -123,6 +123,70 @@ void HalLedInit (void)
   /* Initialize sleepActive to FALSE */
   HalLedStatusControl.sleepActive = FALSE;
 #endif
+}
+
+void GPIOInit(void)
+{
+  HalGpioSet(HAL_GPIO_ALL,HAL_GPIO_MODE_OFF);
+}
+
+/***************************************************************************************************
+ * @fn      HalLedSet
+ *
+ * @brief   Tun ON/OFF/ given GPIOs
+ *
+ * @param   gpio- bit mask value of leds to be turned ON/OFF/TOGGLE
+ *          mode - ON, OFF
+ * @return  None
+ ***************************************************************************************************/
+uint8 HalGpioSet(uint8 gpios, uint8 mode)
+{
+  if (gpios & HAL_GPIO_1)
+  {
+    if (mode == HAL_GPIO_MODE_ON)
+    {
+      HAL_TURN_ON_GPIO1();
+    }
+    else
+    {
+      HAL_TURN_OFF_GPIO1();
+    }
+  }
+  
+    if (gpios & HAL_GPIO_2)
+  {
+    if (mode == HAL_GPIO_MODE_ON)
+    {
+      HAL_TURN_ON_GPIO2();
+    }
+    else
+    {
+      HAL_TURN_OFF_GPIO2();
+    }
+  }
+    if (gpios & HAL_GPIO_3)
+  {
+    if (mode == HAL_GPIO_MODE_ON)
+    {
+      HAL_TURN_ON_GPIO3();
+    }
+    else
+    {
+      HAL_TURN_OFF_GPIO3();
+    }
+  }
+    if (gpios & HAL_GPIO_4)
+  {
+    if (mode == HAL_GPIO_MODE_ON)
+    {
+      HAL_TURN_ON_GPIO4();
+    }
+    else
+    {
+      HAL_TURN_OFF_GPIO4();
+    }
+  }
+  
 }
 
 /***************************************************************************************************
