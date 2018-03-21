@@ -1,6 +1,6 @@
 /**************************************************************************************************
   Filename:       ConnectorApp.c
-  Revised:        $Date: 2014-04-16 13:53:12 -0800 (Wed, 16 Apr 2014) $
+  Revised:        $Date: 2018-03-21 11:09:54 $
   Revision:       $Revision: 29217 $
 
   Description:    Connector Application
@@ -8,7 +8,7 @@
 
 /**************************************************************************************************
 Modify by Sam_Chen
-Date:2015-08-07
+Date:2018-03-21
 **************************************************************************************************/
 
 
@@ -90,9 +90,6 @@ static uint16 fLen;		//buffer data length
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-#ifndef ZDO_COORDINATOR
-static void ConnectorApp_HeartBeatEvent(void);
-#endif
 
 /*********************************************************************
  * NETWORK LAYER CALLBACKS
@@ -161,53 +158,6 @@ void CommonApp_MessageMSGCB( afIncomingMSGPacket_t *pkt )
  */
 void CommonApp_ProcessZDOStates(devStates_t status)
 {
-  if(status == DEV_ZB_COORD || status == DEV_ROUTER)
-  {
-	nwkAddr = NLME_GetShortAddr();
-	incode_2_to_16(SHORT_ADDR_G, (uint8 *)&nwkAddr, 2);
-	memcpy(macAddr, NLME_GetExtAddr(), sizeof(ZLongAddr_t));
-    incode_2_to_16(EXT_ADDR_G, macAddr, 8);
-
-#ifdef ZDO_COORDINATOR
-	UC_t mFrame;
-
-	memcpy(mFrame.head, FR_HEAD_UC, 3);
-	mFrame.type = FR_DEV_COORD;
-	memcpy(mFrame.ed_type, FR_APP_DEV, 2);
-	memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
-	memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
-	incode_2_to_16(mFrame.panid, (uint8 *)&_NIB.nwkPanId, 2);
-	uint16 channel = _NIB.nwkLogicalChannel;
-	incode_2_to_16(mFrame.channel, (uint8 *)&channel, 2);
-    mFrame.data = NULL;
-	mFrame.data_len = 0;
-	memcpy(mFrame.tail, f_tail, 4);
-
-	if(!SSAFrame_Package(HEAD_UC, &mFrame, &fBuf, &fLen))
-	{
-		CommonApp_GetDevDataSend(fBuf, fLen);
-	}
-#else
-	UO_t mFrame;
-	
-	memcpy(mFrame.head, FR_HEAD_UO, 3);
-	mFrame.type = FR_DEV_ROUTER;
-	memcpy(mFrame.ed_type, FR_APP_DEV, 2);
-	memcpy(mFrame.short_addr, SHORT_ADDR_G, 4);
-	memcpy(mFrame.ext_addr, EXT_ADDR_G, 16);
-	mFrame.data = NULL;
-	mFrame.data_len = 0;
-	memcpy(mFrame.tail, f_tail, 4);
-
-	if(!SSAFrame_Package(HEAD_UO, &mFrame, &fBuf, &fLen))
-	{
-		CommonApp_GetDevDataSend(fBuf, fLen);
-		CommonApp_SendTheMessage(COORDINATOR_ADDR, fBuf, fLen);
-	}
-
-	ConnectorApp_HeartBeatEvent();
-#endif
-  }
 }
 
 
@@ -328,84 +278,10 @@ void CommonApp_HandleCombineKeys(uint16 keys, uint8 keyCounts)
 }
 #endif
 
-#ifndef ZDO_COORDINATOR
-void ConnectorApp_HeartBeatEvent(void)
-{
-	CommonApp_HeartBeatCB(NULL, NULL, NULL);
-	
-	set_user_event(CommonApp_TaskID, HEARTBERAT_EVT, CommonApp_HeartBeatCB, 
-  		HEARTBEAT_TIMEOUT, TIMER_LOOP_EXECUTION|TIMER_EVENT_RESIDENTS, NULL);
-}
-#endif
-
 
 void ConnectorApp_TxHandler(uint8 txBuf[], uint8 txLen)
 {
-	uint16 Send_shortAddr = 0;
-
-	if(txLen>=16 && !memcmp(txBuf, FR_HEAD_DE, 2)
-		&& !memcmp(txBuf+2, FR_CMD_JOIN_CTRL, 4)
-		&& !memcmp(txBuf+txLen-4, f_tail, 4))
-	{
-		if(!memcmp(txBuf+6, SHORT_ADDR_G, 4))
-		{
-			uint8 cmdData, ret;
-			uint8 retData[2] = {0};
-		
-			cmdData = atox(txBuf+10, 2);
-
-			if(!cmdData)
-				ret = !CommonApp_PermitJoiningRequest(PERMIT_JOIN_FORBID);
-			else if(cmdData == 1)
-				ret = !CommonApp_PermitJoiningRequest(PERMIT_JOIN_TIMEOUT);
-
-			incode_2_to_16(retData, &ret, 1);
-			PermitJoin_Refresh(retData, 2);
-		}
-		else
-		{
-			incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-			CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
-		}
-		
-	}
-	else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-		&& !memcmp(txBuf+2, FR_CMD_BROCAST_REFRESH, 4)
-		&& !memcmp(txBuf+txLen-4, f_tail, 4))
-	{
-		incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-		if(Send_shortAddr == COORDINATOR_ADDR)
-		{
-			CommonApp_ProcessZDOStates(DEV_ZB_COORD);
-		}
-		else
-		{
-			CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
-		}
-	}
-	else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-		&& (!memcmp(txBuf+2, FR_CMD_SINGLE_EXCUTE, 4)
-		|| !memcmp(txBuf+2, FR_CMD_PEROID_EXCUTE, 4)
-		|| !memcmp(txBuf+2, FR_CMD_PEROID_STOP, 4))
-		&& !memcmp(txBuf+txLen-4, f_tail, 4))
-	{
-		incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-		CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
-	}
-	else if(txLen>=14 && !memcmp(txBuf, FR_HEAD_DE, 2)
-		&& !memcmp(txBuf+2, FR_CMD_SINGLE_REFRESH, 4)
-		&& !memcmp(txBuf+txLen-4, f_tail, 4))
-	{
-		incode_16_to_2(&Send_shortAddr, txBuf+6, 4);
-		if(Send_shortAddr == COORDINATOR_ADDR) //coord self
-		{
-			CommonApp_ProcessZDOStates(DEV_ZB_COORD);
-		}
-		else
-		{
-			CommonApp_SendTheMessage(Send_shortAddr, txBuf, txLen);
-		}
-	}
+	CommonApp_SendTheMessage(BROADCAST_ADDR, txBuf, txLen);
 }
 
 /*********************************************************************
